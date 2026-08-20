@@ -12,7 +12,7 @@
 ## Установка
 
 ```bash
-git clone <url-репозитория>
+git clone https://github.com/SergeyObraztsov11/pulsar.git
 cd pulsar
 npm install
 ```
