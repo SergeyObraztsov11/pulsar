@@ -1,0 +1,52 @@
+# Nuxt / Nitro
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env (секреты локально, пример в репо)
+.env
+.env.*
+!.env.example
+
+# Prisma generated client
+app/generated/prisma
+
+# Тесты / сборка
+coverage
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+Desktop.ini
+.fleet
+.idea
+.vscode
+.cursor
+.cursorignore
+*.swp
+*.swo
+
+# Локальные seed-медиа (заливка: npx tsx prisma/seed-media.ts)
+public/audio/
+public/covers/
+
+# Локальные / временные
+*.local
+.turbo
+tmp
+temp

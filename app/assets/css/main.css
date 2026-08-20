@@ -1,0 +1,129 @@
+/* Шрифт Onest + Tailwind */
+@import "@fontsource/onest/400.css";
+@import "@fontsource/onest/500.css";
+@import "@fontsource/onest/600.css";
+@import "@fontsource/onest/700.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+
+  /* Grayscale: white / black + gray by strength (light → dark) */
+  --color-primary-white: #ffffff;
+  --color-primary-gray-light: #b3b3b3;
+  --color-primary-gray: #6a6a6a;
+  --color-primary-gray-dark: #141414;
+  --color-primary-black: #0a0a0a;
+
+  /* Accent - главный цвет */
+  --color-accent: #5a60e0;
+
+  /* Ошибки форм */
+  --color-danger: #e85d5d;
+
+  /* Accent - дополнительные цвета для атмосферы в порядке от светлого к тёмному*/
+  --color-accent-1: #d4d6fa;
+  --color-accent-2: #5a60e0;
+  --color-accent-3: #1a1f8d;
+  --color-accent-4: #06071d;
+
+
+  /* Именованные анимации для утилит animate-* */
+  --animate-fade-up: fade-up 0.55s ease-out both;
+  --animate-glow-breathe: glow-breathe 5s ease-in-out infinite;
+  --animate-progress-sheen: progress-sheen 1.6s ease-in-out infinite;
+}
+
+/* Появление блоков (stagger на landing) */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Дыхание glow: translate(-50%, -50%) уже здесь — не дублировать в классах */
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+/* Блик по текущему сегменту прогресса */
+@keyframes progress-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+/* Скролл только внутри layout/main, не у документа */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-primary-black);
+}
+
+html {
+  color-scheme: dark;
+}
+
+/* Выделение текста */
+::selection {
+  background-color: var(--color-accent-3); 
+  color: var(--color-primary-black);
+}
+
+::-moz-selection {
+  background-color: var(--color-accent-3 );
+  color: var(--color-primary-black);
+}
+
+/* Переходы между страницами (NuxtPage name: "page") */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* Отключение анимаций при prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active,
+  .animate-fade-up,
+  .animate-glow-breathe,
+  .animate-progress-sheen {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .page-enter-from,
+  .page-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+}

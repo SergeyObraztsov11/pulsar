@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  avatarSrc    String?
+  bio          String?
+  birthDate    DateTime?
+  gender       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  albums              Album[]
+  tracks              Track[]
+  playlists           Playlist[]
+  trackLikes          TrackLike[]
+  albumLikes          AlbumLike[]
+  artistLikesGiven    ArtistLike[] @relation("ArtistLikesGiven")
+  artistLikesReceived ArtistLike[] @relation("ArtistLikesReceived")
+}
+
+/// Код сброса пароля
+model PasswordResetOtp {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  lastSentAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+/// Черновик регистрации, пока email не подтверждён кодом
+model RegisterOtp {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  codeHash     String
+  expiresAt    DateTime
+  attempts     Int      @default(0)
+  lastSentAt   DateTime @default(now())
+  name         String
+  passwordHash String
+  birthDate    DateTime
+  gender       String
+  createdAt    DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model Album {
+  id          String    @id @default(cuid())
+  artistId    String
+  name        String
+  coverSrc    String?
+  coverColor  String?
+  releaseDate DateTime?
+  createdAt   DateTime  @default(now())
+
+  artist User         @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  tracks Track[]
+  likes  AlbumLike[]
+  genres AlbumGenre[]
+
+  @@index([artistId])
+}
+
+model Track {
+  id          String   @id @default(cuid())
+  albumId     String
+  artistId    String
+  name        String
+  trackNumber Int
+  durationSec Int
+  audioSrc    String?
+  isExplicit  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  album          Album           @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  artist         User            @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  playlistTracks PlaylistTrack[]
+  likes          TrackLike[]
+  genres         TrackGenre[]
+
+  @@unique([albumId, trackNumber])
+  @@index([albumId])
+  @@index([artistId])
+}
+
+model Playlist {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  coverSrc  String?
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks PlaylistTrack[]
+
+  @@index([userId])
+}
+
+model PlaylistTrack {
+  playlistId String
+  trackId    String
+  position   Int
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, trackId])
+  @@unique([playlistId, position])
+}
+
+model TrackLike {
+  userId    String
+  trackId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([userId, trackId])
+  @@index([userId, createdAt])
+  @@index([trackId])
+}
+
+model AlbumLike {
+  userId    String
+  albumId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@id([userId, albumId])
+  @@index([userId, createdAt])
+  @@index([albumId])
+}
+
+model ArtistLike {
+  userId    String
+  artistId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("ArtistLikesGiven", fields: [userId], references: [id], onDelete: Cascade)
+  artist User @relation("ArtistLikesReceived", fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([userId, artistId])
+  @@index([userId, createdAt])
+  @@index([artistId])
+}
+
+model Genre {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  tracks TrackGenre[]
+  albums AlbumGenre[]
+}
+
+model TrackGenre {
+  trackId String
+  genreId String
+
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([trackId, genreId])
+  @@index([genreId])
+}
+
+model AlbumGenre {
+  albumId String
+  genreId String
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([albumId, genreId])
+  @@index([genreId])
+}
