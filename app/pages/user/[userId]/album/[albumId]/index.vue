@@ -115,14 +115,10 @@ const isPlayingAlbum = computed(
   () => isCurrentAlbum.value && playerStore.isPlaying,
 );
 
-/** Атмосфера: цвет сверху, вниз в прозрачный (фон страницы) */
-const headerWashStyle = computed(() => {
-  const color = album.value?.coverColor;
-  if (!color) return undefined;
-  return {
-    backgroundImage: `linear-gradient(to bottom, ${color} 0%, transparent 72%)`,
-  };
-});
+/** Атмосфера шапки: пока серый (позже — coverColor) */
+const headerWashStyle = {
+  backgroundImage: `radial-gradient(ellipse 120% 100% at 50% 0%, var(--color-primary-gray) 0%, transparent 75%)`,
+};
 
 /** Треклист уже на странице — без второго запроса */
 function onListenClick() {
@@ -140,39 +136,48 @@ function onListenClick() {
 
 <template>
   <div class="relative flex flex-col gap-10 lg:gap-16">
-    <!-- Wash: под хедер, на всю ширину скролла; хедер прозрачный до скролла -->
+    <!-- Wash: серый (позже coverColor), blur сглаживает полосы -->
     <div
-      class="pointer-events-none absolute -top-24 left-1/2 z-0 h-140 w-screen -translate-x-1/2 bg-linear-to-t from-transparent to-primary-gray opacity-50 lg:h-96"
+      class="pointer-events-none absolute -top-24 left-1/2 z-0 h-140 w-screen -translate-x-1/2 overflow-hidden lg:h-96"
       aria-hidden="true"
-    />
+    >
+      <div
+        class="absolute -inset-16 opacity-55 blur-3xl motion-reduce:blur-none motion-reduce:opacity-40"
+        :style="headerWashStyle"
+      />
+    </div>
 
     <!-- Шапка альбома -->
     <section
-      class="relative z-10 flex flex-col items-center gap-6 animate-fade-up motion-reduce:animate-none lg:h-64 lg:flex-row lg:items-stretch"
+      class="relative z-10 flex flex-col items-center gap-3 animate-fade-up motion-reduce:animate-none sm:gap-4 lg:h-64 lg:flex-row lg:items-stretch lg:gap-6"
     >
       <div
-        class="size-48 shrink-0 overflow-hidden rounded-xl bg-primary-gray-dark sm:size-56 lg:size-64"
+        class="size-36 shrink-0 overflow-hidden rounded-xl bg-primary-gray-dark sm:size-52 lg:size-64"
       >
         <UiCoverImage :src="album?.coverSrc" :alt="album?.name" />
       </div>
 
       <div
-        class="flex min-w-0 flex-1 flex-col items-center gap-6 text-center lg:items-stretch lg:justify-between lg:text-left"
+        class="flex w-full min-w-0 max-w-sm flex-col items-center gap-3 text-center sm:max-w-md lg:h-full lg:max-w-none lg:flex-1 lg:items-stretch lg:justify-between lg:gap-0 lg:text-left"
       >
-        <div class="flex min-w-0 flex-col items-center gap-2 lg:items-start">
-          <div class="text-sm text-primary-white">Альбом</div>
+        <!-- Сверху: тип -->
+        <div class="text-sm text-primary-gray hidden lg:block">Альбом</div>
+
+        <!-- По центру: название и артист -->
+        <div
+          class="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2 lg:items-start lg:gap-3"
+        >
           <h1
-            class="max-w-full text-3xl font-bold text-primary-white sm:text-4xl lg:truncate lg:text-5xl"
+            class="max-w-full text-2xl font-bold wrap-break-word text-primary-white sm:text-4xl lg:truncate lg:text-5xl lg:break-normal"
           >
             {{ album?.name }}
           </h1>
-
           <NuxtLink
             :to="artistTo"
-            class="flex max-w-full flex-row items-center gap-3"
+            class="flex max-w-full flex-row items-center gap-2"
           >
             <div
-              class="size-10 shrink-0 overflow-hidden rounded-full bg-primary-gray-dark"
+              class="size-7 shrink-0 overflow-hidden rounded-full bg-primary-gray-dark sm:size-8"
             >
               <UiCoverImage
                 :src="album?.artist.avatarSrc"
@@ -181,32 +186,36 @@ function onListenClick() {
               />
             </div>
             <span
-              class="truncate text-xl font-semibold text-primary-white hover:underline"
+              class="truncate text-sm font-semibold text-primary-white hover:underline sm:text-base"
             >
               {{ album?.artist.name }}
             </span>
           </NuxtLink>
-
-          <div class="text-sm text-primary-white">{{ metaLabel }}</div>
         </div>
 
-        <div
-          class="flex flex-wrap items-center justify-center gap-3 lg:justify-start"
-        >
-          <UiButton
-            :icon="isPlayingAlbum ? 'Pause' : 'Play'"
-            filled
-            variant="white"
-            text="Слушать"
-            @click="onListenClick"
-          />
-          <UiButton
-            variant="gray"
-            icon="Heart"
-            :filled="isLiked"
-            @click="isLiked = !isLiked"
-          />
-          <UiButton variant="gray" icon="DotsThree" />
+        <!-- Снизу: мета и кнопки -->
+        <div class="flex flex-col items-center gap-2 lg:items-start lg:gap-3">
+          <div class="text-sm text-primary-gray">
+            {{ metaLabel }}
+          </div>
+          <div
+            class="flex flex-row items-center justify-center gap-2 sm:gap-3 lg:justify-start"
+          >
+            <UiButton
+              :icon="isPlayingAlbum ? 'Pause' : 'Play'"
+              filled
+              variant="white"
+              text="Слушать"
+              @click="onListenClick"
+            />
+            <UiButton
+              variant="gray"
+              icon="Heart"
+              :filled="isLiked"
+              @click="isLiked = !isLiked"
+            />
+            <UiButton variant="gray" icon="DotsThree" />
+          </div>
         </div>
       </div>
     </section>

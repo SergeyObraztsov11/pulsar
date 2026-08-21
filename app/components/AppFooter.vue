@@ -1,26 +1,22 @@
-<template>
-  <footer class="border-t border-primary-gray-dark pt-8 pb-2">
-    <div
-      class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <nav class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <NuxtLink to="/register" class="text-primary-gray hover:underline">
-          Регистрация
-        </NuxtLink>
-        <NuxtLink to="/login" class="text-primary-gray hover:underline">
-          Войти
-        </NuxtLink>
-        <NuxtLink to="/search" class="text-primary-gray hover:underline">
-          Поиск
-        </NuxtLink>
-        <NuxtLink to="/upload" class="text-primary-gray hover:underline">
-          Загрузить
-        </NuxtLink>
-      </nav>
-    </div>
+<script setup lang="ts">
+/**
+ * AppFooter — кратко о Pulsar, навигация и копирайт.
+ */
+</script>
 
-    <p class="mt-6 text-sm text-primary-gray">
-      © {{ new Date().getFullYear() }}. Все права защищены.
+<template>
+  <footer
+    class="border-t border-primary-gray-dark pt-8 pb-2 flex flex-col gap-2"
+  >
+    <!-- О проекте -->
+
+    <p class="text-sm text-primary-gray lg:w-1/2">
+      Pulsar — сервис для прослушивания и публикации музыки. Слушайте альбомы и
+      треки, сохраняйте любимое и делитесь своим звуком.
+    </p>
+
+    <p class="text-sm text-primary-gray">
+      © {{ new Date().getFullYear() }} Pulsar
     </p>
   </footer>
 </template>

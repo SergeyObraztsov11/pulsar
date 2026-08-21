@@ -175,7 +175,7 @@ const {
       </button>
 
       <TrackMoreMenu
-        v-if="interactive"
+        v-if="interactive && !isLgUp"
         v-model:open="moreOpen"
         :is-playing-current="isPlayingCurrent"
         :is-liked="isLiked"

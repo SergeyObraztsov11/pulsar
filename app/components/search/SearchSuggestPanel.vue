@@ -2,7 +2,7 @@
 /**
  * SearchSuggestPanel — текстовые подсказки поиска.
  */
-import { PhMagnifyingGlass } from "@phosphor-icons/vue";
+import { PhCaretRight, PhMagnifyingGlass } from "@phosphor-icons/vue";
 import type { Album } from "~/types/album";
 import type { Artist } from "~/types/artist";
 import type { Track } from "~/types/track";
@@ -54,18 +54,13 @@ const items = computed(() => {
 
 <template>
   <div class="flex min-w-0 flex-col">
-    <!-- Шапка запроса -->
-    <p class="truncate px-3 py-2 text-sm leading-none text-primary-gray">
-      Поиск «{{ props.query }}»
-    </p>
-
     <!-- Ничего не найдено -->
     <div
       v-if="props.showEmpty"
-      class="flex items-center gap-2 px-3 py-2 text-primary-gray"
+      class="flex items-center mx-auto gap-2 px-3 py-2"
     >
       <PhMagnifyingGlass class="shrink-0" :size="20" weight="light" />
-      <p class="text-sm leading-normal">Ничего не найдено.</p>
+      <p class="text-sm leading-normal">Ничего не найдено</p>
     </div>
 
     <!-- Текстовые строки -->
@@ -76,14 +71,6 @@ const items = computed(() => {
         :to="item.to"
         :title="item.title"
       />
-
-      <NuxtLink
-        v-if="props.hasResults"
-        class="px-3 py-2 text-right text-sm text-primary-gray hover:text-primary-white hover:underline"
-        :to="searchPageTo"
-      >
-        Все результаты
-      </NuxtLink>
     </template>
   </div>
 </template>

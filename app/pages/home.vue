@@ -76,7 +76,6 @@ const genreTags = computed(() => {
 
 <template>
   <div class="flex flex-col gap-16">
-   
     <!-- Личная полка -->
     <!-- Animation: fade-up + delay 240ms -->
     <AlbumsSwiperSection
@@ -86,7 +85,7 @@ const genreTags = computed(() => {
       :items="shelfItems"
       :limit="8"
     />
-    <pre>{{ newestAlbums }}</pre>
+
     <!-- Новое и на подъёме -->
     <!-- Animation: fade-up + delay 360ms -->
     <AlbumsSwiperSection

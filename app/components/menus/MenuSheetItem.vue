@@ -27,7 +27,7 @@ function onSelect() {
 <template>
   <button
     type="button"
-    class="flex h-10 w-full items-center gap-3 text-left leading-none text-primary-white transition-colors active:text-accent"
+    class="flex h-10 w-full items-center gap-3 rounded-lg px-2 text-left leading-none text-primary-white transition-colors active:bg-primary-gray/25"
     @click="onSelect"
   >
     <component

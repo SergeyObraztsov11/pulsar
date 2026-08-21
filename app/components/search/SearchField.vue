@@ -12,6 +12,7 @@ import {
 } from "@floating-ui/vue";
 import { onClickOutside } from "@vueuse/core";
 import { PhMagnifyingGlass } from "@phosphor-icons/vue";
+
 const route = useRoute();
 
 const query = ref("");
@@ -20,14 +21,8 @@ const fieldEl = ref<HTMLElement | null>(null);
 const panelEl = ref<HTMLElement | null>(null);
 const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
 
-const {
-  tracks,
-  albums,
-  artists,
-  trimmedQuery,
-  hasResults,
-  showEmpty,
-} = useSearchSuggest(query);
+const { tracks, albums, artists, trimmedQuery, hasResults, showEmpty } =
+  useSearchSuggest(query);
 
 /** Панель видна при фокусе, непустом запросе и готовом ответе */
 const isOpen = computed(
@@ -97,7 +92,7 @@ function onFieldKeydown(event: KeyboardEvent) {
     <div
       ref="fieldEl"
       class="group box-border flex h-10 min-w-0 w-full items-center gap-3 rounded-full border bg-primary-gray-dark px-4 leading-none transition-colors"
-      :class="isFocused ? 'border-primary-white' : 'border-transparent'"
+      :class="isFocused ? 'border-primary-gray' : 'border-transparent'"
     >
       <input
         ref="inputEl"
@@ -111,9 +106,7 @@ function onFieldKeydown(event: KeyboardEvent) {
         @blur="isFocused = false"
         @keydown="onFieldKeydown"
       />
-      <div
-        class="shrink-0 text-primary-gray transition-colors group-focus-within:text-primary-white"
-      >
+      <div class="shrink-0 text-primary-white transition-colors">
         <PhMagnifyingGlass :size="20" weight="light" />
       </div>
     </div>
@@ -125,7 +118,7 @@ function onFieldKeydown(event: KeyboardEvent) {
         ref="panelEl"
         data-menu-floating-panel
         :style="floatingStyles"
-        class="z-60 overflow-y-auto rounded-xl border border-primary-gray-dark bg-primary-black p-1 text-sm text-primary-white backdrop-blur-sm"
+        class="z-60 overflow-y-auto rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white"
         @mousedown.prevent
       >
         <SearchSuggestPanel

@@ -47,7 +47,7 @@ const iconBoxStyle = computed(() => ({
     class="size-full object-cover"
     @error="failed = true"
   />
-  <div v-else class="flex size-full items-center justify-center">
+  <div v-else class="flex size-full items-center justify-center bg-primary-gray-dark">
     <div class="text-primary-white" :style="iconBoxStyle">
       <component
         :is="props.icon"

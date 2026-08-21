@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * AppPlayerDesktop — мини-плеер для lg+ (h-16), как в SoundCloud:
- * transport | meta | progress на всю ширину + время | volume (hover) + expand.
+ * AppPlayerDesktop — мини-плеер для lg+ (h-16).
+ * Chrome: полоса gray-dark; play white; остальные ghost (читаются на gray-dark).
  */
 const playerStore = usePlayerStore();
 
@@ -70,12 +70,10 @@ function onSeekCommit(event: Event) {
 </script>
 
 <template>
-  <div class="relative hidden h-16 w-full shrink-0 bg-primary-black lg:block">
-    <!-- Как HeaderLayout: max-w-5xl + px-8, бордер на полоске контента -->
+  <div class="relative hidden h-16 w-full shrink-0 bg-primary-gray-dark lg:block">
+    <!-- Как HeaderLayout: max-w-5xl + px-8 -->
     <div class="mx-auto h-full w-full max-w-5xl px-8">
-      <div
-        class="flex h-full w-full items-center gap-5 border-t border-primary-gray-dark"
-      >
+      <div class="flex h-full w-full items-center gap-5">
         <!-- Transport: слева -->
         <div class="flex shrink-0 items-center gap-2">
           <UiButton
@@ -103,7 +101,7 @@ function onSeekCommit(event: Event) {
         <!-- Meta: обложка + название -->
         <div class="flex max-w-56 min-w-0 shrink-0 items-center gap-3">
           <div
-            class="size-10 shrink-0 overflow-hidden rounded-md bg-primary-gray-dark"
+            class="size-10 shrink-0 overflow-hidden rounded-md bg-primary-black"
           >
             <UiCoverImage
               :src="track?.album.coverSrc"
@@ -125,7 +123,7 @@ function onSeekCommit(event: Event) {
               <NuxtLink
                 v-if="artistTo"
                 :to="artistTo"
-                class="hover:text-accent hover:underline"
+                class="hover:underline"
               >
                 {{ artistLabel }}
               </NuxtLink>
@@ -139,7 +137,7 @@ function onSeekCommit(event: Event) {
           class="progress-panel group relative flex h-3 min-w-0 flex-1 items-center"
         >
           <div
-            class="pointer-events-none absolute bottom-full mb-1 -translate-x-1/2 rounded-md bg-primary-gray-dark px-2 py-1 text-xs leading-none text-primary-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
+            class="pointer-events-none absolute bottom-full mb-1 -translate-x-1/2 rounded-md bg-primary-black px-2 py-1 text-xs leading-none text-primary-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
             :style="{ left: `${playerStore.progressRatio * 100}%` }"
           >
             {{ currentTimeLabel }}
@@ -176,7 +174,7 @@ function onSeekCommit(event: Event) {
               class="pointer-events-none absolute bottom-full left-1/2 z-10 flex -translate-x-1/2 flex-col items-center pb-3 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 motion-reduce:transition-none"
             >
               <div
-                class="volume-panel flex items-center justify-center rounded-full border border-primary-gray-dark bg-primary-black p-2"
+                class="volume-panel flex items-center justify-center rounded-full border border-primary-gray-dark bg-primary-gray-dark p-2"
               >
                 <input
                   v-model.number="volumePct"
@@ -184,7 +182,7 @@ function onSeekCommit(event: Event) {
                   min="0"
                   max="100"
                   step="1"
-                  class="volume-slider h-28 w-2 cursor-pointer appearance-none"
+                  class="volume-slider h-28 w-3 cursor-pointer appearance-none"
                   :style="{ '--volume-pct': `${volumePct}%` }"
                 />
               </div>
@@ -215,12 +213,13 @@ function onSeekCommit(event: Event) {
 /*
   Высота input = размер бегунка → кружок по центру.
   Тонкий трек — через background-size.
+  На gray-dark трек — black, fill — white; бегунок только на hover.
 */
 .progress-slider {
   height: 0.75rem;
   border-radius: 9999px;
-  --progress-fill: var(--color-primary-gray);
-  --progress-track: var(--color-primary-gray-dark);
+  --progress-fill: var(--color-primary-white);
+  --progress-track: var(--color-primary-black);
   background: linear-gradient(
     to right,
     var(--progress-fill) 0%,
@@ -231,10 +230,6 @@ function onSeekCommit(event: Event) {
   background-size: 100% 0.25rem;
   background-position: center;
   background-repeat: no-repeat;
-}
-
-.progress-panel:hover .progress-slider {
-  --progress-fill: var(--color-primary-white);
 }
 
 .progress-slider::-webkit-slider-runnable-track {
@@ -274,15 +269,15 @@ function onSeekCommit(event: Event) {
 }
 
 /*
-  Вертикальный range громкости.
+  Вертикальный range громкости — как прогресс: white fill, black track, бегунок на hover.
   --volume-pct — уровень снизу вверх.
 */
 .volume-slider {
   writing-mode: vertical-lr;
   direction: rtl;
   border-radius: 9999px;
-  --volume-fill: var(--color-primary-gray-light);
-  --volume-track: var(--color-primary-gray);
+  --volume-fill: var(--color-primary-white);
+  --volume-track: var(--color-primary-black);
   background: linear-gradient(
     to top,
     var(--volume-fill) 0%,
@@ -290,10 +285,9 @@ function onSeekCommit(event: Event) {
     var(--volume-track) var(--volume-pct),
     var(--volume-track) 100%
   );
-}
-
-.volume-panel:hover .volume-slider {
-  --volume-fill: var(--color-primary-white);
+  background-size: 0.25rem 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .volume-slider::-webkit-slider-runnable-track {
@@ -304,7 +298,7 @@ function onSeekCommit(event: Event) {
 }
 
 .volume-slider::-moz-range-track {
-  width: 100%;
+  width: 0.25rem;
   height: 100%;
   border: none;
   background: transparent;
@@ -312,28 +306,25 @@ function onSeekCommit(event: Event) {
 
 .volume-slider::-webkit-slider-thumb {
   appearance: none;
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.75rem;
+  height: 0.75rem;
   border-radius: 9999px;
-  background-color: var(--volume-fill);
+  background-color: transparent;
 }
 
 .volume-panel:hover .volume-slider::-webkit-slider-thumb {
-  width: 0.75rem;
-  height: 0.75rem;
-  margin-left: -0.125rem;
-}
-
-.volume-slider::-moz-range-thumb {
-  width: 0.5rem;
-  height: 0.5rem;
-  border: none;
-  border-radius: 9999px;
   background-color: var(--volume-fill);
 }
 
-.volume-panel:hover .volume-slider::-moz-range-thumb {
+.volume-slider::-moz-range-thumb {
   width: 0.75rem;
   height: 0.75rem;
+  border: none;
+  border-radius: 9999px;
+  background-color: transparent;
+}
+
+.volume-panel:hover .volume-slider::-moz-range-thumb {
+  background-color: var(--volume-fill);
 }
 </style>

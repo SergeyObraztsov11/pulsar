@@ -68,7 +68,7 @@ const menuItems = computed<MenuItem[]>(() => {
       />
 
       <div
-        class="flex shrink-0 items-center gap-1"
+        class="flex shrink-0 items-center gap-3"
         :class="showHeaderSearch ? 'ml-auto lg:ml-0' : 'ml-auto'"
       >
         <UiButton variant="gray" icon="Bell" aria-label="Notifications" />
@@ -81,7 +81,6 @@ const menuItems = computed<MenuItem[]>(() => {
               :aria-label="user?.name ?? 'Profile'"
               :aria-expanded="menuOpen"
             >
-  
               <UiCoverImage
                 :src="user?.avatarSrc"
                 :icon="PhUser"

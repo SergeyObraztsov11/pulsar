@@ -35,7 +35,7 @@ function onFieldKeydown(event: KeyboardEvent) {
     <!-- Крупное поле страницы -->
     <div
       class="group box-border flex h-14 min-w-0 w-full items-center gap-4 rounded-full border bg-primary-gray-dark px-5 leading-none transition-colors"
-      :class="isFocused ? 'border-primary-white' : 'border-transparent'"
+      :class="isFocused ? 'border-primary-gray' : 'border-transparent'"
     >
       <input
         ref="inputEl"
@@ -49,9 +49,7 @@ function onFieldKeydown(event: KeyboardEvent) {
         @blur="isFocused = false"
         @keydown="onFieldKeydown"
       />
-      <div
-        class="shrink-0 text-primary-gray transition-colors group-focus-within:text-primary-white"
-      >
+      <div class="shrink-0 text-primary-white transition-colors">
         <PhMagnifyingGlass :size="28" weight="light" />
       </div>
     </div>

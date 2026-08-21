@@ -15,6 +15,7 @@ import {
   PhHeart,
   PhPause,
   PhPlay,
+  PhQueue,
   PhSidebar,
   PhSidebarSimple,
   PhSkipBack,
@@ -23,6 +24,7 @@ import {
   PhSpeakerLow,
   PhSpeakerNone,
   PhSpeakerSimpleX,
+  PhTextAlignLeft,
   PhUploadSimple,
   PhX,
 } from "@phosphor-icons/vue";
@@ -38,6 +40,7 @@ const ICONS = {
   Heart: PhHeart,
   Pause: PhPause,
   Play: PhPlay,
+  Queue: PhQueue,
   Sidebar: PhSidebar,
   SidebarSimple: PhSidebarSimple,
   SkipBack: PhSkipBack,
@@ -46,6 +49,7 @@ const ICONS = {
   SpeakerLow: PhSpeakerLow,
   SpeakerNone: PhSpeakerNone,
   SpeakerSimpleX: PhSpeakerSimpleX,
+  TextAlignLeft: PhTextAlignLeft,
   UploadSimple: PhUploadSimple,
   X: PhX,
 } as const;

@@ -83,13 +83,13 @@ html {
 
 /* Выделение текста */
 ::selection {
-  background-color: var(--color-accent-3); 
-  color: var(--color-primary-black);
+  background-color: color-mix(in srgb, var(--color-primary-white) 50%, transparent);
+  color: var(--color-primary-white);
 }
 
 ::-moz-selection {
-  background-color: var(--color-accent-3 );
-  color: var(--color-primary-black);
+  background-color: color-mix(in srgb, var(--color-primary-white) 50%, transparent);
+  color: var(--color-primary-white);
 }
 
 /* Переходы между страницами (NuxtPage name: "page") */

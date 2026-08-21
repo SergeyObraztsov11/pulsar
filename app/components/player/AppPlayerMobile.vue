@@ -16,7 +16,7 @@ function toggleLike() {
 
 <template>
   <div
-    class="relative mx-4 flex h-20 items-center gap-4 rounded-2xl border border-primary-gray-dark bg-primary-black p-3 lg:hidden"
+    class="relative mx-4 flex h-20 items-center gap-4 rounded-2xl border border-primary-gray-dark bg-primary-gray-dark p-3 lg:hidden"
   >
     <div
       class="size-14 shrink-0 overflow-hidden rounded-md bg-primary-gray-dark"

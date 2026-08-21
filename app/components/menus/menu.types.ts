@@ -26,6 +26,6 @@ export type MenuItem = {
 /** Id служебного пункта «Назад» в MenuSheet */
 export const MENU_SHEET_BACK_ID = "__back";
 
-/** Классы панели floating (корень + flyout) */
+/** Классы панели floating (корень + flyout) — как suggest поиска */
 export const MENU_FLOATING_PANEL_CLASS =
-  "z-60 w-max rounded-xl border border-primary-gray-dark bg-primary-black/90 p-1 text-sm text-primary-white backdrop-blur-sm";
+  "z-60 w-max rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white";
