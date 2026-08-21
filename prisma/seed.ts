@@ -97,6 +97,7 @@ async function main() {
   const passwordHash = await new Hash(new Scrypt({})).make("password");
 
   // Сначала чистим (порядок важен из‑за связей)
+  await prisma.artistLink.deleteMany();
   await prisma.artistLike.deleteMany();
   await prisma.albumLike.deleteMany();
   await prisma.trackLike.deleteMany();

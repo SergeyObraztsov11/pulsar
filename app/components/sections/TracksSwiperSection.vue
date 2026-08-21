@@ -8,6 +8,8 @@ import type { Swiper as SwiperInstance } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import type { Track } from "~/types/track";
+import type { PlayerQueueSource } from "~/stores/player";
+import { playerQueueKey } from "~/composables/useTrackCard";
 
 const COLUMN_SIZE = 5;
 
@@ -25,6 +27,8 @@ const props = withDefaults(
     description?: string;
     /** Заголовок как ссылка */
     to?: string;
+    /** Контекст очереди для play с карточки */
+    queueSource?: PlayerQueueSource | null;
   }>(),
   {
     variant: "cover",
@@ -38,6 +42,15 @@ const isLoading = computed(() => props.items == null);
 const visibleItems = computed(() => {
   if (!props.items) return [];
   return props.limit != null ? props.items.slice(0, props.limit) : props.items;
+});
+
+/** В очередь — весь список секции, не только видимый limit */
+const queueTracks = computed(() => props.items ?? []);
+const queueSource = computed(() => props.queueSource ?? null);
+
+provide(playerQueueKey, {
+  tracks: queueTracks,
+  source: queueSource,
 });
 
 /** Колонки по COLUMN_SIZE треков */

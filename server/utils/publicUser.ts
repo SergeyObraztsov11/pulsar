@@ -6,4 +6,5 @@ export const publicUserSelect = {
   name: true,
   avatarSrc: true,
   bio: true,
+  country: true,
 } as const;

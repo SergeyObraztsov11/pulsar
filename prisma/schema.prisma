@@ -14,6 +14,8 @@ model User {
   name         String
   avatarSrc    String?
   bio          String?
+  /// Страна (публично, для профиля артиста)
+  country      String?
   birthDate    DateTime?
   gender       String?
   createdAt    DateTime  @default(now())
@@ -26,6 +28,33 @@ model User {
   albumLikes          AlbumLike[]
   artistLikesGiven    ArtistLike[] @relation("ArtistLikesGiven")
   artistLikesReceived ArtistLike[] @relation("ArtistLikesReceived")
+  artistLinks         ArtistLink[]
+}
+
+/// Тип внешней ссылки артиста (стриминг / соцсеть)
+enum ArtistLinkKind {
+  spotify
+  appleMusic
+  yandexMusic
+  instagram
+  telegram
+  youtube
+  tiktok
+  vk
+}
+
+/// Внешняя ссылка в профиле артиста
+model ArtistLink {
+  id        String         @id @default(cuid())
+  userId    String
+  kind      ArtistLinkKind
+  href      String
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sortOrder])
 }
 
 /// Код сброса пароля
