@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
   >
     <button
       type="button"
-      class="flex w-full items-center gap-2 rounded-lg p-2 text-left leading-none text-primary-white transition-colors hover:bg-primary-gray/25"
+      class="flex w-full min-w-48 items-center gap-2 rounded-lg p-2 text-left leading-none text-primary-white transition-colors hover:bg-primary-gray/25"
       :class="submenuOpen ? 'bg-primary-gray/25' : null"
       @click="onSelect"
     >
@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
         @mouseenter="openSubmenu"
         @mouseleave="scheduleCloseSubmenu"
       >
-        <div class="flex flex-col">
+        <div class="flex max-h-64 flex-col overflow-y-auto">
           <MenuFloatingItem
             v-for="child in props.item.children"
             :key="child.id"

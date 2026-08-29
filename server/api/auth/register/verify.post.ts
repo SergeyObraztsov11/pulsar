@@ -1,5 +1,7 @@
+import { createLikedPlaylistForUser } from "../../../utils/likedPlaylist";
+
 /**
- * POST /api/auth/register/verify — проверка кода, пользователь и сессия.
+ * POST /api/auth/register/verify — verify code, create user and session.
  * Body: { email, code }
  */
 export default defineEventHandler(async (event) => {
@@ -75,6 +77,7 @@ export default defineEventHandler(async (event) => {
         bio: true,
       },
     });
+    await createLikedPlaylistForUser(tx, created.id);
     await tx.registerOtp.delete({ where: { email } });
     return created;
   });

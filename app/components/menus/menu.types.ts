@@ -13,7 +13,7 @@ export type MenuItem = {
   icon?: Component;
   /** Вес иконки */
   iconWeight?: "light" | "fill";
-  /** Доп. классы иконки (например accent при like) */
+  /** Доп. классы иконки (например white при like) */
   iconClass?: string;
   /** Доп. классы текста */
   labelClass?: string;
@@ -21,11 +21,13 @@ export type MenuItem = {
   children?: MenuItem[];
   /** Колбэк по клику на лист (без children) */
   onClick?: () => void;
+  /** Не закрывать меню после onClick (toggle в подменю) */
+  keepOpen?: boolean;
 };
 
 /** Id служебного пункта «Назад» в MenuSheet */
 export const MENU_SHEET_BACK_ID = "__back";
 
-/** Классы панели floating (корень + flyout) — как suggest поиска */
+/** Классы панели floating (корень + flyout) — как suggest поиска; выше модалок (z-100) */
 export const MENU_FLOATING_PANEL_CLASS =
-  "z-60 w-max rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white";
+  "z-110 w-max rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white";

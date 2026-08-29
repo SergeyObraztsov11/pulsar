@@ -2,10 +2,10 @@ import type { Track } from "~/types/track";
 
 /** Откуда собрали очередь; id только у сущности */
 export type PlayerQueueSource =
-  | { type: "album"; id: string }
-  | { type: "artist"; id: string }
-  | { type: "playlist"; id: string }
-  | { type: "likes" };
+  | { type: "album"; id: string; title?: string }
+  | { type: "artist"; id: string; title?: string }
+  | { type: "playlist"; id: string; title?: string }
+  | { type: "likes"; title?: string };
 
 export function isSameQueueSource(
   a: PlayerQueueSource | null | undefined,
@@ -14,6 +14,20 @@ export function isSameQueueSource(
   if (!a || !b || a.type !== b.type) return false;
   if (a.type === "likes") return true;
   return a.id === b.id;
+}
+
+/** Подпись «откуда играет» над текущим треком в очереди */
+export function queueSourceKindLabel(source: PlayerQueueSource): string {
+  switch (source.type) {
+    case "album":
+      return "Сейчас играет из альбома";
+    case "artist":
+      return "Сейчас играет из популярных треков исполнителя";
+    case "playlist":
+      return "Сейчас играет из плейлиста";
+    case "likes":
+      return "Сейчас играет из лайкнутых";
+  }
 }
 
 export const usePlayerStore = defineStore("player", () => {
@@ -149,6 +163,15 @@ export const usePlayerStore = defineStore("player", () => {
     currentTime.value = Math.min(max, Math.max(0, value));
   }
 
+  /** Обновить isLiked в снимке очереди после лайка из плеера */
+  function patchTrackLike(trackId: string, isLiked: boolean) {
+    const index = queue.value.findIndex((track) => track.id === trackId);
+    if (index < 0) return;
+    const track = queue.value[index];
+    if (!track || track.isLiked === isLiked) return;
+    queue.value[index] = { ...track, isLiked };
+  }
+
   return {
     showPlayer,
     isExpanded,
@@ -180,5 +203,6 @@ export const usePlayerStore = defineStore("player", () => {
     seekAt,
     isScrubbing,
     setDuration,
+    patchTrackLike,
   };
 });

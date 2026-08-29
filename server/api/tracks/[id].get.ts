@@ -1,7 +1,9 @@
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
+import { serializeTrackRow } from "../../utils/playlistDetail";
 
 /**
- * GET /api/tracks/:id — трек, артист, альбом, жанры и isLiked.
+ * GET /api/tracks/:id — track, artist, album, genres, isLiked
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -11,36 +13,29 @@ export default defineEventHandler(async (event) => {
 
   const userId = getAuthUserId(event);
 
-  const track = await prisma.track.findUnique({
-    where: { id },
-    include: {
-      artist: { select: publicUserSelect },
-      album: {
-        select: {
-          id: true,
-          name: true,
-          coverSrc: true,
-          coverColor: true,
-          artist: { select: publicUserSelect },
+  const [track, likedTrackIds] = await Promise.all([
+    prisma.track.findUnique({
+      where: { id },
+      include: {
+        artist: { select: publicUserSelect },
+        album: {
+          select: {
+            id: true,
+            name: true,
+            coverSrc: true,
+            coverColor: true,
+            artist: { select: publicUserSelect },
+          },
         },
+        genres: { include: { genre: true } },
       },
-      genres: { include: { genre: true } },
-      likes: {
-        where: { userId: userId ?? "" },
-        take: 1,
-        select: { userId: true },
-      },
-    },
-  });
+    }),
+    getLikedTrackIdSet(userId),
+  ]);
 
   if (!track) {
     throw createError({ statusCode: 404, statusMessage: "Track not found" });
   }
 
-  const { genres, likes, ...rest } = track;
-  return {
-    ...rest,
-    genres: genres.map((row) => row.genre),
-    isLiked: likes.length > 0,
-  };
+  return serializeTrackRow(track, likedTrackIds);
 });

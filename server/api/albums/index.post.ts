@@ -13,6 +13,7 @@ import {
   serializeAlbumDetail,
 } from "../../utils/albumDetail";
 import { durationSecFromAudio } from "../../utils/durationSecFromAudio";
+import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 import { processAlbumCover } from "../../utils/processCover";
 
 const COVER_MAX_BYTES = 10 * 1024 * 1024;
@@ -56,7 +57,11 @@ export default defineEventHandler(async (event) => {
   const form = await readAlbumForm(event);
 
   const album = await prisma.album.create({
-    data: { name: form.name, artistId },
+    data: {
+      name: form.name,
+      artistId,
+      isExplicit: form.tracks.some((track) => track.isExplicit),
+    },
   });
 
   await saveCoverAndTracks(album.id, artistId, form);
@@ -65,7 +70,8 @@ export default defineEventHandler(async (event) => {
     where: { id: album.id },
     include: albumDetailInclude(artistId),
   });
-  return serializeAlbumDetail(created);
+  const likedTrackIds = await getLikedTrackIdSet(artistId);
+  return serializeAlbumDetail(created, likedTrackIds);
 });
 
 /** Сессия есть, пользователь должен быть в БД (после seed сессия может протухнуть) */

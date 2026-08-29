@@ -1,11 +1,14 @@
 /**
  * Доступ к страницам по сессии.
+ * При каждом переходе — fetch сессии с сервера (/api/_auth/session).
  * Гость: /, /login, /register, /forgot-password, /logout.
  * Залогиненный с /, /login, /register, /forgot-password → /home.
  * /onboarding — только после входа (скелет выбора вкусов).
  */
-export default defineNuxtRouteMiddleware((to) => {
-  const { loggedIn } = useUserSession();
+export default defineNuxtRouteMiddleware(async (to) => {
+  const { loggedIn, fetch: fetchSession } = useUserSession();
+  await fetchSession();
+
   const path = to.path;
 
   const publicPaths = new Set([

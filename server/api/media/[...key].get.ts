@@ -41,7 +41,10 @@ export default defineEventHandler(async (event) => {
 
   setResponseHeaders(event, {
     "content-type": object.ContentType ?? contentTypeByKey(key),
-    "cache-control": "public, max-age=3600",
+    // Аватары часто перезаписывают тот же ключ — коротко кэшируем + ETag
+    "cache-control": key.startsWith("avatars/")
+      ? "public, max-age=0, must-revalidate"
+      : "public, max-age=3600",
     "accept-ranges": "bytes",
   });
   if (object.ETag) {

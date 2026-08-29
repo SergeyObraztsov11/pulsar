@@ -135,7 +135,7 @@ defineExpose({ focus });
       :class="
         props.invalid
           ? 'border-danger'
-          : 'border-transparent focus:border-primary-white'
+          : 'border-primary-gray'
       "
       @input="onInput(index, $event)"
       @keydown="onKeydown(index, $event)"

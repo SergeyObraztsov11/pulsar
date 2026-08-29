@@ -7,10 +7,11 @@ const playerStore = usePlayerStore();
 
 /** Иконка громкости по mute / уровню */
 const volumeIcon = computed(() => {
-  if (playerStore.isVolumeMuted) return "SpeakerSimpleX" as const;
-  if (playerStore.volume >= 0.5) return "SpeakerHigh" as const;
-  if (playerStore.volume >= 0.25) return "SpeakerLow" as const;
-  return "SpeakerNone" as const;
+  if (playerStore.isVolumeMuted || playerStore.volume === 0) {
+    return "SpeakerSimpleX" as const;
+  }
+  if (playerStore.volume > 0.5) return "SpeakerHigh" as const;
+  return "SpeakerLow" as const;
 });
 
 /** mm:ss из секунд */
@@ -34,9 +35,7 @@ const volumePct = computed({
 const track = computed(() => playerStore.current);
 
 const nameLabel = computed(() => track.value?.name ?? "Трек");
-const artistLabel = computed(
-  () => track.value?.artist?.name ?? "Исполнитель",
-);
+const artistLabel = computed(() => track.value?.artist?.name ?? "Исполнитель");
 
 const trackTo = computed(() => {
   const value = track.value;
@@ -49,6 +48,11 @@ const trackTo = computed(() => {
 const artistTo = computed(() => {
   const artistId = track.value?.artist?.id;
   return artistId ? `/user/${artistId}` : undefined;
+});
+
+const trackId = computed(() => playerStore.current?.id);
+const { isLiked, pending, toggleLike } = useLike("track", trackId, {
+  initial: computed(() => playerStore.current?.isLiked),
 });
 
 /** Секунды с input[type=range] */
@@ -70,7 +74,9 @@ function onSeekCommit(event: Event) {
 </script>
 
 <template>
-  <div class="relative hidden h-16 w-full shrink-0 bg-primary-gray-dark lg:block">
+  <div
+    class="relative hidden h-16 w-full shrink-0 bg-primary-gray-dark lg:block"
+  >
     <!-- Как HeaderLayout: max-w-5xl + px-8 -->
     <div class="mx-auto h-full w-full max-w-5xl px-8">
       <div class="flex h-full w-full items-center gap-5">
@@ -109,22 +115,14 @@ function onSeekCommit(event: Event) {
             />
           </div>
           <div class="min-w-0 leading-tight">
-            <p class="truncate text-sm font-medium text-primary-white">
-              <NuxtLink
-                v-if="trackTo"
-                :to="trackTo"
-                class="hover:underline"
-              >
+            <p class="truncate text-base font-medium text-primary-white">
+              <NuxtLink v-if="trackTo" :to="trackTo" class="hover:underline">
                 {{ nameLabel }}
               </NuxtLink>
               <span v-else>{{ nameLabel }}</span>
             </p>
-            <p class="truncate text-xs text-primary-gray">
-              <NuxtLink
-                v-if="artistTo"
-                :to="artistTo"
-                class="hover:underline"
-              >
+            <p class="truncate text-sm text-primary-gray">
+              <NuxtLink v-if="artistTo" :to="artistTo" class="hover:underline">
                 {{ artistLabel }}
               </NuxtLink>
               <span v-else>{{ artistLabel }}</span>
@@ -165,6 +163,14 @@ function onSeekCommit(event: Event) {
 
         <!-- Громкость (hover) + раскрытие -->
         <div class="flex shrink-0 items-center gap-1">
+          <UiButton
+            variant="ghost"
+            icon="Heart"
+            :filled="isLiked"
+            :disabled="!track || pending"
+            :aria-label="isLiked ? 'Убрать из любимых' : 'В любимое'"
+            @click="toggleLike()"
+          />
           <div class="group relative flex items-center justify-center">
             <!--
               Панель громкости над кнопкой.

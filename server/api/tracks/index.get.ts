@@ -1,5 +1,10 @@
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import {
+  getLikedTrackIdSet,
+  getOrCreateLikedPlaylist,
+} from "../../utils/likedPlaylist";
+import { serializeTrackRow } from "../../utils/playlistDetail";
 
 const SORTS = ["newest", "oldest", "name", "likedAt"] as const;
 type TrackSort = (typeof SORTS)[number];
@@ -11,18 +16,18 @@ const albumCardSelect = {
   coverColor: true,
 } as const;
 
+const trackListInclude = {
+  artist: { select: publicUserSelect },
+  album: { select: albumCardSelect },
+  genres: { include: { genre: true } },
+} as const;
+
 /**
  * GET /api/tracks
  * Query:
- * - search — поиск по названию трека, артиста и альбома
- * - liked=true — только лайкнутые (нужна сессия)
- * - sort — newest | oldest | name | likedAt (likedAt нужен auth)
- *
- * Примеры:
- *   GET /api/tracks
- *   GET /api/tracks?search=night
- *   GET /api/tracks?sort=name
- *   GET /api/tracks?liked=true&sort=likedAt
+ * - search — track / artist / album name
+ * - liked=true — tracks from system playlist «Любимые» (auth)
+ * - sort — newest | oldest | name | likedAt (likedAt needs auth)
  */
 export default defineEventHandler(async (event) => {
   const userId = getAuthUserId(event);
@@ -45,10 +50,6 @@ export default defineEventHandler(async (event) => {
 
   const trackWhere: Prisma.TrackWhereInput = {};
 
-  if (liked && userId) {
-    trackWhere.likes = { some: { userId } };
-  }
-
   if (search) {
     trackWhere.OR = [
       { name: { contains: search, mode: "insensitive" } },
@@ -57,34 +58,42 @@ export default defineEventHandler(async (event) => {
     ];
   }
 
-  if (sort === "likedAt" && userId) {
-    const rows = await prisma.trackLike.findMany({
+  const likedTrackIds = await getLikedTrackIdSet(userId);
+
+  if (liked && userId) {
+    const playlist = await getOrCreateLikedPlaylist(userId);
+
+    const rows = await prisma.playlistTrack.findMany({
       where: {
-        userId,
-        ...(Object.keys(trackWhere).length > 0
-          ? { track: trackWhere }
-          : {}),
+        playlistId: playlist.id,
+        ...(Object.keys(trackWhere).length > 0 ? { track: trackWhere } : {}),
       },
-      orderBy: { createdAt: "desc" },
-      include: {
-        track: {
-          include: {
-            artist: { select: publicUserSelect },
-            album: { select: albumCardSelect },
-            genres: { include: { genre: true } },
-          },
-        },
-      },
+      orderBy: { addedAt: "desc" },
+      include: { track: { include: trackListInclude } },
     });
 
-    return rows.map(({ track }) => {
-      const { genres, ...rest } = track;
-      return {
-        ...rest,
-        genres: genres.map((row) => row.genre),
-        isLiked: true,
-      };
+    return rows.map(({ track }) => ({
+      ...serializeTrackRow(track, likedTrackIds),
+      isLiked: true,
+    }));
+  }
+
+  if (sort === "likedAt" && userId) {
+    const playlist = await getOrCreateLikedPlaylist(userId);
+
+    const rows = await prisma.playlistTrack.findMany({
+      where: {
+        playlistId: playlist.id,
+        ...(Object.keys(trackWhere).length > 0 ? { track: trackWhere } : {}),
+      },
+      orderBy: { addedAt: "desc" },
+      include: { track: { include: trackListInclude } },
     });
+
+    return rows.map(({ track }) => ({
+      ...serializeTrackRow(track, likedTrackIds),
+      isLiked: true,
+    }));
   }
 
   const orderBy: Prisma.TrackOrderByWithRelationInput =
@@ -96,22 +105,9 @@ export default defineEventHandler(async (event) => {
 
   const tracks = await prisma.track.findMany({
     where: trackWhere,
-    include: {
-      artist: { select: publicUserSelect },
-      album: { select: albumCardSelect },
-      genres: { include: { genre: true } },
-      likes: {
-        where: { userId: userId ?? "" },
-        take: 1,
-        select: { userId: true },
-      },
-    },
+    include: trackListInclude,
     orderBy,
   });
 
-  return tracks.map(({ genres, likes, ...track }) => ({
-    ...track,
-    genres: genres.map((row) => row.genre),
-    isLiked: likes.length > 0,
-  }));
+  return tracks.map((track) => serializeTrackRow(track, likedTrackIds));
 });

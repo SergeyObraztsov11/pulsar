@@ -35,7 +35,7 @@ const inSubmenu = computed(() => stack.value.length > 0);
 /** Служебный пункт «Назад» */
 const backItem = computed<MenuItem>(() => ({
   id: MENU_SHEET_BACK_ID,
-  label: "Back",
+  label: "Назад",
   icon: PhCaretLeft,
 }));
 
@@ -90,7 +90,7 @@ function onSelect(item: MenuItem) {
     return;
   }
   item.onClick?.();
-  requestClose();
+  if (!item.keepOpen) requestClose();
 }
 </script>
 

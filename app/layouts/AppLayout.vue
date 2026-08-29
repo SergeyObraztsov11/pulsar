@@ -25,7 +25,7 @@ const showMiniPlayer = computed(
       >
         <AuthHeader />
 
-        <div class="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 py-8">
+        <div class="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-4 pb-8">
           <slot />
           <AppFooter />
         </div>
@@ -44,6 +44,7 @@ const showMiniPlayer = computed(
     <AppNavbarMobile />
 
     <AppPlayerExpandedDesktop />
+    <AppPlayerExpandedMobile />
   </div>
 </template>
 

@@ -100,7 +100,6 @@ async function main() {
   await prisma.artistLink.deleteMany();
   await prisma.artistLike.deleteMany();
   await prisma.albumLike.deleteMany();
-  await prisma.trackLike.deleteMany();
   await prisma.playlistTrack.deleteMany();
   await prisma.trackGenre.deleteMany();
   await prisma.albumGenre.deleteMany();
@@ -168,13 +167,13 @@ async function main() {
 
   await prisma.playlist.createMany({
     data: [
-      {
-        id: "likes-mix",
-        userId: "platina",
-        name: "Мне нравится",
-        coverSrc: playlistCoverKey("likes-mix"),
+      ...users.map((user) => ({
+        id: `liked-${user.id}`,
+        userId: user.id,
+        name: "Любимые",
         isPublic: false,
-      },
+        systemKind: "liked_tracks" as const,
+      })),
       {
         id: "evening",
         userId: "volna",
@@ -187,20 +186,13 @@ async function main() {
 
   await prisma.playlistTrack.createMany({
     data: [
-      { playlistId: "likes-mix", trackId: "track-1", position: 1 },
-      { playlistId: "likes-mix", trackId: "track-8", position: 2 },
-      { playlistId: "likes-mix", trackId: "track-3", position: 3 },
-      { playlistId: "evening", trackId: "track-6", position: 1 },
-      { playlistId: "evening", trackId: "track-7", position: 2 },
-      { playlistId: "evening", trackId: "track-9", position: 3 },
-    ],
-  });
-
-  await prisma.trackLike.createMany({
-    data: [
-      { userId: "platina", trackId: "track-1" },
-      { userId: "platina", trackId: "track-8" },
-      { userId: "volna", trackId: "track-6" },
+      { playlistId: "liked-platina", trackId: "track-1", position: 0 },
+      { playlistId: "liked-platina", trackId: "track-8", position: 1 },
+      { playlistId: "liked-platina", trackId: "track-3", position: 2 },
+      { playlistId: "liked-volna", trackId: "track-6", position: 0 },
+      { playlistId: "evening", trackId: "track-6", position: 0 },
+      { playlistId: "evening", trackId: "track-7", position: 1 },
+      { playlistId: "evening", trackId: "track-9", position: 2 },
     ],
   });
 

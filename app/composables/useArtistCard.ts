@@ -22,14 +22,12 @@ export function useArtistCard(
     return id ? `/user/${id}` : "/";
   });
 
-  const isLiked = ref(false);
-  watch(
-    () => artistValue.value?.isLiked,
-    (value) => {
-      if (value != null) isLiked.value = value;
-    },
-    { immediate: true },
-  );
+  const artistId = computed(() => artistValue.value?.id);
+  const { isLiked, toggleLike } = useLike("artist", artistId, {
+    initial: computed(() => artistValue.value?.isLiked),
+    disabled: computed(() => !interactive.value),
+  });
+
   const moreOpen = ref(false);
   const isPlaying = ref(false);
 
@@ -42,11 +40,6 @@ export function useArtistCard(
     if (!interactive.value) return;
     isPlaying.value = !isPlaying.value;
     playerStore.isPlaying = isPlaying.value;
-  }
-
-  function toggleLike() {
-    if (!interactive.value) return;
-    isLiked.value = !isLiked.value;
   }
 
   function goToArtist() {

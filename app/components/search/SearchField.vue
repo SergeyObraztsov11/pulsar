@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * SearchField — поиск в шапке: поле + панель подсказок (Teleport + Floating UI).
+ * SearchField — компактный underline-поиск в шапке (у логотипа) + suggest.
  */
 import {
   autoUpdate,
@@ -38,7 +38,7 @@ const searchPageTo = computed(() => ({
 }));
 
 const { floatingStyles } = useFloating(fieldEl, panelEl, {
-  placement: "bottom",
+  placement: "bottom-start",
   strategy: "fixed",
   whileElementsMounted: autoUpdate,
   middleware: [
@@ -48,7 +48,8 @@ const { floatingStyles } = useFloating(fieldEl, panelEl, {
     size({
       apply({ rects, elements, availableHeight }) {
         Object.assign(elements.floating.style, {
-          width: `${rects.reference.width}px`,
+          /* Поле узкое — панель не уже 18rem */
+          width: `${Math.max(rects.reference.width, 288)}px`,
           maxHeight: `${Math.max(120, availableHeight - 8)}px`,
         });
       },
@@ -87,28 +88,30 @@ function onFieldKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="relative min-w-0 w-full">
-    <!-- Поле -->
+  <div class="relative w-44 shrink-0 sm:w-52">
+    <!-- Underline-строка: белый chrome -->
     <div
       ref="fieldEl"
-      class="group box-border flex h-10 min-w-0 w-full items-center gap-3 rounded-full border bg-primary-gray-dark px-4 leading-none transition-colors"
-      :class="isFocused ? 'border-primary-gray' : 'border-transparent'"
+      class="group box-border flex h-10 min-w-0 w-full items-center gap-2 border-b border-primary-white px-1 leading-none transition-opacity"
+      :class="isFocused ? 'opacity-100' : 'opacity-80'"
     >
+      <PhMagnifyingGlass
+        :size="18"
+        weight="light"
+        class="shrink-0 text-primary-white"
+      />
       <input
         ref="inputEl"
         v-model="query"
         type="text"
         name="search"
         autocomplete="off"
-        placeholder="Поиск по артистам, альбомам, трекам"
-        class="h-full min-w-0 flex-1 bg-transparent text-center text-base leading-none text-primary-white outline-none placeholder:text-primary-gray"
+        placeholder="Поиск…"
+        class="h-full min-w-0 flex-1 bg-transparent text-left text-sm leading-none text-primary-white outline-none placeholder:text-primary-white/50"
         @focus="isFocused = true"
         @blur="isFocused = false"
         @keydown="onFieldKeydown"
       />
-      <div class="shrink-0 text-primary-white transition-colors">
-        <PhMagnifyingGlass :size="20" weight="light" />
-      </div>
     </div>
 
     <!-- Подсказки поверх страницы -->

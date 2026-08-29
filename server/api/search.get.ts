@@ -1,8 +1,9 @@
 /**
- * GET /api/search — подсказки для строки поиска.
- * Query: q — строка; по 4 трека, альбома и артиста.
+ * GET /api/search — suggest tracks, albums, artists (4 each)
  */
 import { getAuthUserId } from "../utils/getAuthUserId";
+import { getLikedTrackIdSet } from "../utils/likedPlaylist";
+import { serializeTrackRow } from "../utils/playlistDetail";
 
 const TAKE = 4;
 
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const likeUserId = userId ?? "";
 
-  const [trackRows, albumRows, artistRows] = await Promise.all([
+  const [trackRows, albumRows, artistRows, likedTrackIds] = await Promise.all([
     prisma.track.findMany({
       where: {
         OR: [
@@ -37,11 +38,6 @@ export default defineEventHandler(async (event) => {
         artist: { select: publicUserSelect },
         album: { select: albumCardSelect },
         genres: { include: { genre: true } },
-        likes: {
-          where: { userId: likeUserId },
-          take: 1,
-          select: { userId: true },
-        },
       },
       orderBy: { createdAt: "desc" },
       take: TAKE,
@@ -78,14 +74,11 @@ export default defineEventHandler(async (event) => {
       orderBy: { name: "asc" },
       take: TAKE,
     }),
+    getLikedTrackIdSet(userId),
   ]);
 
   return {
-    tracks: trackRows.map(({ genres, likes, ...track }) => ({
-      ...track,
-      genres: genres.map((row) => row.genre),
-      isLiked: likes.length > 0,
-    })),
+    tracks: trackRows.map((track) => serializeTrackRow(track, likedTrackIds)),
     albums: albumRows.map(({ genres, likes, ...album }) => ({
       ...album,
       genres: genres.map((row) => row.genre),

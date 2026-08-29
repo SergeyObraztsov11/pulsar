@@ -171,7 +171,7 @@ async function onSubmit() {
       Альбом создан:
       <NuxtLink
         :to="albumPath(createdAlbum)"
-        class="hover:text-accent"
+        class="hover:text-primary-gray"
       >
         {{ createdAlbum.name }}
       </NuxtLink>

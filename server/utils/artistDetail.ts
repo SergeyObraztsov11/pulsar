@@ -1,5 +1,5 @@
 /**
- * Общий вид артиста для GET /api/artists/:id.
+ * Shared artist detail shape for GET /api/artists/:id.
  */
 import type { PublicUser } from "../../app/types/publicUser";
 
@@ -18,7 +18,7 @@ export function artistLikeFilter(userId: string | null) {
   } as const;
 }
 
-/** include / select для детального артиста */
+/** select / include for artist detail */
 export function artistDetailQuery(userId: string | null) {
   const likes = artistLikeFilter(userId);
   return {
@@ -42,7 +42,6 @@ export function artistDetailQuery(userId: string | null) {
           artist: { select: publicUserSelect },
           album: { select: albumCardSelect },
           genres: { include: { genre: true } },
-          likes,
         },
       },
     },
@@ -62,14 +61,17 @@ type ArtistDetailRow = {
     likes: { userId: string }[];
   }[];
   tracks: {
+    id: string;
     durationSec: number;
     genres: { genre: { id: string; name: string; slug: string } }[];
-    likes: { userId: string }[];
   }[];
 };
 
-/** Prisma-строка → ответ API */
-export function serializeArtistDetail<T extends ArtistDetailRow>(artist: T) {
+/** Prisma row → API; track isLiked from liked playlist ids */
+export function serializeArtistDetail<T extends ArtistDetailRow>(
+  artist: T,
+  likedTrackIds: Set<string>,
+) {
   const { artistLikesReceived, artistLinks, albums, tracks, ...rest } = artist;
   const publicArtist: PublicUser = {
     id: rest.id,
@@ -83,7 +85,6 @@ export function serializeArtistDetail<T extends ArtistDetailRow>(artist: T) {
     ...rest,
     country: rest.country ?? "Россия",
     isLiked: artistLikesReceived.length > 0,
-    /** Пока нет аналитики — 0 → в UI «Нет слушателей» */
     listenersCount: 0,
     links: artistLinks.map(({ kind, href }) => ({ kind, href })),
     albumCount: albums.length,
@@ -95,10 +96,6 @@ export function serializeArtistDetail<T extends ArtistDetailRow>(artist: T) {
       genres: genres.map((row) => row.genre),
       isLiked: likes.length > 0,
     })),
-    tracks: tracks.map(({ genres, likes, ...track }) => ({
-      ...track,
-      genres: genres.map((row) => row.genre),
-      isLiked: likes.length > 0,
-    })),
+    tracks: tracks.map((track) => serializeTrackRow(track, likedTrackIds)),
   };
 }

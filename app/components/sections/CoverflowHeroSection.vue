@@ -71,7 +71,7 @@ const autoplay = computed(() => {
     <div class="flex min-w-0 flex-1 flex-col items-center gap-6">
       <div class="relative w-full">
         <div
-          class="absolute top-1/2 left-1/2 size-64 rounded-full bg-accent/20 blur-3xl animate-glow-breathe motion-reduce:animate-none lg:size-72"
+          class="absolute top-1/2 left-1/2 size-64 rounded-full bg-primary-white/15 blur-3xl animate-glow-breathe motion-reduce:animate-none lg:size-72"
         />
 
         <!-- Скелетоны: центр + два крыла -->

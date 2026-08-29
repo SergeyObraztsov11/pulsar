@@ -13,17 +13,21 @@ import {
   PhCaretRight,
   PhCaretUp,
   PhCamera,
+  PhChartBar,
   PhDotsThree,
   PhHeart,
   PhInstagramLogo,
+  PhLink,
   PhMusicNotes,
   PhPause,
   PhPencilSimple,
   PhPlay,
   PhQueue,
   PhShareNetwork,
+  PhShieldCheck,
   PhSidebar,
   PhSidebarSimple,
+  PhSignOut,
   PhSkipBack,
   PhSkipForward,
   PhSpeakerHigh,
@@ -35,6 +39,7 @@ import {
   PhTextAlignLeft,
   PhTiktokLogo,
   PhUploadSimple,
+  PhUser,
   PhX,
   PhYoutubeLogo,
 } from "@phosphor-icons/vue";
@@ -48,17 +53,21 @@ const ICONS = {
   CaretRight: PhCaretRight,
   CaretUp: PhCaretUp,
   Camera: PhCamera,
+  ChartBar: PhChartBar,
   DotsThree: PhDotsThree,
   Heart: PhHeart,
   InstagramLogo: PhInstagramLogo,
+  Link: PhLink,
   MusicNotes: PhMusicNotes,
   Pause: PhPause,
   PencilSimple: PhPencilSimple,
   Play: PhPlay,
   Queue: PhQueue,
   ShareNetwork: PhShareNetwork,
+  ShieldCheck: PhShieldCheck,
   Sidebar: PhSidebar,
   SidebarSimple: PhSidebarSimple,
+  SignOut: PhSignOut,
   SkipBack: PhSkipBack,
   SkipForward: PhSkipForward,
   SpeakerHigh: PhSpeakerHigh,
@@ -70,6 +79,7 @@ const ICONS = {
   TextAlignLeft: PhTextAlignLeft,
   TiktokLogo: PhTiktokLogo,
   UploadSimple: PhUploadSimple,
+  User: PhUser,
   X: PhX,
   YoutubeLogo: PhYoutubeLogo,
 } as const;
@@ -89,12 +99,15 @@ const props = withDefaults(
     href?: string;
     /** target для href (по умолчанию _blank для внешних) */
     target?: string;
+    /** Выравнивание содержимого; start — на всю ширину (меню) */
+    align?: "center" | "start";
   }>(),
   {
     variant: "white",
     type: "button",
     filled: false,
     disabled: false,
+    align: "center",
   },
 );
 
@@ -132,11 +145,16 @@ const VARIANT_CLASS = {
 
 const rootClass = computed(() => {
   const shape = isIconOnly.value ? "size-10" : "min-w-10 px-4";
+  const align =
+    props.align === "start"
+      ? "w-full justify-start"
+      : "justify-center";
 
   return [
-    "inline-flex shrink-0 box-border h-10 items-center justify-center gap-2 leading-none rounded-full border transition-[color,background-color,border-color] duration-200",
+    "inline-flex shrink-0 box-border h-10 items-center gap-2 leading-none rounded-full border transition-[color,background-color,border-color] duration-200",
     isLoading.value ? "" : "disabled:pointer-events-none disabled:opacity-40",
     shape,
+    align,
     VARIANT_CLASS[props.variant],
   ].join(" ");
 });
@@ -157,7 +175,7 @@ const rootClass = computed(() => {
       :size="20"
       :weight="props.filled ? 'fill' : 'light'"
     />
-    <span v-if="props.text" class="text-medium">{{ props.text }}</span>
+    <span v-if="props.text" class="text-sm font-medium">{{ props.text }}</span>
   </a>
 
   <button
@@ -182,7 +200,7 @@ const rootClass = computed(() => {
         :size="20"
         :weight="props.filled ? 'fill' : 'light'"
       />
-      <span v-if="props.text" class="text-medium">{{ props.text }}</span>
+      <span v-if="props.text" class="text-sm font-medium">{{ props.text }}</span>
     </template>
   </button>
 </template>

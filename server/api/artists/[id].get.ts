@@ -3,9 +3,10 @@ import {
   artistDetailQuery,
   serializeArtistDetail,
 } from "../../utils/artistDetail";
+import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 
 /**
- * GET /api/artists/:id — профиль артиста, альбомы, треки и isLiked.
+ * GET /api/artists/:id
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -18,14 +19,17 @@ export default defineEventHandler(async (event) => {
 
   const userId = getAuthUserId(event);
 
-  const artist = await prisma.user.findUnique({
-    where: { id },
-    ...artistDetailQuery(userId),
-  });
+  const [artist, likedTrackIds] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id },
+      ...artistDetailQuery(userId),
+    }),
+    getLikedTrackIdSet(userId),
+  ]);
 
   if (!artist) {
     throw createError({ statusCode: 404, statusMessage: "Artist not found" });
   }
 
-  return serializeArtistDetail(artist);
+  return serializeArtistDetail(artist, likedTrackIds);
 });

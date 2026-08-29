@@ -56,7 +56,7 @@ function toggle() {
 function onSelect(item: MenuItem) {
   if (item.children?.length) return;
   item.onClick?.();
-  open.value = false;
+  if (!item.keepOpen) open.value = false;
 }
 </script>
 

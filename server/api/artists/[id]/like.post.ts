@@ -1,7 +1,7 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
 
 /**
- * POST /api/artists/:id/like — лайкнуть артиста (не себя).
+ * POST /api/artists/:id/like
  */
 export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
@@ -10,13 +10,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: "Artist id is required",
-    });
-  }
-
-  if (userId === id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Cannot like yourself",
     });
   }
 

@@ -49,8 +49,7 @@ defineExpose({ focus });
   <!-- Text field -->
   <div class="relative w-full">
     <div
-      class="flex h-10 w-full box-border items-center rounded-full border bg-primary-gray-dark px-4 leading-none text-primary-white transition-colors"
-      :class="isFloating ? 'border-primary-white' : 'border-transparent'"
+      class="flex h-10 w-full box-border items-center rounded-full border border-primary-gray bg-primary-gray-dark px-4 leading-none text-primary-white transition-colors"
     >
       <input
         ref="inputEl"

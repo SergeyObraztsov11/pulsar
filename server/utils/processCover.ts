@@ -1,6 +1,7 @@
 import sharp from "sharp";
 
 const COVER_SIZE = 800;
+const AVATAR_SIZE = 512;
 /** Ниже этого L на чёрном фоне пятно не видно */
 const MIN_LIGHTNESS = 0.35;
 
@@ -22,6 +23,25 @@ export async function processAlbumCover(input: Buffer) {
     throw createError({
       statusCode: 400,
       statusMessage: "cover must be an image",
+    });
+  }
+}
+
+/**
+ * Аватар: квадрат JPEG 512×512 (cover), EXIF-поворот.
+ * Ключ в бакете — avatars/{userId}.jpg.
+ */
+export async function processUserAvatar(input: Buffer) {
+  try {
+    return await sharp(input)
+      .rotate()
+      .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: "cover" })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+  } catch {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "avatar must be an image",
     });
   }
 }

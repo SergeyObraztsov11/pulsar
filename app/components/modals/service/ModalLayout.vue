@@ -22,10 +22,25 @@ const panel = ref<HTMLElement | null>(null);
 /** false до mount → enter; false при закрытии → leave, затем emit */
 const show = ref(false);
 
+/** Игнор outside-click после file dialog (клик по оверлею при закрытии ОС-диалога) */
+let ignoreOutsideUntil = 0;
+
 onMounted(() => {
   requestAnimationFrame(() => {
     show.value = true;
   });
+
+  // Делегат: клик по file input → не закрывать модалку после ОС-диалога
+  panel.value?.addEventListener(
+    "click",
+    (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.('input[type="file"]')) {
+        ignoreOutsideUntil = Date.now() + 1200;
+      }
+    },
+    true,
+  );
 });
 
 function requestClose() {
@@ -37,9 +52,14 @@ function onAfterLeave() {
   emit("close");
 }
 
-onClickOutside(panel, () => {
-  requestClose();
-});
+onClickOutside(
+  panel,
+  () => {
+    if (Date.now() < ignoreOutsideUntil) return;
+    requestClose();
+  },
+  { ignore: ["[data-menu-floating-panel]"] },
+);
 
 defineExpose({ requestClose });
 </script>

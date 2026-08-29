@@ -4,7 +4,6 @@
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from "vue";
 import type { Track } from "~/types/track";
 import type { PlayerQueueSource } from "~/stores/player";
-import { useMediaQuery } from "@vueuse/core";
 
 /** Колонка отдаёт полный список + источник очереди */
 export const playerQueueKey: InjectionKey<{
@@ -19,23 +18,19 @@ export function useTrackCard(
   const playerStore = usePlayerStore();
   const injectedQueue = inject(playerQueueKey, null);
 
-  /** Tailwind lg — which layout hosts TrackMoreMenu (desktop vs mobile row) */
-  const isLgUp = useMediaQuery("(min-width: 1024px)");
-
   const interactive = computed(() => toValue(options.interactive) ?? true);
   const trackValue = computed(() => toValue(track));
 
   const isCurrent = computed(
     () => playerStore.current?.id === trackValue.value?.id,
   );
-  const isLiked = ref(false);
-  watch(
-    () => trackValue.value?.isLiked,
-    (value) => {
-      if (value != null) isLiked.value = value;
-    },
-    { immediate: true },
-  );
+
+  const trackId = computed(() => trackValue.value?.id);
+  const { isLiked, toggleLike } = useLike("track", trackId, {
+    initial: computed(() => trackValue.value?.isLiked),
+    disabled: computed(() => !interactive.value),
+  });
+
   const moreOpen = ref(false);
   const isHovered = ref(false);
 
@@ -71,7 +66,15 @@ export function useTrackCard(
     return artistId ? `/user/${artistId}` : "/";
   });
 
-  const showCoverOverlay = computed(
+    const albumTo = computed(() => {
+      const value = trackValue.value;
+      const artistId = value?.artist?.id;
+      const albumId = value?.album?.id;
+      if (!artistId || !albumId) return "/";
+      return `/user/${artistId}/album/${albumId}`;
+    });
+
+    const showCoverOverlay = computed(
     () => isHovered.value || isCurrent.value,
   );
 
@@ -90,15 +93,9 @@ export function useTrackCard(
     );
   }
 
-  function toggleLike() {
-    if (!interactive.value) return;
-    isLiked.value = !isLiked.value;
-  }
-
   return {
     interactive,
     track: trackValue,
-    isLgUp,
     isCurrent,
     isLiked,
     isHovered,
@@ -110,6 +107,8 @@ export function useTrackCard(
     coverSrc,
     trackTo,
     artistTo,
+    albumTo,
+    trackId,
     showCoverOverlay,
     onPlayClick,
     toggleLike,

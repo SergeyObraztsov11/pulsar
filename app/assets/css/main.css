@@ -8,25 +8,20 @@
 @theme {
   --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
 
-  /* Grayscale: white / black + gray by strength (light → dark) */
+  /*
+   * Grayscale: чистые нейтрали (тёплый undertone убрали — было кофейно).
+   * Архив исходная: white #fff · gray-light #b3b3b3 · gray #6a6a6a ·
+   * gray-dark #141414 · black #0a0a0a
+   * Accent удалён (был #5a60e0 / #6b73ff + accent-1…4).
+   */
   --color-primary-white: #ffffff;
   --color-primary-gray-light: #b3b3b3;
   --color-primary-gray: #6a6a6a;
-  --color-primary-gray-dark: #141414;
-  --color-primary-black: #0a0a0a;
-
-  /* Accent - главный цвет */
-  --color-accent: #5a60e0;
+  --color-primary-gray-dark: #1a1a1a;
+  --color-primary-black: #111111;
 
   /* Ошибки форм */
-  --color-danger: #e85d5d;
-
-  /* Accent - дополнительные цвета для атмосферы в порядке от светлого к тёмному*/
-  --color-accent-1: #d4d6fa;
-  --color-accent-2: #5a60e0;
-  --color-accent-3: #1a1f8d;
-  --color-accent-4: #06071d;
-
+  --color-danger: #f25f5f;
 
   /* Именованные анимации для утилит animate-* */
   --animate-fade-up: fade-up 0.55s ease-out both;

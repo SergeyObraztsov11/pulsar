@@ -1,7 +1,7 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
 
 /**
- * POST /api/albums/:id/like — лайкнуть альбом.
+ * POST /api/albums/:id/like
  */
 export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);

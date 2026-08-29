@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * AppNavbarMobile — нижняя навигация (h-16).
- * Активный пункт — white + fill; в покое — gray + light.
+ * AppNavbarMobile — нижняя навигация (h-14).
+ * Активный пункт — white; в покое — gray.
  */
 import {
   PhHouse,
@@ -26,7 +26,7 @@ function isNavActive(path: string) {
 
 <template>
   <!-- Mobile navbar -->
-  <nav class="grid h-16 grid-cols-4 items-center px-2 lg:hidden">
+  <nav class="grid h-14 grid-cols-4 items-center px-2 lg:hidden">
     <NuxtLink
       v-for="item in navItems"
       :key="item.to"
@@ -34,7 +34,7 @@ function isNavActive(path: string) {
       class="flex flex-col items-center justify-center gap-1"
       :class="isNavActive(item.to) ? 'text-primary-white' : 'text-primary-gray'"
     >
-      <component :is="item.icon" :size="28" weight="light" />
+      <component :is="item.icon" :size="24" weight="light" />
     </NuxtLink>
   </nav>
 </template>

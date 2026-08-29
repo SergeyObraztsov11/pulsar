@@ -3,10 +3,10 @@ import {
   albumDetailInclude,
   serializeAlbumDetail,
 } from "../../utils/albumDetail";
+import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 
 /**
- * GET /api/albums/:id — альбом целиком: артист, жанры, счётчик лайков,
- * isLiked и треки в том же виде, что в GET /api/tracks.
+ * GET /api/albums/:id
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -16,14 +16,17 @@ export default defineEventHandler(async (event) => {
 
   const userId = getAuthUserId(event);
 
-  const album = await prisma.album.findUnique({
-    where: { id },
-    include: albumDetailInclude(userId),
-  });
+  const [album, likedTrackIds] = await Promise.all([
+    prisma.album.findUnique({
+      where: { id },
+      include: albumDetailInclude(userId),
+    }),
+    getLikedTrackIdSet(userId),
+  ]);
 
   if (!album) {
     throw createError({ statusCode: 404, statusMessage: "Album not found" });
   }
 
-  return serializeAlbumDetail(album);
+  return serializeAlbumDetail(album, likedTrackIds);
 });

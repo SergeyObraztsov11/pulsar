@@ -24,7 +24,6 @@ model User {
   albums              Album[]
   tracks              Track[]
   playlists           Playlist[]
-  trackLikes          TrackLike[]
   albumLikes          AlbumLike[]
   artistLikesGiven    ArtistLike[] @relation("ArtistLikesGiven")
   artistLikesReceived ArtistLike[] @relation("ArtistLikesReceived")
@@ -41,6 +40,11 @@ enum ArtistLinkKind {
   youtube
   tiktok
   vk
+}
+
+/// Системный плейлист (null = обычный пользовательский)
+enum PlaylistSystemKind {
+  liked_tracks
 }
 
 /// Внешняя ссылка в профиле артиста
@@ -94,6 +98,8 @@ model Album {
   coverSrc    String?
   coverColor  String?
   releaseDate DateTime?
+  /** true, если хотя бы один трек explicit */
+  isExplicit  Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
   artist User         @relation(fields: [artistId], references: [id], onDelete: Cascade)
@@ -118,7 +124,6 @@ model Track {
   album          Album           @relation(fields: [albumId], references: [id], onDelete: Cascade)
   artist         User            @relation(fields: [artistId], references: [id], onDelete: Cascade)
   playlistTracks PlaylistTrack[]
-  likes          TrackLike[]
   genres         TrackGenre[]
 
   @@unique([albumId, trackNumber])
@@ -127,42 +132,33 @@ model Track {
 }
 
 model Playlist {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  coverSrc  String?
-  isPublic  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id         String              @id @default(cuid())
+  userId     String
+  name       String
+  coverSrc   String?
+  isPublic   Boolean             @default(false)
+  systemKind PlaylistSystemKind?
+  createdAt  DateTime            @default(now())
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   tracks PlaylistTrack[]
 
   @@index([userId])
+  @@index([userId, systemKind])
 }
 
 model PlaylistTrack {
   playlistId String
   trackId    String
   position   Int
+  addedAt    DateTime @default(now())
 
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
   @@id([playlistId, trackId])
   @@unique([playlistId, position])
-}
-
-model TrackLike {
-  userId    String
-  trackId   String
-  createdAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
-
-  @@id([userId, trackId])
-  @@index([userId, createdAt])
-  @@index([trackId])
+  @@index([playlistId, addedAt])
 }
 
 model AlbumLike {

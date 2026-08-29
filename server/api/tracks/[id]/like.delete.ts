@@ -1,7 +1,8 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
+import { removeFromLikedPlaylist } from "../../../utils/likedPlaylist";
 
 /**
- * DELETE /api/tracks/:id/like — убрать лайк трека.
+ * DELETE /api/tracks/:id/like — remove track from «Любимые»
  */
 export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
@@ -10,9 +11,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Track id is required" });
   }
 
-  await prisma.trackLike.deleteMany({
-    where: { userId, trackId: id },
-  });
+  await removeFromLikedPlaylist(userId, id);
 
   return { isLiked: false };
 });

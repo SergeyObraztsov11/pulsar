@@ -24,15 +24,10 @@ const artistTo = computed(() => {
   return artistId ? `/user/${artistId}` : undefined;
 });
 
-/** Лайк текущего трека (локально, как в карточках) */
-const isLiked = ref(false);
-watch(
-  () => track.value?.isLiked,
-  (value) => {
-    if (value != null) isLiked.value = value;
-  },
-  { immediate: true },
-);
+const trackId = computed(() => track.value?.id);
+const { isLiked, pending, toggleLike } = useLike("track", trackId, {
+  initial: computed(() => track.value?.isLiked),
+});
 
 /** mm:ss из секунд */
 function formatTime(totalSeconds: number) {
@@ -76,7 +71,7 @@ function onSeekCommit(event: Event) {
         <UiCoverImage :src="coverSrc" :alt="nameLabel" />
 
         <div
-          class="absolute inset-0 bg-primary-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 motion-reduce:opacity-100"
+          class="absolute inset-0 bg-primary-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 max-lg:opacity-100 motion-reduce:opacity-100"
         >
           <!-- Transport по центру -->
           <div class="absolute inset-0 flex items-center justify-center gap-6">
@@ -115,8 +110,9 @@ function onSeekCommit(event: Event) {
               variant="gray"
               icon="Heart"
               :filled="isLiked"
+              :disabled="!track || pending"
               :aria-label="isLiked ? 'Убрать из любимых' : 'В любимое'"
-              @click="isLiked = !isLiked"
+              @click="toggleLike()"
             />
 
             <UiButton
@@ -142,7 +138,7 @@ function onSeekCommit(event: Event) {
           </NuxtLink>
           <span v-else>{{ nameLabel }}</span>
         </p>
-        <p class="max-w-full truncate text-base text-primary-gray">
+        <p class="max-w-full truncate text-sm text-primary-gray">
           <NuxtLink
             v-if="artistTo"
             :to="artistTo"
@@ -175,7 +171,7 @@ function onSeekCommit(event: Event) {
           />
         </div>
         <div
-          class="flex justify-between text-xs leading-none text-primary-gray tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
+          class="flex justify-between text-xs leading-none text-primary-gray tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100 max-lg:opacity-100 motion-reduce:transition-none"
         >
           <span>{{ currentTimeLabel }}</span>
           <span>{{ durationLabel }}</span>

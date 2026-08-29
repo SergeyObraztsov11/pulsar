@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * AppPlayerExpandedDesktop — оболочка полноэкранного плеера.
+ * AppPlayerExpandedDesktop — оболочка полноэкранного плеера (lg+).
  * Режимы правой панели: player | queue | lyrics.
  */
 type SidePanel = "player" | "queue" | "lyrics";
@@ -67,19 +67,17 @@ watch(sidePanel, async (panel) => {
   <Transition name="player-expand">
     <div
       v-if="playerStore.showPlayer && playerStore.isExpanded"
-      class="absolute inset-0 z-50 flex flex-col overflow-hidden bg-primary-gray/25"
+      class="absolute inset-0 z-50 hidden flex-col overflow-hidden bg-primary-black lg:flex"
     >
-      <!-- Chrome: очередь | текст | свернуть (выше контента, иначе клики не доходят) -->
+      <!-- Chrome: очередь | текст | свернуть -->
       <div class="absolute top-6 right-6 z-20 flex items-center gap-2">
         <UiButton
-          class="hidden lg:inline-flex"
           :variant="sidePanel === 'queue' ? 'white' : 'gray'"
           icon="Queue"
           aria-label="Очередь"
           @click="toggleSidePanel('queue')"
         />
         <UiButton
-          class="hidden lg:inline-flex"
           :variant="sidePanel === 'lyrics' ? 'white' : 'gray'"
           icon="TextAlignLeft"
           aria-label="Текст"
@@ -117,25 +115,25 @@ watch(sidePanel, async (panel) => {
           :class="
             showSidePanel
               ? 'lg:opacity-100'
-              : 'lg:pointer-events-none lg:opacity-0'
+              : 'hidden lg:flex lg:pointer-events-none lg:opacity-0'
           "
         >
           <div
             class="flex w-full flex-col px-8 pb-16 lg:h-full lg:min-h-0 lg:w-[50vw] lg:min-w-[50vw] lg:flex-1 lg:px-12 lg:py-16 lg:pr-20"
           >
-            <div class="relative min-h-0 w-full flex-1">
+            <div class="relative min-h-0 w-full lg:flex-1">
               <div
-                class="pointer-events-none absolute inset-x-0 top-0 z-10 hidden h-16 bg-linear-to-b from-primary-gray-dark to-transparent transition-opacity duration-200 lg:block"
+                class="pointer-events-none absolute inset-x-0 top-0 z-10 hidden h-16 bg-linear-to-b from-primary-black to-transparent transition-opacity duration-200 lg:block"
                 :class="fadeTop ? 'opacity-100' : 'opacity-0'"
               />
               <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-16 bg-linear-to-t from-primary-gray-dark to-transparent transition-opacity duration-200 lg:block"
+                class="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-16 bg-linear-to-t from-primary-black to-transparent transition-opacity duration-200 lg:block"
                 :class="fadeBottom ? 'opacity-100' : 'opacity-0'"
               />
 
               <div
                 ref="sideScrollRef"
-                class="side-scroll relative h-full overflow-y-auto"
+                class="side-scroll relative lg:h-full lg:overflow-y-auto"
                 @scroll="updateSideFades"
               >
                 <!-- Crossfade queue ↔ lyrics -->

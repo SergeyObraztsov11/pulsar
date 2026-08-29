@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
- * AuthHeader — лого | (desktop: поиск) | колокол | аватар.
- * Mobile и desktop в одном хедере; меню профиля — MenuResponsive.
+ * AuthHeader — лого слева | ghost-nav (иконка+текст) + аватар справа.
  */
 import {
+  PhChartBar,
   PhGear,
   PhHeart,
+  PhHouse,
+  PhListHeart,
+  PhMagnifyingGlass,
   PhSignOut,
   PhUploadSimple,
   PhUser,
@@ -16,8 +19,22 @@ const route = useRoute();
 const { user } = useUserSession();
 const menuOpen = ref(false);
 
-/** На /search поле в шапке не дублируем — там своё крупное */
-const showHeaderSearch = computed(() => route.path !== "/search");
+type NavItem = {
+  to: string;
+  label: string;
+  icon?: typeof PhHouse;
+};
+
+const navItems: NavItem[] = [
+  { to: "/home", label: "Главная" },
+  { to: "/search", label: "Поиск", icon: PhMagnifyingGlass },
+  { to: "/likes", label: "Коллекция" },
+  { to: "/popular", label: "Популярное" },
+];
+
+function isNavActive(path: string) {
+  return route.path === path || route.path.startsWith(`${path}/`);
+}
 
 const menuItems = computed<MenuItem[]>(() => {
   const userId = user.value?.id;
@@ -58,26 +75,41 @@ const menuItems = computed<MenuItem[]>(() => {
 
 <template>
   <HeaderLayout>
-    <!-- Band: logo | search (lg+) | bell | avatar -->
-    <div class="flex h-full w-full items-center gap-3">
+    <div class="flex h-full w-full items-center justify-between gap-4">
       <AppLogo to="/home" />
 
-      <SearchField
-        v-if="showHeaderSearch"
-        class="hidden min-w-0 flex-1 lg:block"
-      />
-
-      <div
-        class="flex shrink-0 items-center gap-3"
-        :class="showHeaderSearch ? 'ml-auto lg:ml-0' : 'ml-auto'"
-      >
-        <UiButton variant="gray" icon="Bell" aria-label="Notifications" />
+      <div class="flex shrink-0 items-center gap-6">
+        <nav
+          class="hidden items-center gap-6 lg:flex"
+          aria-label="Основная навигация"
+        >
+          <NuxtLink
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            class="inline-flex items-center gap-2 rounded-full text-sm font-medium leading-none transition-colors text-primary-white hover:text-primary-white/50"
+            :class="
+              isNavActive(item.to)
+                ? 'underline underline-offset-4'
+                : ''
+            "
+          >
+            <component
+              v-if="item?.icon"
+              :is="item.icon"
+              :size="14"
+              weight="light"
+              class="shrink-0"
+            />
+            <span>{{ item.label }}</span>
+          </NuxtLink>
+        </nav>
 
         <MenuResponsive v-model:open="menuOpen" :items="menuItems">
           <template #trigger>
             <button
               type="button"
-              class="relative inline-flex size-10 shrink-0 overflow-hidden rounded-full bg-primary-gray-dark"
+              class="relative inline-flex size-10 shrink-0 overflow-hidden rounded-full ring-2 ring-primary-white"
               :aria-label="user?.name ?? 'Profile'"
               :aria-expanded="menuOpen"
             >

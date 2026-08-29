@@ -58,7 +58,7 @@ function onActionClick() {
       <slot v-if="$slots.visual" name="visual" />
       <div v-else class="relative w-full max-w-xs lg:max-w-sm">
         <div
-          class="absolute top-1/2 left-1/2 size-64 rounded-full bg-accent/20 blur-3xl animate-glow-breathe motion-reduce:animate-none lg:size-72"
+          class="absolute top-1/2 left-1/2 size-64 rounded-full bg-primary-white/15 blur-3xl animate-glow-breathe motion-reduce:animate-none lg:size-72"
         />
 
         <div

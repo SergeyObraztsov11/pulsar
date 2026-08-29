@@ -25,14 +25,11 @@ export function useAlbumCard(
   const interactive = computed(() => toValue(options.interactive) ?? true);
   const albumValue = computed(() => toValue(album));
 
-  const isLiked = ref(false);
-  watch(
-    () => albumValue.value?.isLiked,
-    (value) => {
-      if (value != null) isLiked.value = value;
-    },
-    { immediate: true },
-  );
+  const albumId = computed(() => albumValue.value?.id);
+  const { isLiked, toggleLike } = useLike("album", albumId, {
+    initial: computed(() => albumValue.value?.isLiked),
+    disabled: computed(() => !interactive.value),
+  });
 
   const moreOpen = ref(false);
   const playPending = ref(false);
@@ -80,15 +77,14 @@ export function useAlbumCard(
       const detail = await $fetch<AlbumDetail>(`/api/albums/${id}`);
       const first = detail.tracks.find((track) => Boolean(track.audioSrc));
       if (!first) return;
-      playerStore.play(first, detail.tracks, { type: "album", id });
+      playerStore.play(first, detail.tracks, {
+        type: "album",
+        id,
+        title: detail.name,
+      });
     } finally {
       playPending.value = false;
     }
-  }
-
-  function toggleLike() {
-    if (!interactive.value) return;
-    isLiked.value = !isLiked.value;
   }
 
   function openShare() {

@@ -38,8 +38,8 @@ const items = computed<MenuItem[]>(() => [
     label: props.isLiked ? "Unlike" : "Like",
     icon: PhHeart,
     iconWeight: props.isLiked ? "fill" : "light",
-    iconClass: props.isLiked ? "text-accent" : undefined,
-    labelClass: props.isLiked ? "text-accent" : undefined,
+    iconClass: props.isLiked ? "text-primary-white" : undefined,
+    labelClass: props.isLiked ? "text-primary-white" : undefined,
     onClick: () => emit("toggle-like"),
   },
   {

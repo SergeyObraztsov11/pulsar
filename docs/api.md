@@ -85,7 +85,29 @@ Query: `search` (трек / артист / альбом), `liked=true`, `sort=ne
 
 ### `POST /api/tracks/:id/like` · `DELETE /api/tracks/:id/like`
 
-Лайк трека. Ответ: `{ isLiked }`. Auth. `401` / `404`
+Добавить / убрать трек в системном плейлисте «Любимые». Ответ: `{ isLiked }`. Auth. `401` / `404`
+
+## Playlists
+
+### `GET /api/playlists`
+
+Плейлисты текущего user (включая «Любимые»). Auth. `401`
+
+### `POST /api/playlists`
+
+Body: `{ name, isPublic? }` — user playlist. Auth. `400` / `401`
+
+### `GET /api/playlists/:id`
+
+Meta + `tracks[]` (как `GET /api/tracks`). Владелец или `isPublic`. `403` / `404`
+
+### `PATCH /api/playlists/:id` · `DELETE /api/playlists/:id`
+
+Только user playlists; system «Любимые» нельзя. Auth. `400` / `403` / `404`
+
+### `POST /api/playlists/:id/tracks` · `DELETE /api/playlists/:id/tracks/:trackId`
+
+Body (POST): `{ trackId }`. Auth. `403` / `404`
 
 ## Artists
 
@@ -114,4 +136,4 @@ Query: `search` (имя), `liked=true`, `sort=newest|oldest|name|likedAt` (по 
 
 ## Планируется
 
-playlists · `artistId` / `genre` в tracks/albums · upload треков / CRUD
+`artistId` / `genre` в tracks/albums · upload треков / CRUD · scrobble

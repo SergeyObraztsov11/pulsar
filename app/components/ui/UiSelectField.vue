@@ -140,8 +140,7 @@ defineExpose({ focus });
     <button
       ref="triggerEl"
       type="button"
-      class="group flex h-10 w-full box-border items-center gap-3 rounded-full border bg-primary-gray-dark px-4 leading-none text-primary-white transition-colors"
-      :class="isFloating ? 'border-primary-white' : 'border-transparent'"
+      class="group flex h-10 w-full box-border items-center gap-3 rounded-full border border-primary-gray bg-primary-gray-dark px-4 leading-none text-primary-white outline-none transition-colors"
       :aria-expanded="open"
       aria-haspopup="listbox"
       :aria-label="props.placeholder || undefined"

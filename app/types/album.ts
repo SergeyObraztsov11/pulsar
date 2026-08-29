@@ -13,6 +13,8 @@ export type Album = {
   /** Dominant с обложки, `#rrggbb`; без обложки — null */
   coverColor: string | null;
   releaseDate: string | null;
+  /** Хотя бы один трек с isExplicit */
+  isExplicit: boolean;
   createdAt: string;
   artist: PublicUser;
   genres: Genre[];

@@ -1,7 +1,7 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
 
 /**
- * DELETE /api/artists/:id/like — убрать лайк артиста.
+ * DELETE /api/artists/:id/like
  */
 export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);

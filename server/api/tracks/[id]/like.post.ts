@@ -1,7 +1,8 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
+import { addToLikedPlaylist } from "../../../utils/likedPlaylist";
 
 /**
- * POST /api/tracks/:id/like — лайкнуть трек.
+ * POST /api/tracks/:id/like — add track to system playlist «Любимые»
  */
 export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
@@ -18,11 +19,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Track not found" });
   }
 
-  await prisma.trackLike.upsert({
-    where: { userId_trackId: { userId, trackId: id } },
-    create: { userId, trackId: id },
-    update: {},
-  });
+  await addToLikedPlaylist(userId, id);
 
   return { isLiked: true };
 });

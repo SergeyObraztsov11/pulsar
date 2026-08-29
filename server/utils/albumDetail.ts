@@ -1,5 +1,5 @@
 /**
- * Общий вид альбома для GET /api/albums/:id и POST /api/albums.
+ * Shared album detail shape for GET /api/albums/:id and POST /api/albums.
  */
 export function albumLikeFilter(userId: string | null) {
   return {
@@ -9,7 +9,7 @@ export function albumLikeFilter(userId: string | null) {
   } as const;
 }
 
-/** include для детального альбома */
+/** include for album detail */
 export function albumDetailInclude(userId: string | null) {
   const likes = albumLikeFilter(userId);
   return {
@@ -23,7 +23,6 @@ export function albumDetailInclude(userId: string | null) {
         artist: { select: publicUserSelect },
         album: { select: { id: true, name: true, coverSrc: true, coverColor: true } },
         genres: { include: { genre: true } },
-        likes,
       },
     },
   };
@@ -34,14 +33,17 @@ type AlbumDetailRow = {
   likes: { userId: string }[];
   _count: { likes: number; tracks: number };
   tracks: {
+    id: string;
     durationSec: number;
     genres: { genre: { id: string; name: string; slug: string } }[];
-    likes: { userId: string }[];
   }[];
 };
 
-/** Prisma-строка → ответ API */
-export function serializeAlbumDetail<T extends AlbumDetailRow>(album: T) {
+/** Prisma row → API; track isLiked from liked playlist ids */
+export function serializeAlbumDetail<T extends AlbumDetailRow>(
+  album: T,
+  likedTrackIds: Set<string>,
+) {
   const { genres, likes, tracks, _count, ...rest } = album;
   return {
     ...rest,
@@ -50,10 +52,8 @@ export function serializeAlbumDetail<T extends AlbumDetailRow>(album: T) {
     likesCount: _count.likes,
     trackCount: _count.tracks,
     totalDurationSec: tracks.reduce((sum, track) => sum + track.durationSec, 0),
-    tracks: tracks.map(({ genres: trackGenres, likes: trackLikes, ...track }) => ({
-      ...track,
-      genres: trackGenres.map((row) => row.genre),
-      isLiked: trackLikes.length > 0,
-    })),
+    tracks: tracks.map((track) =>
+      serializeTrackRow(track, likedTrackIds),
+    ),
   };
 }

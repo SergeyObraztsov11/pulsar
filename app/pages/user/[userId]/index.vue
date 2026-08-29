@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Артист — шапка в духе YouTube: имя, bio, слушатели, текстовые ссылки, кнопки.
+ * Артист — три блока: шапка, плашка владельца, основной контент.
  * Данные: GET /api/artists/:id.
  */
 import { PhEmpty, PhLink, PhUser } from "@phosphor-icons/vue";
@@ -19,7 +19,7 @@ const userId = computed(() => String(route.params.userId ?? ""));
 
 const { user } = useUserSession();
 
-/** Свой профиль — другой chrome (редактировать, без лайка) */
+/** Свой профиль — плашка владельца */
 const isOwnProfile = computed(
   () => Boolean(user.value?.id) && user.value?.id === userId.value,
 );
@@ -42,14 +42,10 @@ watch(
   { immediate: true },
 );
 
-// Лайк пока живёт на странице: свой стейт с начальным значением из API
-const isLiked = ref(artist.value?.isLiked ?? false);
-watch(
-  () => artist.value?.isLiked,
-  (value) => {
-    if (value != null) isLiked.value = value;
-  },
-);
+const artistIdForLike = computed(() => artist.value?.id);
+const { isLiked, toggleLike } = useLike("artist", artistIdForLike, {
+  initial: computed(() => artist.value?.isLiked),
+});
 
 const showAlbums = computed(
   () => artist.value == null || (artist.value.albums?.length ?? 0) > 0,
@@ -83,16 +79,6 @@ const canListen = computed(() =>
   Boolean(artist.value?.tracks?.some((track) => Boolean(track.audioSrc))),
 );
 
-/** Свой пустой профиль — «Редактировать» на месте «Слушать» */
-const showEditAsPrimary = computed(
-  () => isOwnProfile.value && showEmptyContent.value,
-);
-
-/** Свой профиль с контентом — «Редактировать» справа */
-const showEditOnRight = computed(
-  () => isOwnProfile.value && !showEmptyContent.value,
-);
-
 const playerStore = usePlayerStore();
 
 const isCurrentArtist = computed(() => {
@@ -110,7 +96,9 @@ function formatListenersCount(count: number): string {
   if (count >= 1_000_000) {
     const value = count / 1_000_000;
     const rounded =
-      value >= 10 ? String(Math.round(value)) : value.toFixed(1).replace(".", ",");
+      value >= 10
+        ? String(Math.round(value))
+        : value.toFixed(1).replace(".", ",");
     return `${rounded.replace(/,0$/, "")} млн`;
   }
   if (count >= 1_000) {
@@ -129,9 +117,7 @@ const bioPlaceholder = computed(() =>
 const hasBio = computed(() => Boolean(artist.value?.bio?.trim()));
 
 /** Есть ли ненулевые слушатели (для цвета подписи) */
-const hasListeners = computed(
-  () => (artist.value?.listenersCount ?? 0) > 0,
-);
+const hasListeners = computed(() => (artist.value?.listenersCount ?? 0) > 0);
 
 /** «Нет слушателей» / «1 слушатель» / … */
 const listenersLabel = computed(() => {
@@ -195,6 +181,7 @@ const { open: openModal } = useModal();
 
 /** Треки уже на странице — без второго запроса */
 function onListenClick() {
+  if (!canListen.value) return;
   const detail = artist.value;
   if (!detail) return;
   if (isCurrentArtist.value) {
@@ -203,7 +190,11 @@ function onListenClick() {
   }
   const first = detail.tracks.find((track) => Boolean(track.audioSrc));
   if (!first) return;
-  playerStore.play(first, detail.tracks, { type: "artist", id: detail.id });
+  playerStore.play(first, detail.tracks, {
+    type: "artist",
+    id: detail.id,
+    title: detail.name,
+  });
 }
 
 /** Модалка «О артисте» */
@@ -248,7 +239,7 @@ async function onShareClick() {
 </script>
 
 <template>
-  <div class="relative flex flex-col gap-10 lg:gap-16">
+  <div class="relative flex flex-col">
     <!-- Wash: серый (позже coverColor), blur сглаживает полосы -->
     <div
       class="pointer-events-none absolute -top-24 left-1/2 z-0 h-140 w-screen -translate-x-1/2 overflow-hidden lg:h-96"
@@ -260,9 +251,9 @@ async function onShareClick() {
       />
     </div>
 
-    <!-- Шапка: сверху имя, по центру info, снизу кнопки -->
-    <section
-      class="relative z-10 flex flex-col items-center gap-4 animate-fade-up motion-reduce:animate-none sm:gap-5 lg:h-64 lg:flex-row lg:items-stretch lg:gap-6"
+    <!-- 1. Шапка -->
+    <header
+      class="relative z-10 flex flex-col items-center gap-4 animate-fade-up motion-reduce:animate-none lg:flex-row lg:items-stretch lg:gap-6"
     >
       <div
         class="group relative size-36 shrink-0 overflow-hidden rounded-full bg-primary-gray-dark sm:size-52 lg:size-64"
@@ -273,7 +264,7 @@ async function onShareClick() {
           :alt="artist?.name"
         />
 
-        <!-- Свой профиль: hover → редактировать (как play на AlbumCard) -->
+        <!-- Свой профиль: hover → редактировать аватар -->
         <template v-if="isOwnProfile">
           <div
             class="pointer-events-none absolute inset-0 bg-primary-black/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 motion-reduce:transition-none"
@@ -294,26 +285,31 @@ async function onShareClick() {
       </div>
 
       <div
-        class="flex w-full min-w-0 max-w-sm flex-col items-center text-center sm:max-w-md lg:h-full lg:max-w-none lg:flex-1 lg:items-stretch lg:justify-between lg:text-left"
+        class="flex w-full min-w-0 max-w-sm flex-col items-center gap-3 text-center sm:max-w-md lg:min-h-64 lg:max-w-none lg:flex-1 lg:items-start lg:gap-3 lg:text-left"
       >
-        <!-- Сверху: имя -->
-        <h1
-          class="mb-5 max-w-full text-2xl font-bold wrap-break-word text-primary-white sm:mb-6 sm:text-4xl lg:truncate lg:text-5xl lg:break-normal"
-        >
-          {{ artist?.name }}
-        </h1>
-
-        <!-- По центру: bio, слушатели, ссылки -->
         <div
-          class="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2 lg:items-start"
+          class="flex w-full min-w-0 flex-col items-center gap-2 lg:flex-1 lg:items-start lg:justify-center lg:gap-3"
         >
+          <h1
+            class="max-w-full py-1 text-5xl font-bold leading-none wrap-break-word text-primary-white lg:truncate lg:break-normal"
+          >
+            {{ artist?.name }}
+          </h1>
           <p
-            class="line-clamp-3 max-w-prose text-sm sm:text-base"
-            :class="hasBio ? 'text-primary-white' : 'text-primary-gray'"
+            class="line-clamp-3 max-w-prose"
+            :class="
+              hasBio
+                ? 'text-base text-primary-white'
+                : 'text-sm text-primary-gray'
+            "
           >
             {{ hasBio ? artist?.bio : bioPlaceholder }}
           </p>
+        </div>
 
+        <div
+          class="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2 lg:items-start"
+        >
           <p
             v-if="listenersLabel"
             class="text-sm"
@@ -372,89 +368,102 @@ async function onShareClick() {
           </div>
         </div>
 
-        <!-- Снизу: play/more/share; свой пустой — edit primary; свой с контентом — edit справа -->
+        <!-- Кнопки всегда на месте; на своём профиле лайк / пустой listen — disabled -->
         <div
-          class="mt-5 flex w-full flex-row flex-wrap items-center justify-center gap-2 sm:mt-6 sm:gap-3 lg:justify-between"
+          class="flex w-full flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 lg:justify-start"
         >
-          <div class="flex flex-row items-center gap-2 sm:gap-3">
-            <UiButton
-              v-if="canListen"
-              :icon="isPlayingArtist ? 'Pause' : 'Play'"
-              filled
-              variant="white"
-              text="Слушать"
-              @click="onListenClick"
-            />
-            <UiButton
-              v-else-if="showEditAsPrimary"
-              icon="PencilSimple"
-              variant="gray"
-              text="Редактировать"
-              href="/settings"
-              target="_self"
-            />
-            <UiButton
-              v-if="!isOwnProfile"
-              variant="gray"
-              icon="Heart"
-              :filled="isLiked"
-              @click="isLiked = !isLiked"
-            />
-            <UiButton
-              variant="gray"
-              icon="DotsThree"
-              aria-label="Ещё"
-              @click="onMoreClick"
-            />
-            <UiButton
-              variant="gray"
-              icon="ShareNetwork"
-              aria-label="Поделиться"
-              @click="onShareClick"
-            />
-          </div>
-
           <UiButton
-            v-if="showEditOnRight"
-            icon="PencilSimple"
+            :icon="isPlayingArtist ? 'Pause' : 'Play'"
+            filled
+            variant="white"
+            :text="isPlayingArtist ? 'Пауза' : 'Слушать'"
+            :disabled="!canListen"
+            @click="onListenClick"
+          />
+          <UiButton
             variant="gray"
-            text="Редактировать"
-            href="/settings"
-            target="_self"
+            icon="Heart"
+            :filled="isLiked"
+            @click="toggleLike"
+          />
+          <UiButton
+            variant="gray"
+            icon="DotsThree"
+            aria-label="Ещё"
+            @click="onMoreClick"
+          />
+          <UiButton
+            variant="gray"
+            icon="ShareNetwork"
+            aria-label="Поделиться"
+            @click="onShareClick"
           />
         </div>
       </div>
-    </section>
+    </header>
 
-    <div
-      v-if="showEmptyContent"
-      class="flex flex-col items-center justify-center gap-3 py-20 text-center text-primary-gray sm:py-28"
+    <!-- 2. Плашка владельца -->
+    <!-- <aside
+      v-if="isOwnProfile"
+      class="relative z-10 mt-6 flex w-full flex-row items-center justify-between gap-3 bg-primary-gray-dark p-2"
+      aria-label="Управление профилем"
     >
-      <PhEmpty :size="48" weight="light" class="shrink-0" />
-      <p class="text-xl font-bold sm:text-2xl">
-        {{ emptyContentTitle }}
+      <p
+        class="min-w-0 truncate px-2  leading-none text-primary-gray"
+      >
+        Вы смотрите свой профиль
       </p>
-      <p class="max-w-sm text-sm sm:text-base">
-        {{ emptyContentDescription }}
-      </p>
-    </div>
+      <div class="flex shrink-0 flex-row items-center gap-1">
+        <UiButton
+          variant="ghost"
+          text="Редактировать"
+          type="button"
+          href="/settings"
+          target="_self"
+        />
+        <UiButton variant="ghost" text="Статистика" type="button" disabled />
+      </div>
+    </aside> -->
 
-    <template v-else>
-      <TracksSwiperSection
-        v-if="showTracks"
-        title="Треки"
-        variant="cover"
-        :items="artist?.tracks ?? null"
-        :limit="artist?.tracks.length ?? 20"
-        :queue-source="artist?.id ? { type: 'artist', id: artist.id } : null"
-      />
+    <!-- 3. Основной контент -->
+    <main
+      class="relative z-10 flex flex-col gap-10 lg:gap-16"
+      :class="isOwnProfile ? 'mt-6' : 'mt-10 lg:mt-16'"
+    >
+      <div
+        v-if="showEmptyContent"
+        class="flex flex-col items-center justify-center gap-3 py-20 text-center text-primary-gray sm:py-28"
+      >
+        <PhEmpty :size="48" weight="light" class="shrink-0" />
+        <p class="text-2xl font-bold text-primary-white">
+          {{ emptyContentTitle }}
+        </p>
+        <p class="max-w-sm text-sm text-primary-gray">
+          {{ emptyContentDescription }}
+        </p>
+      </div>
 
-      <AlbumsSwiperSection
-        v-if="showAlbums"
-        title="Альбомы"
-        :items="artist?.albums ?? null"
-        :limit="8"
-      />
-    </template>
+      <template v-else>
+        <TracksSwiperSection
+          v-if="showTracks"
+          title="Треки"
+          variant="cover"
+          :items="artist?.tracks ?? null"
+          :limit="artist?.tracks.length ?? 20"
+          :queue-source="
+            artist?.id
+              ? { type: 'artist', id: artist.id, title: artist.name }
+              : null
+          "
+        />
+
+        <AlbumsSwiperSection
+          v-if="showAlbums"
+          title="Альбомы"
+          :items="artist?.albums ?? null"
+          :limit="8"
+        />
+      </template>
+    </main>
   </div>
 </template>

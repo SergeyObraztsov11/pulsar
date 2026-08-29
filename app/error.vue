@@ -46,7 +46,7 @@ function goHome() {
       >
         <!-- Animation: glow breathe behind code -->
         <div
-          class="pointer-events-none absolute top-1/2 left-1/2 size-80 rounded-full bg-accent/35 blur-3xl animate-glow-breathe motion-reduce:animate-none"
+          class="pointer-events-none absolute top-1/2 left-1/2 size-80 rounded-full bg-primary-white/20 blur-3xl animate-glow-breathe motion-reduce:animate-none"
           aria-hidden="true"
         />
         <p

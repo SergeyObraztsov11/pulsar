@@ -99,15 +99,18 @@ const {
     </template>
 
     <template #meta>
-      <NuxtLink
-        :to="albumTo"
-        class="truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
-      >
-        {{ nameLabel }}
-      </NuxtLink>
+      <div class="flex min-w-0 items-center gap-1">
+        <NuxtLink
+          :to="albumTo"
+          class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        >
+          {{ nameLabel }}
+        </NuxtLink>
+        <UiExplicitIcon />
+      </div>
       <NuxtLink
         :to="artistTo"
-        class="truncate text-sm text-primary-gray transition-colors duration-300 hover:underline"
+        class="truncate text-sm text-primary-gray transition-colors duration-300 hover:text-primary-white"
       >
         {{ artistLabel }}
       </NuxtLink>
@@ -124,15 +127,18 @@ const {
     </template>
 
     <template #meta>
-      <NuxtLink
-        :to="albumTo"
-        class="truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
-      >
-        {{ nameLabel }}
-      </NuxtLink>
+      <div class="flex min-w-0 items-center gap-1">
+        <NuxtLink
+          :to="albumTo"
+          class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        >
+          {{ nameLabel }}
+        </NuxtLink>
+        <UiExplicitIcon />
+      </div>
       <NuxtLink
         :to="artistTo"
-        class="truncate text-sm text-primary-gray transition-colors duration-300 hover:underline"
+        class="truncate text-sm text-primary-gray transition-colors duration-300 hover:text-primary-white"
       >
         {{ artistLabel }}
       </NuxtLink>

@@ -9,6 +9,7 @@ definePageMeta({
 const { clear } = useUserSession();
 
 await $fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+clearLikeCache();
 await clear();
 await navigateTo("/login");
 </script>

@@ -18,7 +18,6 @@ const props = withDefaults(
 const {
   interactive,
   track,
-  isLgUp,
   isCurrent,
   isLiked,
   isHovered,
@@ -29,6 +28,8 @@ const {
   durationLabel,
   trackTo,
   artistTo,
+  albumTo,
+  trackId,
   onPlayClick,
   toggleLike,
 } = useTrackCard(() => props.track, { interactive: () => props.interactive });
@@ -46,7 +47,7 @@ const {
     <div class="flex size-10 shrink-0 items-center justify-center">
       <span
         v-show="!interactive || (!isHovered && !isCurrent)"
-        class="select-none font-semibold text-primary-gray"
+        class="select-none text-sm font-semibold text-primary-gray"
       >
         {{ track?.trackNumber }}
       </span>
@@ -71,19 +72,20 @@ const {
 
     <!-- Meta -->
     <div class="min-w-0 flex-1">
-      <div class="truncate">
+      <div class="flex min-w-0 items-center gap-1">
         <NuxtLink
           :to="trackTo"
-          class="text-base font-medium text-primary-white hover:underline"
+          class="min-w-0 truncate text-base font-medium text-primary-white hover:underline"
           @click.stop
         >
           {{ nameLabel }}
         </NuxtLink>
+        <UiExplicitIcon />
       </div>
       <div class="truncate">
         <NuxtLink
           :to="artistTo"
-          class="text-sm text-primary-gray hover:underline"
+          class="text-sm text-primary-gray hover:text-primary-white"
           @click.stop
         >
           {{ artistLabel }}
@@ -103,8 +105,11 @@ const {
       </button>
 
       <TrackMoreMenu
-        v-if="interactive && isLgUp && (isHovered || moreOpen)"
+        v-if="interactive && (isHovered || moreOpen)"
         v-model:open="moreOpen"
+        :track-id="trackId ?? ''"
+        :album-to="albumTo"
+        :artist-to="artistTo"
         :is-playing-current="isPlayingCurrent"
         :is-liked="isLiked"
         @play="onPlayClick"
@@ -122,7 +127,7 @@ const {
 
       <span
         v-else
-        class="flex size-8 items-center justify-center text-sm text-primary-white select-none"
+        class="flex size-8 items-center justify-center text-xs tabular-nums text-primary-gray select-none"
       >
         {{ durationLabel }}
       </span>
@@ -142,7 +147,7 @@ const {
     <div class="flex size-10 shrink-0 items-center justify-center">
       <span
         v-show="!isCurrent"
-        class="select-none font-semibold text-primary-gray"
+        class="select-none text-sm font-semibold text-primary-gray"
       >
         {{ track?.trackNumber }}
       </span>
@@ -151,9 +156,12 @@ const {
 
     <!-- Meta -->
     <div class="min-w-0 flex-1">
-      <p class="truncate text-base font-medium text-primary-white">
-        {{ nameLabel }}
-      </p>
+      <div class="flex min-w-0 items-center gap-1">
+        <p class="min-w-0 truncate text-base font-medium text-primary-white">
+          {{ nameLabel }}
+        </p>
+        <UiExplicitIcon />
+      </div>
       <p class="truncate text-sm text-primary-gray">
         {{ artistLabel }}
       </p>
@@ -171,8 +179,11 @@ const {
       </button>
 
       <TrackMoreMenu
-        v-if="interactive && !isLgUp"
+        v-if="interactive"
         v-model:open="moreOpen"
+        :track-id="trackId ?? ''"
+        :album-to="albumTo"
+        :artist-to="artistTo"
         :is-playing-current="isPlayingCurrent"
         :is-liked="isLiked"
         @play="onPlayClick"
@@ -190,7 +201,7 @@ const {
 
       <span
         v-else
-        class="flex size-8 items-center justify-center text-sm text-primary-white select-none"
+        class="flex size-8 items-center justify-center text-xs tabular-nums text-primary-gray select-none"
       >
         {{ durationLabel }}
       </span>

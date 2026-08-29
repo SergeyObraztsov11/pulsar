@@ -38,7 +38,7 @@ function onSelect() {
       :size="24"
       :weight="props.item.iconWeight ?? 'light'"
     />
-    <span class="text-xl" :class="props.item.labelClass">
+    <span class="min-w-0 flex-1 truncate text-xl" :class="props.item.labelClass">
       {{ props.item.label }}
     </span>
     <PhCaretRight
