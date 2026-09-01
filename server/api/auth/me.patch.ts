@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
+
 /**
  * PATCH /api/auth/me — частичное обновление профиля.
  * В body только меняемые поля: name | bio | country | gender | day+month+year.
@@ -25,16 +27,10 @@ export default defineEventHandler(async (event) => {
   if (body.name !== undefined) {
     const name = body.name.trim();
     if (!name) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "name is required",
-      });
+      throwApiError(400, ApiErrorCode.NAME_REQUIRED);
     }
     if (name.length > 50) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "name is too long",
-      });
+      throwApiError(400, ApiErrorCode.NAME_TOO_LONG);
     }
     data.name = name;
   }
@@ -43,10 +39,7 @@ export default defineEventHandler(async (event) => {
     const bioRaw = body.bio == null ? "" : String(body.bio).trim();
     const bio = bioRaw ? bioRaw : null;
     if (bio && bio.length > 1000) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "bio is too long",
-      });
+      throwApiError(400, ApiErrorCode.BIO_TOO_LONG);
     }
     data.bio = bio;
   }
@@ -56,10 +49,7 @@ export default defineEventHandler(async (event) => {
       body.country == null ? "" : String(body.country).trim();
     const country = countryRaw ? countryRaw : null;
     if (country && country.length > 80) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "country is too long",
-      });
+      throwApiError(400, ApiErrorCode.COUNTRY_TOO_LONG);
     }
     data.country = country;
   }
@@ -77,10 +67,7 @@ export default defineEventHandler(async (event) => {
     } else {
       const birthDate = parseBirthDate(day, month, year);
       if (!birthDate) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: "invalid birth date",
-        });
+        throwApiError(400, ApiErrorCode.INVALID_BIRTH_DATE);
       }
       data.birthDate = birthDate;
     }
@@ -91,19 +78,13 @@ export default defineEventHandler(async (event) => {
       body.gender == null ? "" : String(body.gender).trim();
     const gender = genderRaw ? genderRaw : null;
     if (gender && !isGender(gender)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "invalid gender",
-      });
+      throwApiError(400, ApiErrorCode.INVALID_GENDER);
     }
     data.gender = gender;
   }
 
   if (Object.keys(data).length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "no fields to update",
-    });
+    throwApiError(400, ApiErrorCode.NO_FIELDS_TO_UPDATE);
   }
 
   const user = await prisma.user.update({

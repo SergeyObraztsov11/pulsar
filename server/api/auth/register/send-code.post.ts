@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
+
 /**
  * POST /api/auth/register/send-code — черновик + код на email.
  * Body: { email, password, name, day, month, year, gender }
@@ -24,24 +26,15 @@ export default defineEventHandler(async (event) => {
   );
 
   if (!email || !password || !name || !birthDate || !isGender(gender)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Проверьте имя, дату рождения, пол, email и пароль.",
-    });
+    throwApiError(400, ApiErrorCode.REGISTRATION_FIELDS_INVALID);
   }
 
   if (name.length > 50) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Имя слишком длинное.",
-    });
+    throwApiError(400, ApiErrorCode.NAME_TOO_LONG);
   }
 
   if (password.length < 8) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Пароль должен быть не короче 8 символов.",
-    });
+    throwApiError(400, ApiErrorCode.PASSWORD_TOO_SHORT);
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -49,10 +42,7 @@ export default defineEventHandler(async (event) => {
     select: { id: true },
   });
   if (existingUser) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: "Этот email уже зарегистрирован.",
-    });
+    throwApiError(409, ApiErrorCode.EMAIL_ALREADY_REGISTERED);
   }
 
   const existingOtp = await prisma.registerOtp.findUnique({
@@ -62,10 +52,7 @@ export default defineEventHandler(async (event) => {
     existingOtp &&
     Date.now() - existingOtp.lastSentAt.getTime() < REGISTER_OTP_RESEND_MS
   ) {
-    throw createError({
-      statusCode: 429,
-      statusMessage: "Код уже отправлен. Подождите минуту.",
-    });
+    throwApiError(429, ApiErrorCode.CODE_RATE_LIMITED);
   }
 
   const code = generateRegisterOtp();

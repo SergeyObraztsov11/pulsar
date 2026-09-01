@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
- * Глобальная страница ошибок (404 и прочие).
+ * Global error page — 404, 403 (private playlist), 5xx.
  */
 import type { NuxtError } from "#app";
+import { ApiErrorCode } from "#shared/apiErrorCodes";
+import { apiErrorMessage } from "~/utils/apiErrorMessage";
 
 const props = defineProps<{
   error: NuxtError;
@@ -11,18 +13,36 @@ const props = defineProps<{
 const { loggedIn } = useUserSession();
 
 const isNotFound = computed(() => props.error?.statusCode === 404);
+const isPrivatePlaylist = computed(
+  () => props.error?.statusMessage === ApiErrorCode.PRIVATE_PLAYLIST,
+);
+const isForbidden = computed(
+  () =>
+    props.error?.statusCode === 403 &&
+    props.error?.statusMessage !== ApiErrorCode.PRIVATE_PLAYLIST,
+);
 
 const codeLabel = computed(() => String(props.error?.statusCode ?? 500));
 
-const title = computed(() =>
-  isNotFound.value ? "Страница не найдена." : "Что-то пошло не так.",
-);
+const title = computed(() => {
+  if (isNotFound.value) return "Страница не найдена.";
+  if (isPrivatePlaylist.value) return "Плейлист недоступен.";
+  if (isForbidden.value) return apiErrorMessage(ApiErrorCode.FORBIDDEN);
+  return "Что-то пошло не так.";
+});
 
-const description = computed(() =>
-  isNotFound.value
-    ? "Ссылка битая или страница переехала. Вернись и продолжай слушать."
-    : "Мы уже в курсе. Попробуй ещё раз через минуту.",
-);
+const description = computed(() => {
+  if (isNotFound.value) {
+    return "Ссылка битая или страница переехала. Вернись и продолжай слушать.";
+  }
+  if (isPrivatePlaylist.value) {
+    return "Он приватный или доступен только владельцу.";
+  }
+  if (isForbidden.value) {
+    return "У тебя нет прав просматривать этот контент.";
+  }
+  return "Мы уже в курсе. Попробуй ещё раз через минуту.";
+});
 
 const homeTo = computed(() => (loggedIn.value ? "/home" : "/"));
 

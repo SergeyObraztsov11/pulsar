@@ -1,4 +1,5 @@
 import { requireAuthUserId } from "../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 
 /**
  * POST /api/playlists — create user playlist (not system)
@@ -10,10 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const name = body.name?.trim() ?? "";
   if (!name || name.length > 120) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Playlist name is required (max 120 chars)",
-    });
+    throwApiError(400, ApiErrorCode.PLAYLIST_NAME_REQUIRED);
   }
 
   const playlist = await prisma.playlist.create({

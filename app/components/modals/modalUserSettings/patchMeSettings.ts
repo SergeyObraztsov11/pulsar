@@ -1,7 +1,7 @@
 /**
  * PATCH /api/auth/me из модалок настроек.
  */
-import type { FetchError } from "ofetch";
+import { fetchErrorMessage } from "~/utils/apiErrorMessage";
 import type { MeSettingsUser } from "./types";
 
 type PatchBody = {
@@ -23,13 +23,9 @@ export async function patchMeSettings(body: PatchBody) {
     });
     return { ok: true as const, user };
   } catch (error) {
-    const fetchError = error as FetchError;
     return {
       ok: false as const,
-      message:
-        fetchError?.data?.statusMessage ??
-        fetchError?.statusMessage ??
-        "Не удалось сохранить",
+      message: fetchErrorMessage(error, "Не удалось сохранить"),
     };
   }
 }

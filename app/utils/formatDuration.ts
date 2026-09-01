@@ -1,12 +1,12 @@
+/**
+ * formatDuration — длинная длительность по-русски для альбомов и мета-блоков.
+ * Пример: 270 → «4 мин, 30 сек»; 0 → null.
+ */
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 
 dayjs.extend(duration);
 
-/**
- * Длительность по-русски: «4 мин 30 сек».
- * 0 или меньше → null.
- */
 export function formatDurationRu(totalSec: number): string | null {
   if (totalSec <= 0) return null;
 

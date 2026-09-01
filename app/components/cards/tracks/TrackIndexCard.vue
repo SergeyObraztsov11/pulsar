@@ -1,9 +1,8 @@
 <script setup lang="ts">
 /**
- * TrackIndexCard — track row with index only (album tracklist).
- * Desktop + Mobile in one file; shared behavior via useTrackCard.
+ * TrackIndexCard — track row with index (album tracklist).
  */
-import { PhDotsThree, PhHeart, PhPause, PhPlay } from "@phosphor-icons/vue";
+import { PhPause, PhPlay } from "@phosphor-icons/vue";
 import type { Track } from "./trackCard.types";
 
 const props = withDefaults(
@@ -22,7 +21,11 @@ const {
   isLiked,
   isHovered,
   moreOpen,
+  isLgUp,
   isPlayingCurrent,
+  showTrackNumber,
+  showIndexEqualizer,
+  showIndexPlay,
   nameLabel,
   artistLabel,
   durationLabel,
@@ -30,23 +33,27 @@ const {
   artistTo,
   albumTo,
   trackId,
+  onRowClick,
   onPlayClick,
   toggleLike,
 } = useTrackCard(() => props.track, { interactive: () => props.interactive });
 </script>
 
 <template>
-  <!-- Desktop -->
   <TrackCardLayout
-    class="hidden items-center transition-transform duration-200 hover:bg-primary-gray-dark motion-reduce:transform-none motion-reduce:transition-none lg:flex"
-    :class="isCurrent ? 'bg-primary-gray-dark' : ''"
+    class="flex items-center lg:transition-transform lg:duration-200 lg:hover:bg-primary-gray-dark lg:motion-reduce:transform-none lg:motion-reduce:transition-none"
+    :class="[
+      isCurrent ? 'bg-primary-gray-dark' : '',
+      interactive && !isLgUp ? 'cursor-pointer' : '',
+    ]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    @click="onRowClick"
   >
     <!-- Index / play -->
     <div class="flex size-10 shrink-0 items-center justify-center">
       <span
-        v-show="!interactive || (!isHovered && !isCurrent)"
+        v-show="showTrackNumber"
         class="select-none text-sm font-semibold text-primary-gray"
       >
         {{ track?.trackNumber }}
@@ -54,157 +61,40 @@ const {
 
       <UiEqualizerIcon
         v-if="interactive"
-        v-show="!isHovered && isCurrent"
+        v-show="showIndexEqualizer"
         :active="isPlayingCurrent"
       />
 
       <button
-        v-if="interactive"
-        v-show="isHovered"
+        v-if="showIndexPlay"
         type="button"
         class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
-        @click="onPlayClick()"
+        @click.stop="onPlayClick()"
       >
         <PhPause v-if="isPlayingCurrent" :size="16" weight="fill" />
         <PhPlay v-else :size="16" weight="fill" />
       </button>
     </div>
 
-    <!-- Meta -->
-    <div class="min-w-0 flex-1">
-      <div class="flex min-w-0 items-center gap-1">
-        <NuxtLink
-          :to="trackTo"
-          class="min-w-0 truncate text-base font-medium text-primary-white hover:underline"
-          @click.stop
-        >
-          {{ nameLabel }}
-        </NuxtLink>
-        <UiExplicitIcon />
-      </div>
-      <div class="truncate">
-        <NuxtLink
-          :to="artistTo"
-          class="text-sm text-primary-gray hover:text-primary-white"
-          @click.stop
-        >
-          {{ artistLabel }}
-        </NuxtLink>
-      </div>
-    </div>
+    <TrackCardMeta
+      :name-label="nameLabel"
+      :artist-label="artistLabel"
+      :track-to="trackTo"
+      :artist-to="artistTo"
+      :is-lg-up="isLgUp"
+    />
 
-    <!-- Actions: like + more (hover) / duration -->
-    <div class="flex items-center justify-center gap-3">
-      <button
-        v-if="interactive"
-        type="button"
-        class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
-        @click="toggleLike()"
-      >
-        <PhHeart :size="20" :weight="isLiked ? 'fill' : 'light'" />
-      </button>
-
-      <TrackMoreMenu
-        v-if="interactive && (isHovered || moreOpen)"
-        v-model:open="moreOpen"
-        :track-id="trackId ?? ''"
-        :album-to="albumTo"
-        :artist-to="artistTo"
-        :is-playing-current="isPlayingCurrent"
-        :is-liked="isLiked"
-        @play="onPlayClick"
-        @toggle-like="toggleLike"
-      >
-        <template #trigger>
-          <button
-            type="button"
-            class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
-          >
-            <PhDotsThree :size="24" weight="light" />
-          </button>
-        </template>
-      </TrackMoreMenu>
-
-      <span
-        v-else
-        class="flex size-8 items-center justify-center text-xs tabular-nums text-primary-gray select-none"
-      >
-        {{ durationLabel }}
-      </span>
-    </div>
-  </TrackCardLayout>
-
-  <!-- Mobile -->
-  <TrackCardLayout
-    class="flex items-center lg:hidden"
-    :class="[
-      isCurrent ? 'bg-primary-gray-dark' : '',
-      interactive ? 'cursor-pointer' : '',
-    ]"
-    @click="interactive ? onPlayClick() : undefined"
-  >
-    <!-- Index -->
-    <div class="flex size-10 shrink-0 items-center justify-center">
-      <span
-        v-show="!isCurrent"
-        class="select-none text-sm font-semibold text-primary-gray"
-      >
-        {{ track?.trackNumber }}
-      </span>
-      <UiEqualizerIcon v-show="isCurrent" :active="isPlayingCurrent" />
-    </div>
-
-    <!-- Meta -->
-    <div class="min-w-0 flex-1">
-      <div class="flex min-w-0 items-center gap-1">
-        <p class="min-w-0 truncate text-base font-medium text-primary-white">
-          {{ nameLabel }}
-        </p>
-        <UiExplicitIcon />
-      </div>
-      <p class="truncate text-sm text-primary-gray">
-        {{ artistLabel }}
-      </p>
-    </div>
-
-    <!-- Actions: like + more / duration (stop — row click = play) -->
-    <div class="flex items-center justify-center gap-3" @click.stop>
-      <button
-        v-if="interactive"
-        type="button"
-        class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
-        @click="toggleLike()"
-      >
-        <PhHeart :size="20" :weight="isLiked ? 'fill' : 'light'" />
-      </button>
-
-      <TrackMoreMenu
-        v-if="interactive"
-        v-model:open="moreOpen"
-        :track-id="trackId ?? ''"
-        :album-to="albumTo"
-        :artist-to="artistTo"
-        :is-playing-current="isPlayingCurrent"
-        :is-liked="isLiked"
-        @play="onPlayClick"
-        @toggle-like="toggleLike"
-      >
-        <template #trigger>
-          <button
-            type="button"
-            class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
-          >
-            <PhDotsThree :size="24" weight="light" />
-          </button>
-        </template>
-      </TrackMoreMenu>
-
-      <span
-        v-else
-        class="flex size-8 items-center justify-center text-xs tabular-nums text-primary-gray select-none"
-      >
-        {{ durationLabel }}
-      </span>
-    </div>
+    <TrackCardActions
+      v-model:open="moreOpen"
+      :interactive="interactive"
+      :track-id="trackId ?? ''"
+      :album-to="albumTo"
+      :artist-to="artistTo"
+      :is-playing-current="isPlayingCurrent"
+      :is-liked="isLiked"
+      :duration-label="durationLabel"
+      @play="onPlayClick"
+      @toggle-like="toggleLike"
+    />
   </TrackCardLayout>
 </template>

@@ -4,6 +4,7 @@
  */
 import type { Album } from "~/types/album";
 import { albumPath } from "~/utils/catalogPaths";
+import { fetchErrorMessage } from "~/utils/apiErrorMessage";
 
 definePageMeta({
   layout: "app-layout",
@@ -33,14 +34,7 @@ const canSubmit = computed(() => {
 
 /** Текст ошибки $fetch */
 function errorText(error: unknown) {
-  if (error && typeof error === "object" && "data" in error) {
-    const data = (
-      error as { data?: { statusMessage?: string; message?: string } }
-    ).data;
-    if (data?.statusMessage) return data.statusMessage;
-    if (data?.message) return data.message;
-  }
-  return "Не получилось. Попробуйте ещё раз.";
+  return fetchErrorMessage(error);
 }
 
 function onCoverChange(event: Event) {

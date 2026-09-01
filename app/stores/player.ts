@@ -54,7 +54,7 @@ export const usePlayerStore = defineStore("player", () => {
   const queueSource = ref<PlayerQueueSource | null>(null);
   /** Мини/expanded только когда выбран трек */
   const showPlayer = computed(() => current.value != null);
-  /** Host применяет к audio.currentTime */
+  /** AppAudioHost применяет к audio.currentTime */
   const seekAt = ref<number | null>(null);
   /** Тянем ползунок: не писать timeupdate в currentTime */
   const isScrubbing = ref(false);
@@ -122,7 +122,7 @@ export const usePlayerStore = defineStore("player", () => {
     setCurrentTime(seconds);
   }
 
-  /** Перемотка при отпускании; isScrubbing снимет host после audio.currentTime */
+  /** Перемотка при отпускании; isScrubbing снимет AppAudioHost после audio.currentTime */
   function seek(seconds: number) {
     setCurrentTime(seconds);
     seekAt.value = currentTime.value;
@@ -139,7 +139,7 @@ export const usePlayerStore = defineStore("player", () => {
   function toggleExpanded() {
     isExpanded.value = !isExpanded.value;
   }
-
+  
   function togglePlaying() {
     if (!current.value) return;
     isPlaying.value = !isPlaying.value;

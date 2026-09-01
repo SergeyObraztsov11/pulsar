@@ -24,6 +24,8 @@ export type Album = {
 /** Альбом из GET /api/albums/:id — с треклистом и счётчиками */
 export type AlbumDetail = Album & {
   likesCount: number;
+  /** Уникальные пользователи с listen по трекам альбома */
+  listenersCount: number;
   trackCount: number;
   totalDurationSec: number;
   tracks: Track[];

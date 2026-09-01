@@ -1,4 +1,5 @@
 import { parseBuffer } from "music-metadata";
+import { ApiErrorCode, throwApiError } from "./apiError";
 
 /**
  * Длительность из файла. Не разобралось — это не аудио, 400.
@@ -11,9 +12,6 @@ export async function durationSecFromAudio(data: Buffer) {
     if (sec == null || !Number.isFinite(sec) || sec < 0) return 0;
     return Math.round(sec);
   } catch {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "audio must be a valid audio file",
-    });
+    throwApiError(400, ApiErrorCode.AUDIO_INVALID);
   }
 }

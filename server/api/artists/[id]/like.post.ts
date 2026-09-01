@@ -1,4 +1,5 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
 /**
  * POST /api/artists/:id/like
@@ -7,10 +8,7 @@ export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Artist id is required",
-    });
+    throwApiError(400, ApiErrorCode.ARTIST_ID_REQUIRED);
   }
 
   const artist = await prisma.user.findUnique({
@@ -18,7 +16,7 @@ export default defineEventHandler(async (event) => {
     select: { id: true },
   });
   if (!artist) {
-    throw createError({ statusCode: 404, statusMessage: "Artist not found" });
+    throwApiError(404, ApiErrorCode.ARTIST_NOT_FOUND);
   }
 
   await prisma.artistLike.upsert({

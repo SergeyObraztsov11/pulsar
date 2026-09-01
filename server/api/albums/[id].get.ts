@@ -1,6 +1,8 @@
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 import {
   albumDetailInclude,
+  getAlbumListenersCount,
   serializeAlbumDetail,
 } from "../../utils/albumDetail";
 import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
@@ -11,22 +13,23 @@ import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: "Album id is required" });
+    throwApiError(400, ApiErrorCode.ALBUM_ID_REQUIRED);
   }
 
   const userId = getAuthUserId(event);
 
-  const [album, likedTrackIds] = await Promise.all([
+  const [album, likedTrackIds, listenersCount] = await Promise.all([
     prisma.album.findUnique({
       where: { id },
       include: albumDetailInclude(userId),
     }),
     getLikedTrackIdSet(userId),
+    getAlbumListenersCount(id),
   ]);
 
   if (!album) {
-    throw createError({ statusCode: 404, statusMessage: "Album not found" });
+    throwApiError(404, ApiErrorCode.ALBUM_NOT_FOUND);
   }
 
-  return serializeAlbumDetail(album, likedTrackIds);
+  return serializeAlbumDetail(album, likedTrackIds, listenersCount);
 });

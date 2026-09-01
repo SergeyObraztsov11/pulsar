@@ -23,8 +23,10 @@ import {
   PhPencilSimple,
   PhPlay,
   PhQueue,
+  PhRepeat,
   PhShareNetwork,
   PhShieldCheck,
+  PhShuffle,
   PhSidebar,
   PhSidebarSimple,
   PhSignOut,
@@ -63,8 +65,10 @@ const ICONS = {
   PencilSimple: PhPencilSimple,
   Play: PhPlay,
   Queue: PhQueue,
+  Repeat: PhRepeat,
   ShareNetwork: PhShareNetwork,
   ShieldCheck: PhShieldCheck,
+  Shuffle: PhShuffle,
   Sidebar: PhSidebar,
   SidebarSimple: PhSidebarSimple,
   SignOut: PhSignOut,
@@ -134,8 +138,8 @@ const linkRel = computed(() => {
 
 const VARIANT_CLASS = {
   white:
-    "border-transparent bg-primary-white text-primary-black hover:bg-primary-gray-light",
-  gray: "border-transparent bg-primary-gray-dark text-primary-white hover:bg-primary-gray/50",
+    "border-transparent bg-primary-white text-primary-black hover:bg-primary-gray-extra-light disabled:bg-primary-gray-light disabled:text-primary-gray disabled:hover:bg-primary-gray-light",
+  gray: "border-transparent bg-primary-gray-dark text-primary-white hover:bg-primary-gray-light",
   ghost: "border-transparent text-primary-white hover:text-primary-gray",
   outline:
     "border-primary-gray-dark text-primary-white hover:border-primary-white disabled:hover:border-primary-gray-dark",
@@ -152,7 +156,10 @@ const rootClass = computed(() => {
 
   return [
     "inline-flex shrink-0 box-border h-10 items-center gap-2 leading-none rounded-full border transition-[color,background-color,border-color] duration-200",
-    isLoading.value ? "" : "disabled:pointer-events-none disabled:opacity-40",
+    isLoading.value ? "" : "disabled:pointer-events-none",
+    isLoading.value || props.variant === "white"
+      ? ""
+      : "disabled:opacity-40",
     shape,
     align,
     VARIANT_CLASS[props.variant],

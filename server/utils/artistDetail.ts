@@ -25,6 +25,7 @@ export function artistDetailQuery(userId: string | null) {
     select: {
       ...publicUserSelect,
       artistLikesReceived: likes,
+      _count: { select: { artistLikesReceived: true } },
       artistLinks: {
         orderBy: { sortOrder: "asc" as const },
         select: { kind: true, href: true },
@@ -55,6 +56,7 @@ type ArtistDetailRow = {
   bio: string | null;
   country: string | null;
   artistLikesReceived: { userId: string }[];
+  _count: { artistLikesReceived: number };
   artistLinks: { kind: string; href: string }[];
   albums: {
     genres: { genre: { id: string; name: string; slug: string } }[];
@@ -71,8 +73,10 @@ type ArtistDetailRow = {
 export function serializeArtistDetail<T extends ArtistDetailRow>(
   artist: T,
   likedTrackIds: Set<string>,
+  listenersCount: number,
 ) {
-  const { artistLikesReceived, artistLinks, albums, tracks, ...rest } = artist;
+  const { artistLikesReceived, artistLinks, albums, tracks, _count, ...rest } =
+    artist;
   const publicArtist: PublicUser = {
     id: rest.id,
     name: rest.name,
@@ -85,7 +89,8 @@ export function serializeArtistDetail<T extends ArtistDetailRow>(
     ...rest,
     country: rest.country ?? "Россия",
     isLiked: artistLikesReceived.length > 0,
-    listenersCount: 0,
+    likesCount: _count.artistLikesReceived,
+    listenersCount,
     links: artistLinks.map(({ kind, href }) => ({ kind, href })),
     albumCount: albums.length,
     trackCount: tracks.length,
@@ -98,4 +103,13 @@ export function serializeArtistDetail<T extends ArtistDetailRow>(
     })),
     tracks: tracks.map((track) => serializeTrackRow(track, likedTrackIds)),
   };
+}
+
+/** Уникальные пользователи с хотя бы одним listen на треках артиста */
+export async function getArtistListenersCount(artistId: string) {
+  const groups = await prisma.trackListen.groupBy({
+    by: ["userId"],
+    where: { track: { artistId } },
+  });
+  return groups.length;
 }

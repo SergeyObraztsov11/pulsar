@@ -2,8 +2,10 @@
  * useTrackCard — shared play / like / more / labels for track row cards.
  */
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import type { Track } from "~/types/track";
 import type { PlayerQueueSource } from "~/stores/player";
+import { formatTimeMmSs } from "~/utils/formatTime";
 
 /** Колонка отдаёт полный список + источник очереди */
 export const playerQueueKey: InjectionKey<{
@@ -33,6 +35,8 @@ export function useTrackCard(
 
   const moreOpen = ref(false);
   const isHovered = ref(false);
+  /** Один TrackMoreMenu на карточку — desktop/mobile не дублируют v-model */
+  const isLgUp = useMediaQuery("(min-width: 1024px)");
 
   const isPlayingCurrent = computed(
     () => isCurrent.value && playerStore.isPlaying,
@@ -45,9 +49,7 @@ export function useTrackCard(
   const durationLabel = computed(() => {
     const sec = trackValue.value?.durationSec;
     if (sec == null) return "0:00";
-    const minutes = Math.floor(sec / 60);
-    const seconds = sec % 60;
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    return formatTimeMmSs(sec);
   });
   const coverSrc = computed(
     () => trackValue.value?.album?.coverSrc ?? undefined,
@@ -66,17 +68,56 @@ export function useTrackCard(
     return artistId ? `/user/${artistId}` : "/";
   });
 
-    const albumTo = computed(() => {
-      const value = trackValue.value;
-      const artistId = value?.artist?.id;
-      const albumId = value?.album?.id;
-      if (!artistId || !albumId) return "/";
-      return `/user/${artistId}/album/${albumId}`;
-    });
+  const albumTo = computed(() => {
+    const value = trackValue.value;
+    const artistId = value?.artist?.id;
+    const albumId = value?.album?.id;
+    if (!artistId || !albumId) return "/";
+    return `/user/${artistId}/album/${albumId}`;
+  });
 
-    const showCoverOverlay = computed(
+  const showCoverOverlay = computed(
     () => isHovered.value || isCurrent.value,
   );
+
+  /** Index column (TrackIndexCard) */
+  const showTrackNumber = computed(() => {
+    if (!isLgUp.value) return !isCurrent.value;
+    return !interactive.value || (!isHovered.value && !isCurrent.value);
+  });
+
+  const showIndexEqualizer = computed(() => {
+    if (!isCurrent.value) return false;
+    if (!isLgUp.value) return true;
+    return interactive.value && !isHovered.value;
+  });
+
+  const showIndexPlay = computed(
+    () => isLgUp.value && interactive.value && isHovered.value,
+  );
+
+  /** Cover overlay (TrackCoverCard / TrackRankedCard) */
+  const showCoverOverlayPanel = computed(() => {
+    if (!interactive.value) return false;
+    if (!isLgUp.value) return isCurrent.value;
+    return showCoverOverlay.value;
+  });
+
+  const showCoverEqualizer = computed(() => {
+    if (!isCurrent.value) return false;
+    if (!isLgUp.value) return true;
+    return !isHovered.value;
+  });
+
+  const showCoverPlay = computed(
+    () => isLgUp.value && interactive.value && isHovered.value,
+  );
+
+  /** Mobile: tap row → play */
+  function onRowClick() {
+    if (isLgUp.value || !interactive.value) return;
+    onPlayClick();
+  }
 
   function onPlayClick() {
     if (!interactive.value) return;
@@ -100,7 +141,14 @@ export function useTrackCard(
     isLiked,
     isHovered,
     moreOpen,
+    isLgUp,
     isPlayingCurrent,
+    showTrackNumber,
+    showIndexEqualizer,
+    showIndexPlay,
+    showCoverOverlayPanel,
+    showCoverEqualizer,
+    showCoverPlay,
     nameLabel,
     artistLabel,
     durationLabel,
@@ -110,6 +158,7 @@ export function useTrackCard(
     albumTo,
     trackId,
     showCoverOverlay,
+    onRowClick,
     onPlayClick,
     toggleLike,
   };

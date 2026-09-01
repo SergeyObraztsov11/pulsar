@@ -74,15 +74,11 @@ const canGoNext = computed(() => {
   }
 });
 
+import { fetchErrorMessage } from "~/utils/apiErrorMessage";
+
 /** Текст ошибки $fetch */
 function errorText(error: unknown) {
-  if (error && typeof error === "object" && "data" in error) {
-    const data = (error as { data?: { statusMessage?: string; message?: string } })
-      .data;
-    if (data?.statusMessage) return data.statusMessage;
-    if (data?.message) return data.message;
-  }
-  return "Не получилось. Попробуйте ещё раз.";
+  return fetchErrorMessage(error);
 }
 
 /** Загрузка видна не меньше секунды */

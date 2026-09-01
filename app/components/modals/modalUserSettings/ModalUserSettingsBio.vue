@@ -66,6 +66,7 @@ async function onSave() {
       <UiTextArea
         v-model="bio"
         placeholder="Описание"
+        hint="Несколько слов о себе и музыке"
         :rows="5"
         maxlength="1000"
       />

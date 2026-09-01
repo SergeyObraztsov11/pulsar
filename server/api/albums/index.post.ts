@@ -8,6 +8,7 @@
  * После put ключ сразу в откат: если update упал, файл всё равно удалится.
  */
 import { albumCoverKey, audioObjectKey } from "../../utils/s3";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 import {
   albumDetailInclude,
   serializeAlbumDetail,
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
     include: albumDetailInclude(artistId),
   });
   const likedTrackIds = await getLikedTrackIdSet(artistId);
-  return serializeAlbumDetail(created, likedTrackIds);
+  return serializeAlbumDetail(created, likedTrackIds, 0);
 });
 
 /** Сессия есть, пользователь должен быть в БД (после seed сессия может протухнуть) */
@@ -83,7 +84,7 @@ async function requireArtist(event: Parameters<typeof requireAuthUserId>[0]) {
   });
   if (!artist) {
     await clearUserSession(event);
-    throw createError({ statusCode: 401, statusMessage: "User not found" });
+    throwApiError(401, ApiErrorCode.USER_NOT_FOUND);
   }
   return artistId;
 }
@@ -92,10 +93,7 @@ async function requireArtist(event: Parameters<typeof requireAuthUserId>[0]) {
 async function readAlbumForm(event: Parameters<typeof requireAuthUserId>[0]) {
   const parts = await readMultipartFormData(event);
   if (!parts?.length) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "multipart form is required",
-    });
+    throwApiError(400, ApiErrorCode.MULTIPART_FORM_REQUIRED);
   }
   return validateAlbumForm(parseParts(parts));
 }
@@ -163,31 +161,19 @@ function validateAlbumForm(raw: {
   }[];
 }): AlbumForm {
   if (!raw.name) {
-    throw createError({ statusCode: 400, statusMessage: "name is required" });
+    throwApiError(400, ApiErrorCode.ALBUM_NAME_REQUIRED);
   }
   if (raw.name.length > NAME_MAX) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `name must be at most ${NAME_MAX} characters`,
-    });
+    throwApiError(400, ApiErrorCode.ALBUM_NAME_TOO_LONG);
   }
   if (raw.tracks.length === 0) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "at least one track is required",
-    });
+    throwApiError(400, ApiErrorCode.ALBUM_TRACKS_REQUIRED);
   }
   if (raw.tracks.length > MAX_TRACKS) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `at most ${MAX_TRACKS} tracks`,
-    });
+    throwApiError(400, ApiErrorCode.ALBUM_TRACKS_TOO_MANY);
   }
   if (raw.cover && raw.cover.data.length > COVER_MAX_BYTES) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "cover must be at most 10MB",
-    });
+    throwApiError(400, ApiErrorCode.ALBUM_COVER_TOO_LARGE);
   }
 
   const tracks: TrackInput[] = [];
@@ -195,35 +181,23 @@ function validateAlbumForm(raw: {
 
   for (const track of raw.tracks) {
     if (!track.name) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "each track must have a name",
-      });
+      throwApiError(400, ApiErrorCode.ALBUM_TRACK_NAME_REQUIRED);
     }
     if (track.name.length > NAME_MAX) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `track name must be at most ${NAME_MAX} characters`,
-      });
+      throwApiError(400, ApiErrorCode.ALBUM_TRACK_NAME_TOO_LONG);
     }
     if (!track.audio) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "each track must have an audio file",
-      });
+      throwApiError(400, ApiErrorCode.ALBUM_TRACK_AUDIO_REQUIRED);
     }
     if (track.audio.data.length > AUDIO_MAX_BYTES) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "audio must be at most 30MB",
-      });
+      throwApiError(400, ApiErrorCode.ALBUM_AUDIO_TOO_LARGE);
     }
     totalBytes += track.audio.data.length;
     tracks.push({ ...track, audio: track.audio });
   }
 
   if (totalBytes > TOTAL_MAX_BYTES) {
-    throw createError({ statusCode: 413, statusMessage: "payload too large" });
+    throwApiError(413, ApiErrorCode.PAYLOAD_TOO_LARGE);
   }
 
   return { name: raw.name, cover: raw.cover, tracks };

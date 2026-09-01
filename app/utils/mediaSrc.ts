@@ -1,6 +1,6 @@
 /**
- * Ключ объекта в бакете → URL отдачи через /api/media.
- * Готовые ссылки и пути из public оставляю как есть.
+ * mediaSrc — ключ MinIO / путь в бакете → URL для <img> и <audio>.
+ * Готовые http(s) и /public пути не трогаем.
  */
 export function toMediaSrc(src?: string | null) {
   if (!src) return null;

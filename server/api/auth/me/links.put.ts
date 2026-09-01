@@ -3,6 +3,7 @@
  * Body: { links: [{ kind, href }] }
  */
 import type { ArtistLinkKind } from "~/types/artist";
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
 const KINDS = new Set<ArtistLinkKind>([
   "spotify",
@@ -32,16 +33,10 @@ export default defineEventHandler(async (event) => {
 
   const rawLinks = Array.isArray(body.links) ? body.links : null;
   if (!rawLinks) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "links is required",
-    });
+    throwApiError(400, ApiErrorCode.LINKS_REQUIRED);
   }
   if (rawLinks.length > KINDS.size) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "too many links",
-    });
+    throwApiError(400, ApiErrorCode.TOO_MANY_LINKS);
   }
 
   const normalized: { kind: ArtistLinkKind; href: string }[] = [];
@@ -52,22 +47,13 @@ export default defineEventHandler(async (event) => {
     const href = item.href?.trim() ?? "";
     if (!kind && !href) continue;
     if (!kind || !KINDS.has(kind)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `invalid link kind: ${kind}`,
-      });
+      throwApiError(400, ApiErrorCode.INVALID_LINK_KIND, { kind });
     }
     if (seen.has(kind)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `duplicate link kind: ${kind}`,
-      });
+      throwApiError(400, ApiErrorCode.DUPLICATE_LINK_KIND, { kind });
     }
     if (!href || !isValidHttpUrl(href)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "invalid link url",
-      });
+      throwApiError(400, ApiErrorCode.INVALID_LINK_URL);
     }
     seen.add(kind);
     normalized.push({ kind, href });

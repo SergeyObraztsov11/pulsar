@@ -1,4 +1,16 @@
+import type { H3Event } from "h3";
 import type { PlaylistSystemKind } from "../../app/generated/prisma/client";
+import {
+  isLikedTracksPlaylist,
+  LIKED_PLAYLIST_COVER_SRC,
+  LIKED_PLAYLIST_NAME,
+} from "./likedPlaylist";
+import { requireAuthUserId } from "./getAuthUserId";
+import { ApiErrorCode, throwApiError } from "./apiError";
+
+export const PLAYLIST_NAME_MAX_LENGTH = 120;
+export const PLAYLIST_DESCRIPTION_MAX_LENGTH = 1000;
+export const PLAYLIST_COVER_MAX_BYTES = 10 * 1024 * 1024;
 
 const albumCardSelect = {
   id: true,
@@ -55,10 +67,12 @@ type PlaylistRow = {
   id: string;
   userId: string;
   name: string;
+  description: string | null;
   coverSrc: string | null;
   isPublic: boolean;
   systemKind: PlaylistSystemKind | null;
   createdAt: Date;
+  updatedAt: Date;
   _count?: { tracks: number };
 };
 
@@ -66,13 +80,21 @@ export function serializePlaylistSummary(playlist: PlaylistRow) {
   return {
     id: playlist.id,
     userId: playlist.userId,
-    name: playlist.name,
-    coverSrc: playlist.coverSrc,
+    name: isLikedTracksPlaylist(playlist.systemKind)
+      ? LIKED_PLAYLIST_NAME
+      : playlist.name,
+    description: playlist.description,
+    coverSrc:
+      playlist.coverSrc ??
+      (isLikedTracksPlaylist(playlist.systemKind)
+        ? LIKED_PLAYLIST_COVER_SRC
+        : null),
     isPublic: playlist.isPublic,
     systemKind: playlist.systemKind,
     isSystem: playlist.systemKind != null,
     trackCount: playlist._count?.tracks ?? 0,
     createdAt: playlist.createdAt,
+    updatedAt: playlist.updatedAt,
   };
 }
 
@@ -87,4 +109,29 @@ export function serializePlaylistDetail(
       serializeTrackRow(track, likedTrackIds),
     ),
   };
+}
+
+/** Owner-only user playlist (not system «Мне нравится») */
+export async function requireEditableUserPlaylist(
+  event: H3Event,
+  playlistId: string,
+) {
+  const userId = requireAuthUserId(event);
+
+  const playlist = await prisma.playlist.findUnique({
+    where: { id: playlistId },
+    include: { _count: { select: { tracks: true } } },
+  });
+
+  if (!playlist) {
+    throwApiError(404, ApiErrorCode.PLAYLIST_NOT_FOUND);
+  }
+  if (playlist.userId !== userId) {
+    throwApiError(403, ApiErrorCode.FORBIDDEN);
+  }
+  if (isLikedTracksPlaylist(playlist.systemKind)) {
+    throwApiError(400, ApiErrorCode.SYSTEM_PLAYLIST_NOT_EDITABLE);
+  }
+
+  return playlist;
 }

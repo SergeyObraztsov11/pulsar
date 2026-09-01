@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
+
 /**
  * POST /api/auth/forgot/send-code — код сброса на email.
  * Всегда { ok: true }, чтобы не палить, есть ли аккаунт.
@@ -8,10 +10,7 @@ export default defineEventHandler(async (event) => {
   const email = body.email?.trim().toLowerCase() ?? "";
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Укажите email.",
-    });
+    throwApiError(400, ApiErrorCode.EMAIL_REQUIRED);
   }
 
   const user = await prisma.user.findUnique({

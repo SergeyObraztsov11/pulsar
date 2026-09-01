@@ -99,7 +99,8 @@ Body: `{ name, isPublic? }` — user playlist. Auth. `400` / `401`
 
 ### `GET /api/playlists/:id`
 
-Meta + `tracks[]` (как `GET /api/tracks`). Владелец или `isPublic`. `403` / `404`
+Meta + `tracks[]` (как `GET /api/tracks`). Владелец или `isPublic`.  
+`400` · `404` · `403` (`private_playlist` — чужой приватный плейлист)
 
 ### `PATCH /api/playlists/:id` · `DELETE /api/playlists/:id`
 
@@ -133,6 +134,107 @@ Query: `search` (имя), `liked=true`, `sort=newest|oldest|name|likedAt` (по 
 ### `GET /api/genres`
 
 Список жанров. Ответ: `{ id, name, slug }[]`, сортировка по `name`.
+
+## Ошибки
+
+Единый формат: **`statusMessage`** — snake_case код из `shared/apiErrorCodes.ts` (`ApiErrorCode`).
+
+```json
+{
+  "statusCode": 404,
+  "statusMessage": "album_not_found",
+  "message": "album_not_found"
+}
+```
+
+Сервер: `throwApiError(statusCode, ApiErrorCode.…)` из `server/utils/apiError.ts`.  
+Клиент: `fetchErrorMessage(error)` / `apiErrorMessage(code)` в `app/utils/apiErrorMessage.ts`.  
+Страница ошибок: `app/error.vue`.
+
+Опционально в теле: `data` (например `{ kind }` для `invalid_link_kind`).
+
+---
+
+### `401`
+
+| Код | Когда |
+|---|---|
+| `authentication_required` | Auth без сессии; `?liked=true` на list |
+| `invalid_credentials` | `POST /api/auth/login` |
+| `user_not_found` | `GET /api/auth/me`, `POST /api/albums` |
+
+### `403`
+
+| Код | Когда |
+|---|---|
+| `private_playlist` | `GET /api/playlists/:id` — чужой приватный |
+| `forbidden` | Не владелец (album delete, playlist CRUD/tracks) |
+
+### `404`
+
+| Код | Когда |
+|---|---|
+| `album_not_found` | Альбом |
+| `artist_not_found` | Артист |
+| `track_not_found` | Трек |
+| `playlist_not_found` | Плейлист |
+| `media_not_found` | `GET /api/media/:key` |
+
+### `409` · `413` · `416` · `429`
+
+| HTTP | Код |
+|---|---|
+| 409 | `email_already_registered` |
+| 413 | `payload_too_large` |
+| 416 | `range_not_satisfiable` |
+| 429 | `code_rate_limited` |
+
+### `400` — auth
+
+| Код | Эндпоинты |
+|---|---|
+| `email_password_required` | login |
+| `verify_email_required` | register (legacy) |
+| `registration_fields_invalid` | register/send-code |
+| `name_too_long` | send-code |
+| `password_too_short` | send-code, forgot/reset |
+| `code_required` | verify, forgot |
+| `code_expired_or_invalid` | verify, forgot |
+| `code_too_many_attempts` | verify, forgot |
+| `code_invalid` | verify, forgot |
+| `email_required` | forgot/send-code |
+
+### `400` — профиль (`/api/auth/me`)
+
+| Код |
+|---|
+| `name_required` · `name_too_long` · `bio_too_long` · `country_too_long` |
+| `invalid_birth_date` · `invalid_gender` · `no_fields_to_update` |
+| `avatar_file_required` · `avatar_too_large` · `avatar_must_be_image` |
+| `links_required` · `too_many_links` · `invalid_link_kind` · `duplicate_link_kind` · `invalid_link_url` |
+
+### `400` — upload / альбомы
+
+| Код |
+|---|
+| `album_id_required` · `multipart_form_required` · `album_name_required` |
+| `album_name_too_long` · `album_tracks_required` · `album_tracks_too_many` |
+| `album_cover_too_large` · `cover_must_be_image` |
+| `album_track_name_required` · `album_track_name_too_long` |
+| `album_track_audio_required` · `album_audio_too_large` · `audio_invalid` |
+
+### `400` — треки · плейлисты · media
+
+| Код | Область |
+|---|---|
+| `track_id_required` · `played_sec_required` · `listen_threshold_not_met` | треки |
+| `playlist_id_required` · `playlist_not_found` · `playlist_name_required` | плейлисты |
+| `system_playlist_not_editable` · `system_playlist_not_deletable` | «Любимые» |
+| `playlist_track_id_required` · `playlist_ids_required` | tracks в плейлисте |
+| `artist_id_required` | артисты |
+| `invalid_media_key` | media |
+
+Полный enum — **`shared/apiErrorCodes.ts`**.
 
 ## Планируется
 

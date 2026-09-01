@@ -7,6 +7,11 @@ import { PhHeart, PhPause, PhPlay } from "@phosphor-icons/vue";
 
 const playerStore = usePlayerStore();
 
+/** Mini: есть трек и expanded закрыт */
+const showMiniPlayer = computed(
+  () => playerStore.showPlayer && !playerStore.isExpanded,
+);
+
 const track = computed(() => playerStore.current);
 
 const nameLabel = computed(() => track.value?.name ?? "Трек");
@@ -23,15 +28,17 @@ function openExpanded() {
 </script>
 
 <template>
-  <div
-    role="button"
-    tabindex="0"
-    class="relative mx-4 flex h-16 cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-primary-gray-dark bg-primary-gray-dark px-3 lg:hidden"
-    aria-label="Развернуть плеер"
-    @click="openExpanded"
-    @keydown.enter.prevent="openExpanded"
-    @keydown.space.prevent="openExpanded"
-  >
+  <Transition name="player-mini">
+    <div
+      v-if="showMiniPlayer"
+      role="button"
+      tabindex="0"
+      class="relative mx-4 flex h-16 cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-primary-gray-dark bg-primary-gray-dark px-3 lg:hidden"
+      aria-label="Развернуть плеер"
+      @click="openExpanded"
+      @keydown.enter.prevent="openExpanded"
+      @keydown.space.prevent="openExpanded"
+    >
     <div
       class="size-10 shrink-0 overflow-hidden rounded-md bg-primary-black"
     >
@@ -78,5 +85,25 @@ function openExpanded() {
         :style="{ width: `${playerStore.progressRatio * 100}%` }"
       />
     </div>
-  </div>
+    </div>
+  </Transition>
 </template>
+
+<style scoped>
+.player-mini-enter-active,
+.player-mini-leave-active {
+  transition: transform 0.35s ease;
+}
+
+.player-mini-enter-from,
+.player-mini-leave-to {
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-mini-enter-active,
+  .player-mini-leave-active {
+    transition: none;
+  }
+}
+</style>

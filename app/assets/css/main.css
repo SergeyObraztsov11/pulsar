@@ -15,8 +15,11 @@
    * Accent удалён (был #5a60e0 / #6b73ff + accent-1…4).
    */
   --color-primary-white: #ffffff;
-  --color-primary-gray-light: #b3b3b3;
+  /* --color-primary-gray-extra-light: #2e2d2d; */
+  --color-primary-gray-light: #2e2d2d;
+  
   --color-primary-gray: #6a6a6a;
+
   --color-primary-gray-dark: #1a1a1a;
   --color-primary-black: #111111;
 

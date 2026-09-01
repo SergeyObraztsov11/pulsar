@@ -27,6 +27,8 @@ export type ArtistLink = {
 
 /** Артист из GET /api/artists/:id — с альбомами, треками и счётчиками */
 export type ArtistDetail = Artist & {
+  /** Лайки профиля артиста */
+  likesCount: number;
   /** Слушатели (пока демо, без аналитики) */
   listenersCount: number;
   /** Внешние ссылки (пока демо; позже — из профиля) */

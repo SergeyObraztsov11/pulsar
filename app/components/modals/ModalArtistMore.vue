@@ -35,6 +35,8 @@ import {
 } from "@phosphor-icons/vue";
 import type { Component } from "vue";
 import type { ArtistLinkKind } from "~/types/artist";
+import { formatListenersLabel } from "~/utils/formatListenersLabel";
+import { formatCountRu } from "~/utils/pluralizeRu";
 
 const props = withDefaults(defineProps<ModalArtistMoreProps>(), {
   bio: null,
@@ -91,57 +93,24 @@ function linkHost(href: string): string {
   }
 }
 
-/** Компактно: «12 тыс.» / «1,2 млн» */
-function formatCompactCount(count: number): string {
-  if (count >= 1_000_000) {
-    const value = count / 1_000_000;
-    const rounded =
-      value >= 10
-        ? String(Math.round(value))
-        : value.toFixed(1).replace(".", ",");
-    return `${rounded.replace(/,0$/, "")} млн`;
-  }
-  if (count >= 1_000) {
-    return `${Math.round(count / 1_000)} тыс.`;
-  }
-  return count.toLocaleString("ru-RU");
-}
-
-function pluralRu(
-  count: number,
-  one: string,
-  few: string,
-  many: string,
-): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-  return many;
-}
-
 const listenersLabel = computed(() => {
-  const count = props.listenersCount;
-  if (count <= 0) return "Нет слушателей";
-  const formatted = formatCompactCount(count);
-  return `${formatted} ${pluralRu(count, "слушатель", "слушателя", "слушателей")}`;
+  const label = formatListenersLabel(props.listenersCount);
+  return label ?? "Нет слушателей";
 });
 
 const hasListeners = computed(() => props.listenersCount > 0);
 
 const hasAlbums = computed(() => props.albumCount > 0);
 
-const albumsLabel = computed(() => {
-  const count = props.albumCount;
-  return `${count.toLocaleString("ru-RU")} ${pluralRu(count, "альбом", "альбома", "альбомов")}`;
-});
+const albumsLabel = computed(() =>
+  formatCountRu(props.albumCount, "альбом", "альбома", "альбомов"),
+);
 
 const hasTracks = computed(() => props.trackCount > 0);
 
-const tracksLabel = computed(() => {
-  const count = props.trackCount;
-  return `${count.toLocaleString("ru-RU")} ${pluralRu(count, "трек", "трека", "треков")}`;
-});
+const tracksLabel = computed(() =>
+  formatCountRu(props.trackCount, "трек", "трека", "треков"),
+);
 
 const profileUrl = computed(() => {
   if (typeof window === "undefined") return `/user/${props.artistId}`;

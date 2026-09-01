@@ -1,4 +1,5 @@
 import { createLikedPlaylistForUser } from "../../../utils/likedPlaylist";
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
 /**
  * POST /api/auth/register/verify — verify code, create user and session.
@@ -11,10 +12,7 @@ export default defineEventHandler(async (event) => {
   const code = body.code?.trim() ?? "";
 
   if (!email || code.length !== REGISTER_OTP_LENGTH) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Введите код из письма.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_REQUIRED);
   }
 
   const otp = await prisma.registerOtp.findUnique({ where: { email } });
@@ -22,18 +20,12 @@ export default defineEventHandler(async (event) => {
     if (otp) {
       await prisma.registerOtp.delete({ where: { email } });
     }
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Код неверный или срок истёк. Запросите новый.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_EXPIRED_OR_INVALID);
   }
 
   if (otp.attempts >= REGISTER_OTP_MAX_ATTEMPTS) {
     await prisma.registerOtp.delete({ where: { email } });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Слишком много попыток. Запросите код снова.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_TOO_MANY_ATTEMPTS);
   }
 
   const valid = await verifyPassword(otp.codeHash, code);
@@ -42,10 +34,7 @@ export default defineEventHandler(async (event) => {
       where: { email },
       data: { attempts: { increment: 1 } },
     });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Неверный код.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_INVALID);
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -54,10 +43,7 @@ export default defineEventHandler(async (event) => {
   });
   if (existingUser) {
     await prisma.registerOtp.delete({ where: { email } });
-    throw createError({
-      statusCode: 409,
-      statusMessage: "Этот email уже зарегистрирован.",
-    });
+    throwApiError(409, ApiErrorCode.EMAIL_ALREADY_REGISTERED);
   }
 
   const user = await prisma.$transaction(async (tx) => {

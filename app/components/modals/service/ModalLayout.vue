@@ -7,6 +7,7 @@
  * Контент слушает @close и вызывает useModal().close().
  */
 import { onClickOutside } from "@vueuse/core";
+import { PhX } from "@phosphor-icons/vue";
 
 const props = defineProps<{
   /** Заголовок в шапке (если есть) */
@@ -81,17 +82,18 @@ defineExpose({ requestClose });
           <header class="flex shrink-0 items-center gap-3 p-4 pb-2">
             <h2
               v-if="props.title"
-              class="min-w-0 flex-1 truncate text-xl font-bold leading-none text-primary-white"
+              class="min-w-0 flex-1 truncate text-base font-semibold leading-none text-primary-white"
             >
               {{ props.title }}
             </h2>
-            <UiButton
-              class="ml-auto"
-              variant="outline"
-              icon="X"
+            <button
+              type="button"
+              class="ml-auto shrink-0 text-primary-white transition-[color,transform] duration-200 hover:text-primary-gray active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
               aria-label="Закрыть"
               @click="requestClose"
-            />
+            >
+              <PhX :size="16" weight="light" />
+            </button>
           </header>
 
           <!-- Контент модального окна -->

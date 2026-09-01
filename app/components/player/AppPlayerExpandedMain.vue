@@ -3,6 +3,8 @@
  * AppPlayerExpandedMain — левая колонка expanded: обложка, transport, meta, progress.
  */
 
+import { formatTimeMmSs } from "~/utils/formatTime";
+
 const playerStore = usePlayerStore();
 
 const track = computed(() => playerStore.current);
@@ -29,17 +31,9 @@ const { isLiked, pending, toggleLike } = useLike("track", trackId, {
   initial: computed(() => track.value?.isLiked),
 });
 
-/** mm:ss из секунд */
-function formatTime(totalSeconds: number) {
-  const seconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(seconds / 60);
-  const rest = seconds % 60;
-  return `${minutes}:${rest.toString().padStart(2, "0")}`;
-}
+const currentTimeLabel = computed(() => formatTimeMmSs(playerStore.currentTime));
 
-const currentTimeLabel = computed(() => formatTime(playerStore.currentTime));
-
-const durationLabel = computed(() => formatTime(playerStore.duration));
+const durationLabel = computed(() => formatTimeMmSs(playerStore.duration));
 
 /** Секунды с input[type=range] */
 function secondsFromEvent(event: Event) {

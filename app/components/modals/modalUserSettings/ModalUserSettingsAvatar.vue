@@ -14,7 +14,7 @@ export type ModalUserSettingsAvatarProps = {
 
 <script setup lang="ts">
 import { PhUser } from "@phosphor-icons/vue";
-import type { FetchError } from "ofetch";
+import { fetchErrorMessage } from "~/utils/apiErrorMessage";
 import { toMediaSrc } from "~/utils/mediaSrc";
 
 const props = defineProps<ModalUserSettingsAvatarProps>();
@@ -104,11 +104,7 @@ async function onSave() {
     props.onSaved(user);
     close();
   } catch (error) {
-    const fetchError = error as FetchError;
-    errorMessage.value =
-      fetchError?.data?.statusMessage ??
-      fetchError?.statusMessage ??
-      "Не удалось сохранить";
+    errorMessage.value = fetchErrorMessage(error, "Не удалось сохранить");
   } finally {
     saving.value = false;
   }
@@ -127,11 +123,7 @@ async function onRemove() {
     props.onSaved(user);
     close();
   } catch (error) {
-    const fetchError = error as FetchError;
-    errorMessage.value =
-      fetchError?.data?.statusMessage ??
-      fetchError?.statusMessage ??
-      "Не удалось удалить";
+    errorMessage.value = fetchErrorMessage(error, "Не удалось удалить");
   } finally {
     removing.value = false;
   }

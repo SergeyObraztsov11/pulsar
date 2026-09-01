@@ -2,6 +2,8 @@
  * GET /api/media/<ключ> — объект из MinIO.
  * Range на audio: 206, иначе <audio> при seek начинает трек сначала.
  */
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
+
 const ALLOWED_PREFIXES = ["covers/", "avatars/", "audio/"];
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -27,16 +29,16 @@ export default defineEventHandler(async (event) => {
     ALLOWED_PREFIXES.some((prefix) => key.startsWith(prefix));
 
   if (!isAllowed) {
-    throw createError({ statusCode: 400, statusMessage: "Invalid media key" });
+    throwApiError(400, ApiErrorCode.INVALID_MEDIA_KEY);
   }
 
   const rangeHeader = getHeader(event, "range");
   const object = await getS3Object(key, rangeHeader).catch(() => null);
   if (!object?.Body) {
-    throw createError({
-      statusCode: rangeHeader ? 416 : 404,
-      statusMessage: rangeHeader ? "Range Not Satisfiable" : "Media not found",
-    });
+    throwApiError(
+      rangeHeader ? 416 : 404,
+      rangeHeader ? ApiErrorCode.RANGE_NOT_SATISFIABLE : ApiErrorCode.MEDIA_NOT_FOUND,
+    );
   }
 
   setResponseHeaders(event, {

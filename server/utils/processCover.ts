@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { ApiErrorCode, throwApiError } from "./apiError";
 
 const COVER_SIZE = 800;
 const AVATAR_SIZE = 512;
@@ -20,10 +21,7 @@ export async function processAlbumCover(input: Buffer) {
     return { body, coverColor };
   } catch (error) {
     if (typeof error === "object" && error && "statusCode" in error) throw error;
-    throw createError({
-      statusCode: 400,
-      statusMessage: "cover must be an image",
-    });
+    throwApiError(400, ApiErrorCode.COVER_MUST_BE_IMAGE);
   }
 }
 
@@ -39,10 +37,7 @@ export async function processUserAvatar(input: Buffer) {
       .jpeg({ quality: 85 })
       .toBuffer();
   } catch {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "avatar must be an image",
-    });
+    throwApiError(400, ApiErrorCode.AVATAR_MUST_BE_IMAGE);
   }
 }
 

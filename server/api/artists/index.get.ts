@@ -1,5 +1,6 @@
 import type { Prisma } from "../../../app/generated/prisma/client";
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 
 const SORTS = ["newest", "oldest", "name", "likedAt"] as const;
 type ArtistSort = (typeof SORTS)[number];
@@ -29,10 +30,7 @@ export default defineEventHandler(async (event) => {
     : "name";
 
   if ((liked || sort === "likedAt") && !userId) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Authentication required",
-    });
+    throwApiError(401, ApiErrorCode.AUTHENTICATION_REQUIRED);
   }
 
   const artistWhere: Prisma.UserWhereInput = {};

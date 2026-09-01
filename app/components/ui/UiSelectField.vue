@@ -134,47 +134,56 @@ defineExpose({ focus });
 
 <template>
   <!-- Select: триггер как поле; список — панель меню -->
-  <div class="relative min-w-0 w-full">
+  <div class="relative min-w-0 w-full bg-inherit">
     <input type="hidden" v-bind="$attrs" :value="model" />
 
-    <button
-      ref="triggerEl"
-      type="button"
-      class="group flex h-10 w-full box-border items-center gap-3 rounded-full border border-primary-gray bg-primary-gray-dark px-4 leading-none text-primary-white outline-none transition-colors"
-      :aria-expanded="open"
-      aria-haspopup="listbox"
-      :aria-label="props.placeholder || undefined"
-      @click="toggle"
-      @keydown="onTriggerKeydown"
-      @focus="focused = true"
-      @blur="focused = false"
+    <div
+      class="flex h-11 w-full box-border items-center rounded-lg bg-primary-gray-light px-4 leading-none transition-[border-color,background-color] duration-200 motion-reduce:transition-none"
+      :class="
+        isFloating
+          ? 'border border-primary-gray'
+          : 'border border-transparent'
+      "
     >
-      <span class="min-w-0 flex-1 truncate text-left leading-none text-primary-white">
-        {{ selected?.label ?? "" }}
-      </span>
-      <PhCaretDown
-        :size="20"
-        weight="light"
-        class="shrink-0 text-primary-gray transition-transform duration-200"
-        :class="{ 'rotate-180': open }"
-      />
-    </button>
+      <button
+        ref="triggerEl"
+        type="button"
+        class="group flex min-h-0 min-w-0 flex-1 items-center gap-3 bg-transparent leading-none text-primary-white outline-none"
+        :aria-expanded="open"
+        aria-haspopup="listbox"
+        :aria-label="props.placeholder || undefined"
+        @click="toggle"
+        @keydown="onTriggerKeydown"
+        @focus="focused = true"
+        @blur="focused = false"
+      >
+        <span
+          class="min-w-0 flex-1 truncate text-left text-base leading-none text-primary-white"
+        >
+          {{ selected?.label ?? "" }}
+        </span>
+        <PhCaretDown
+          :size="20"
+          weight="light"
+          class="shrink-0 text-primary-gray transition-transform duration-200"
+          :class="{ 'rotate-180': open }"
+        />
+      </button>
+    </div>
 
     <span
       v-if="props.placeholder"
       class="pointer-events-none absolute z-10 origin-left leading-none transition-all duration-200 motion-reduce:transition-none"
       :class="[
         isFloating
-          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs'
-          : 'top-1/2 left-4 -translate-y-1/2',
-        isFloating ? 'text-primary-white' : 'text-primary-gray',
+          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs text-primary-white'
+          : 'top-1/2 left-4 -translate-y-1/2 text-sm text-primary-gray',
       ]"
     >
-      <!-- Перекрывает рамку по центру подписи, текст поверх -->
       <span
         v-if="isFloating"
         aria-hidden="true"
-        class="absolute top-1/2 right-0 left-0 h-[5px] -translate-y-1/2 bg-primary-black"
+        class="absolute top-1/2 right-0 left-0 h-1.25 -translate-y-1/2 bg-inherit"
       />
       <span class="relative">{{ props.placeholder }}</span>
     </span>

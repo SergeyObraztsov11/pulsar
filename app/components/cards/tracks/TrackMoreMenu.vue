@@ -41,11 +41,11 @@ const emit = defineEmits<{
 
 const router = useRouter();
 const { open: openModal } = useModal();
+const toastStore = useToastStore();
 
 const trackIdRef = computed(() => props.trackId);
 const {
   playlists,
-  pending,
   error,
   refresh,
   addTrackToPlaylist,
@@ -91,6 +91,10 @@ function syncLikedPlaylistState(playlist: PlaylistSummary, contains: boolean) {
   setLikeState("track", props.trackId, contains);
 }
 
+function toastAddedToPlaylist(playlist: PlaylistSummary) {
+  toastStore.toast({ title: `Добавлено в «${playlistLabel(playlist)}»` });
+}
+
 /** Toggle track in playlist; клик по всей строке */
 async function togglePlaylistTrack(playlist: PlaylistSummary) {
   if (!props.trackId || busyPlaylistId.value) return;
@@ -107,6 +111,7 @@ async function togglePlaylistTrack(playlist: PlaylistSummary) {
       await addTrackToPlaylist(playlist.id, props.trackId);
       setMembership(playlist.id, true);
       syncLikedPlaylistState(playlist, true);
+      toastAddedToPlaylist(playlist);
     }
   } catch {
     // keep menu open
@@ -117,12 +122,11 @@ async function togglePlaylistTrack(playlist: PlaylistSummary) {
 
 function buildPlaylistRow(playlist: PlaylistSummary): MenuItem {
   const inPlaylist = isTrackInPlaylist(playlist.id);
-  const busy = busyPlaylistId.value === playlist.id;
   const label = playlistLabel(playlist);
 
   return {
     id: `playlist-${playlist.id}`,
-    label: busy ? `${label}…` : label,
+    label,
     icon: inPlaylist ? PhMinus : PhPlus,
     labelClass: inPlaylist ? "text-primary-white" : undefined,
     onClick: () => void togglePlaylistTrack(playlist),
@@ -138,6 +142,7 @@ function onCreatePlaylistClick() {
       trackId: props.trackId,
       onCreated: (playlist) => {
         setMembership(playlist.id, true);
+        toastAddedToPlaylist(playlist);
         void refresh();
       },
     },
@@ -145,10 +150,7 @@ function onCreatePlaylistClick() {
 }
 
 const playlistChildren = computed<MenuItem[]>(() => {
-  if (pending.value && playlists.value.length === 0) {
-    return [{ id: "playlists-loading", label: "Загрузка…" }];
-  }
-  if (error.value) {
+  if (error.value && playlists.value.length === 0) {
     return [
       {
         id: "playlists-error",
@@ -157,7 +159,6 @@ const playlistChildren = computed<MenuItem[]>(() => {
       },
     ];
   }
-
   const list = playlists.value;
   const liked = list.find((p) => p.systemKind === "liked_tracks");
   const userPlaylists = list.filter((p) => p.systemKind !== "liked_tracks");
@@ -187,7 +188,9 @@ const items = computed<MenuItem[]>(() => [
   },
   {
     id: "like",
-    label: props.isLiked ? "Убрать из избранного" : "В избранное",
+    label: props.isLiked
+      ? `Убрать из «${LIKED_PLAYLIST_MENU_LABEL}»`
+      : `Добавить в «${LIKED_PLAYLIST_MENU_LABEL}»`,
     icon: PhHeart,
     iconWeight: props.isLiked ? "fill" : "light",
     iconClass: props.isLiked ? "text-primary-white" : undefined,

@@ -2,6 +2,8 @@
 /**
  * Вход: email и пароль в карточке как у регистрации.
  */
+import { fetchErrorMessage } from "~/utils/apiErrorMessage";
+
 definePageMeta({
   layout: "auth-layout",
 });
@@ -59,9 +61,9 @@ async function onSubmit() {
     await waitAtLeast(startedAt);
     await refreshSession();
     await navigateTo("/home");
-  } catch {
+  } catch (error) {
     await waitAtLeast(startedAt);
-    errorMessage.value = "Неверный email или пароль";
+    errorMessage.value = fetchErrorMessage(error, "Неверный email или пароль");
   } finally {
     pending.value = false;
   }

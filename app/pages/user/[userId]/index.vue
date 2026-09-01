@@ -8,10 +8,15 @@ import ModalArtistMore, {
   type ModalArtistMoreProps,
 } from "~/components/modals/ModalArtistMore.vue";
 import type { ArtistDetail, ArtistLink, ArtistLinkKind } from "~/types/artist";
+import { ApiErrorCode } from "#shared/apiErrorCodes";
 import { isSameQueueSource } from "~/stores/player";
+import { formatCompactCount } from "~/utils/formatCompactCount";
+import { formatListenersLabel } from "~/utils/formatListenersLabel";
+import { pluralizeRu } from "~/utils/pluralizeRu";
 
 definePageMeta({
   layout: "app-layout",
+  key: (route) => `artist-${route.params.userId}`,
 });
 
 const route = useRoute();
@@ -29,23 +34,32 @@ const { data: artist, error } = await useFetch<ArtistDetail>(
   { key: computed(() => `artist:${userId.value}`) },
 );
 
-watch(
-  error,
-  (err) => {
-    if (!err) return;
-    throw createError({
-      statusCode: err.statusCode ?? 404,
-      statusMessage: "Artist not found",
-      fatal: true,
-    });
-  },
-  { immediate: true },
-);
+if (error.value) {
+  throw createError({
+    statusCode: error.value.statusCode ?? 404,
+    statusMessage: error.value.statusMessage ?? ApiErrorCode.ARTIST_NOT_FOUND,
+    fatal: true,
+  });
+}
 
 const artistIdForLike = computed(() => artist.value?.id);
 const { isLiked, toggleLike } = useLike("artist", artistIdForLike, {
   initial: computed(() => artist.value?.isLiked),
 });
+
+/** Число лайков; ±1 при toggle на странице */
+const likesCount = computed(() => {
+  let count = artist.value?.likesCount ?? 0;
+  const serverLiked = artist.value?.isLiked ?? false;
+  if (isLiked.value !== serverLiked) {
+    count += isLiked.value ? 1 : -1;
+  }
+  return Math.max(0, count);
+});
+
+const likesCountButtonLabel = computed(() =>
+  formatCompactCount(likesCount.value),
+);
 
 const showAlbums = computed(
   () => artist.value == null || (artist.value.albums?.length ?? 0) > 0,
@@ -91,22 +105,6 @@ const isPlayingArtist = computed(
   () => isCurrentArtist.value && playerStore.isPlaying,
 );
 
-/** Компактно: «12 тыс.» / «1,2 млн» */
-function formatListenersCount(count: number): string {
-  if (count >= 1_000_000) {
-    const value = count / 1_000_000;
-    const rounded =
-      value >= 10
-        ? String(Math.round(value))
-        : value.toFixed(1).replace(".", ",");
-    return `${rounded.replace(/,0$/, "")} млн`;
-  }
-  if (count >= 1_000) {
-    return `${Math.round(count / 1_000)} тыс.`;
-  }
-  return count.toLocaleString("ru-RU");
-}
-
 /** Плейсхолдер, если bio не заполнен */
 const bioPlaceholder = computed(() =>
   isOwnProfile.value
@@ -119,20 +117,10 @@ const hasBio = computed(() => Boolean(artist.value?.bio?.trim()));
 /** Есть ли ненулевые слушатели (для цвета подписи) */
 const hasListeners = computed(() => (artist.value?.listenersCount ?? 0) > 0);
 
-/** «Нет слушателей» / «1 слушатель» / … */
-const listenersLabel = computed(() => {
-  const count = artist.value?.listenersCount;
-  if (count == null) return null;
-  if (count <= 0) return "Нет слушателей";
-  const formatted = formatListenersCount(count);
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${formatted} слушатель`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `${formatted} слушателя`;
-  }
-  return `${formatted} слушателей`;
-});
+/** «Нет слушателей» / «1,2 млн слушателей» */
+const listenersLabel = computed(() =>
+  formatListenersLabel(artist.value?.listenersCount),
+);
 
 const LINK_LABELS: Record<ArtistLinkKind, string> = {
   spotify: "Spotify",
@@ -157,13 +145,12 @@ const moreLinksCount = computed(() =>
 const moreLinksLabel = computed(() => {
   const count = moreLinksCount.value;
   if (count <= 0) return null;
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return `и ещё ${count} ссылка`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `и ещё ${count} ссылки`;
-  }
-  return `и ещё ${count} ссылок`;
+  return pluralizeRu(
+    count,
+    `и ещё ${count} ссылка`,
+    `и ещё ${count} ссылки`,
+    `и ещё ${count} ссылок`,
+  );
 });
 
 const linksExpanded = ref(false);
@@ -384,6 +371,7 @@ async function onShareClick() {
             variant="gray"
             icon="Heart"
             :filled="isLiked"
+            :text="likesCountButtonLabel"
             @click="toggleLike"
           />
           <UiButton

@@ -5,11 +5,16 @@
  */
 import { PhUser } from "@phosphor-icons/vue";
 import type { Album, AlbumDetail } from "~/types/album";
+import { ApiErrorCode } from "#shared/apiErrorCodes";
 import { isSameQueueSource } from "~/stores/player";
 import { formatDurationRu } from "~/utils/formatDuration";
+import { formatCompactCount } from "~/utils/formatCompactCount";
+import { formatListenersLabel } from "~/utils/formatListenersLabel";
+import { formatCountRu } from "~/utils/pluralizeRu";
 
 definePageMeta({
   layout: "app-layout",
+  key: (route) => `album-${route.params.userId}-${route.params.albumId}`,
 });
 
 const route = useRoute();
@@ -21,18 +26,13 @@ const { data: album, error } = await useFetch<AlbumDetail>(
   { key: computed(() => `album:${albumId.value}`) },
 );
 
-watch(
-  error,
-  (err) => {
-    if (!err) return;
-    throw createError({
-      statusCode: err.statusCode ?? 404,
-      statusMessage: "Album not found",
-      fatal: true,
-    });
-  },
-  { immediate: true },
-);
+if (error.value) {
+  throw createError({
+    statusCode: error.value.statusCode ?? 404,
+    statusMessage: error.value.statusMessage ?? ApiErrorCode.ALBUM_NOT_FOUND,
+    fatal: true,
+  });
+}
 
 /** Альбом текущего пользователя — плашка владельца */
 const isOwnAlbum = computed(
@@ -77,18 +77,31 @@ const releaseYear = computed(() => {
 /** «1 трек» / «2 трека» / «5 треков» */
 const trackCountLabel = computed(() => {
   const count = album.value?.trackCount ?? 0;
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${count} трек`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `${count} трека`;
-  }
-  return `${count} треков`;
+  return formatCountRu(count, "трек", "трека", "треков");
 });
 
 /** Общая длительность альбома */
 const totalDurationLabel = computed(() =>
   formatDurationRu(album.value?.totalDurationSec ?? 0),
+);
+
+/** «Нет слушателей» / «1,2 млн слушателей» */
+const listenersLabel = computed(() =>
+  formatListenersLabel(album.value?.listenersCount),
+);
+
+/** Число лайков; ±1 при toggle на странице */
+const likesCount = computed(() => {
+  let count = album.value?.likesCount ?? 0;
+  const serverLiked = album.value?.isLiked ?? false;
+  if (isLiked.value !== serverLiked) {
+    count += isLiked.value ? 1 : -1;
+  }
+  return Math.max(0, count);
+});
+
+const likesCountButtonLabel = computed(() =>
+  formatCompactCount(likesCount.value),
 );
 
 /** Полку скрываю только когда точно знаю, что других альбомов нет */
@@ -218,6 +231,10 @@ function onListenClick() {
           </NuxtLink>
           <span class="hidden lg:inline" aria-hidden="true">·</span>
           <span>{{ releaseYear }}</span>
+          <template v-if="listenersLabel">
+            <span aria-hidden="true">·</span>
+            <span>{{ listenersLabel }}</span>
+          </template>
           <span aria-hidden="true">·</span>
           <span>{{ trackCountLabel }}</span>
           <span aria-hidden="true">·</span>
@@ -238,6 +255,7 @@ function onListenClick() {
             variant="gray"
             icon="Heart"
             :filled="isLiked"
+            :text="likesCountButtonLabel"
             @click="toggleLike"
           />
           <UiButton variant="gray" icon="DotsThree" />

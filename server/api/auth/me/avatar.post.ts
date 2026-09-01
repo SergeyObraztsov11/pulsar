@@ -1,6 +1,7 @@
 /**
  * POST /api/auth/me/avatar — загрузить / заменить аватар (multipart, поле avatar).
  */
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 import { processUserAvatar } from "../../../utils/processCover";
 import { avatarObjectKey, putS3Object } from "../../../utils/s3";
 
@@ -22,16 +23,10 @@ export default defineEventHandler(async (event) => {
   const parts = await readMultipartFormData(event);
   const part = parts?.find((item) => item.name === "avatar" && item.filename);
   if (!part?.data?.length) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "avatar file is required",
-    });
+    throwApiError(400, ApiErrorCode.AVATAR_FILE_REQUIRED);
   }
   if (part.data.length > AVATAR_MAX_BYTES) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "avatar is too large",
-    });
+    throwApiError(400, ApiErrorCode.AVATAR_TOO_LARGE);
   }
 
   const body = await processUserAvatar(part.data);

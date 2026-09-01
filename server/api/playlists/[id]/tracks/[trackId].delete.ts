@@ -1,6 +1,8 @@
 import { requireAuthUserId } from "../../../../utils/getAuthUserId";
 import { isLikedTracksPlaylist } from "../../../../utils/likedPlaylist";
 import { compactPlaylistPositionsAfterDelete } from "../../../../utils/playlistPosition";
+import { touchPlaylistUpdatedAt } from "../../../../utils/touchPlaylistUpdatedAt";
+import { ApiErrorCode, throwApiError } from "../../../../utils/apiError";
 
 /**
  * DELETE /api/playlists/:id/tracks/:trackId — remove track from playlist
@@ -10,18 +12,15 @@ export default defineEventHandler(async (event) => {
   const playlistId = getRouterParam(event, "id");
   const trackId = getRouterParam(event, "trackId");
   if (!playlistId || !trackId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Playlist id and track id are required",
-    });
+    throwApiError(400, ApiErrorCode.PLAYLIST_TRACK_ID_REQUIRED);
   }
 
   const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
   if (!playlist) {
-    throw createError({ statusCode: 404, statusMessage: "Playlist not found" });
+    throwApiError(404, ApiErrorCode.PLAYLIST_NOT_FOUND);
   }
   if (playlist.userId !== userId) {
-    throw createError({ statusCode: 403, statusMessage: "Forbidden" });
+    throwApiError(403, ApiErrorCode.FORBIDDEN);
   }
 
   const removed = await prisma.playlistTrack.findUnique({
@@ -40,6 +39,8 @@ export default defineEventHandler(async (event) => {
     if (!isLikedTracksPlaylist(playlist.systemKind)) {
       await compactPlaylistPositionsAfterDelete(tx, playlistId, removed.position);
     }
+
+    await touchPlaylistUpdatedAt(playlistId, tx);
   });
 
   return { ok: true, removed: true };

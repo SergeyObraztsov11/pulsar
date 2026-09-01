@@ -1,5 +1,7 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
 import { isLikedTracksPlaylist } from "../../../utils/likedPlaylist";
+import { touchPlaylistUpdatedAt } from "../../../utils/touchPlaylistUpdatedAt";
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
 /**
  * POST /api/playlists/:id/tracks — add track to playlist
@@ -9,21 +11,21 @@ export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
   const playlistId = getRouterParam(event, "id");
   if (!playlistId) {
-    throw createError({ statusCode: 400, statusMessage: "Playlist id is required" });
+    throwApiError(400, ApiErrorCode.PLAYLIST_ID_REQUIRED);
   }
 
   const body = await readBody<{ trackId?: string }>(event);
   const trackId = body.trackId?.trim();
   if (!trackId) {
-    throw createError({ statusCode: 400, statusMessage: "trackId is required" });
+    throwApiError(400, ApiErrorCode.PLAYLIST_TRACK_ID_REQUIRED);
   }
 
   const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
   if (!playlist) {
-    throw createError({ statusCode: 404, statusMessage: "Playlist not found" });
+    throwApiError(404, ApiErrorCode.PLAYLIST_NOT_FOUND);
   }
   if (playlist.userId !== userId) {
-    throw createError({ statusCode: 403, statusMessage: "Forbidden" });
+    throwApiError(403, ApiErrorCode.FORBIDDEN);
   }
 
   const track = await prisma.track.findUnique({
@@ -31,7 +33,7 @@ export default defineEventHandler(async (event) => {
     select: { id: true },
   });
   if (!track) {
-    throw createError({ statusCode: 404, statusMessage: "Track not found" });
+    throwApiError(404, ApiErrorCode.TRACK_NOT_FOUND);
   }
 
   const existing = await prisma.playlistTrack.findUnique({
@@ -47,12 +49,15 @@ export default defineEventHandler(async (event) => {
       orderBy: { position: "desc" },
       select: { position: true },
     });
-    await prisma.playlistTrack.create({
-      data: {
-        playlistId,
-        trackId,
-        position: last ? last.position + 1 : 0,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.playlistTrack.create({
+        data: {
+          playlistId,
+          trackId,
+          position: last ? last.position + 1 : 0,
+        },
+      });
+      await touchPlaylistUpdatedAt(playlistId, tx);
     });
   } else {
     const last = await prisma.playlistTrack.findFirst({
@@ -61,8 +66,11 @@ export default defineEventHandler(async (event) => {
       select: { position: true },
     });
     const position = last ? last.position + 1 : 0;
-    await prisma.playlistTrack.create({
-      data: { playlistId, trackId, position },
+    await prisma.$transaction(async (tx) => {
+      await tx.playlistTrack.create({
+        data: { playlistId, trackId, position },
+      });
+      await touchPlaylistUpdatedAt(playlistId, tx);
     });
   }
 

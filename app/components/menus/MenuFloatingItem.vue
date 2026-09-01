@@ -76,8 +76,8 @@ onBeforeUnmount(() => {
   >
     <button
       type="button"
-      class="flex w-full min-w-48 items-center gap-2 rounded-lg p-2 text-left leading-none text-primary-white transition-colors hover:bg-primary-gray/25"
-      :class="submenuOpen ? 'bg-primary-gray/25' : null"
+      class="flex w-full min-w-48 items-center gap-2 rounded-lg p-2 text-left leading-none text-primary-white transition-colors hover:bg-primary-gray-light"
+      :class="submenuOpen ? 'bg-primary-gray-light' : null"
       @click="onSelect"
     >
       <component

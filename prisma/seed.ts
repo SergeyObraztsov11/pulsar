@@ -170,7 +170,7 @@ async function main() {
       ...users.map((user) => ({
         id: `liked-${user.id}`,
         userId: user.id,
-        name: "Любимые",
+        name: "Мне нравится",
         isPublic: false,
         systemKind: "liked_tracks" as const,
       })),

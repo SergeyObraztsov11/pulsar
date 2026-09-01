@@ -28,6 +28,7 @@ model User {
   artistLikesGiven    ArtistLike[] @relation("ArtistLikesGiven")
   artistLikesReceived ArtistLike[] @relation("ArtistLikesReceived")
   artistLinks         ArtistLink[]
+  trackListens        TrackListen[]
 }
 
 /// Тип внешней ссылки артиста (стриминг / соцсеть)
@@ -125,6 +126,7 @@ model Track {
   artist         User            @relation(fields: [artistId], references: [id], onDelete: Cascade)
   playlistTracks PlaylistTrack[]
   genres         TrackGenre[]
+  listens        TrackListen[]
 
   @@unique([albumId, trackNumber])
   @@index([albumId])
@@ -134,11 +136,13 @@ model Track {
 model Playlist {
   id         String              @id @default(cuid())
   userId     String
-  name       String
-  coverSrc   String?
+  name        String
+  description String?
+  coverSrc    String?
   isPublic   Boolean             @default(false)
   systemKind PlaylistSystemKind?
   createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   tracks PlaylistTrack[]
@@ -216,4 +220,20 @@ model AlbumGenre {
 
   @@id([albumId, genreId])
   @@index([genreId])
+}
+
+/// Засчитанное прослушивание трека (append-only)
+model TrackListen {
+  id         String   @id @default(cuid())
+  userId     String
+  trackId    String
+  listenedAt DateTime @default(now())
+  playedSec  Int
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([userId, listenedAt])
+  @@index([trackId, listenedAt])
+  @@index([trackId])
 }

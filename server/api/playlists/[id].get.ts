@@ -1,4 +1,5 @@
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 import {
   getLikedTrackIdSet,
   isLikedTracksPlaylist,
@@ -15,7 +16,7 @@ import {
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: "Playlist id is required" });
+    throwApiError(400, ApiErrorCode.PLAYLIST_ID_REQUIRED);
   }
 
   const userId = getAuthUserId(event);
@@ -26,11 +27,11 @@ export default defineEventHandler(async (event) => {
   });
 
   if (!playlist) {
-    throw createError({ statusCode: 404, statusMessage: "Playlist not found" });
+    throwApiError(404, ApiErrorCode.PLAYLIST_NOT_FOUND);
   }
 
   if (!playlist.isPublic && playlist.userId !== userId) {
-    throw createError({ statusCode: 403, statusMessage: "Forbidden" });
+    throwApiError(403, ApiErrorCode.PRIVATE_PLAYLIST);
   }
 
   const [trackRows, likedTrackIds] = await Promise.all([

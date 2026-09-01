@@ -1,12 +1,16 @@
 <script setup lang="ts">
 /**
- * AppPlayerHost — единственный <audio> приложения.
- * Смена трека: явный load; ended после skip игнорируем.
+ * AppAudioHost — единственный <audio> приложения.
+ * Синхронизирует DOM с playerStore; смена трека — явный load; ended после skip игнорируем.
+ * Учёт прослушиваний — рядом с audio (useTrackListen), без отдельного plugin.
  */
 import { toMediaSrc } from "~/utils/mediaSrc";
 
 const playerStore = usePlayerStore();
 const audioEl = useTemplateRef<HTMLAudioElement>("audioEl");
+
+/** Один раз на lifetime audio-host: порог → POST /api/tracks/:id/listen */
+useTrackListen();
 
 const src = computed(
   () => toMediaSrc(playerStore.current?.audioSrc) ?? "",
@@ -113,10 +117,10 @@ function onEnded() {
 </script>
 
 <template>
-  <!-- Скрытый движок: не в мини-плеере, чтобы не размонтироваться -->
+  <!-- Скрытый <audio>: в layout, чтобы не размонтироваться при смене chrome плеера -->
   <audio
     ref="audioEl"
-    class="pointer-events-none absolute size-px overflow-hidden opacity-0"
+    class="pointer-events-none hidden"
     preload="auto"
     tabindex="-1"
     @canplay="onCanPlay"
@@ -125,4 +129,5 @@ function onEnded() {
     @timeupdate="onTimeUpdate"
     @ended="onEnded"
   />
+
 </template>

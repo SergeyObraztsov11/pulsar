@@ -1,7 +1,11 @@
 import { PlaylistSystemKind } from "../../app/generated/prisma/client";
+import { touchPlaylistUpdatedAt } from "./touchPlaylistUpdatedAt";
 
 /** Display name for the system liked-tracks playlist */
-export const LIKED_PLAYLIST_NAME = "Любимые";
+export const LIKED_PLAYLIST_NAME = "Мне нравится";
+
+/** Default cover in public/ for system playlist «Любимые» */
+export const LIKED_PLAYLIST_COVER_SRC = "/covers/image.png";
 
 export function isLikedTracksPlaylist(
   systemKind: PlaylistSystemKind | null | undefined,
@@ -64,12 +68,15 @@ export async function addToLikedPlaylist(userId: string, trackId: string) {
     select: { position: true },
   });
 
-  await prisma.playlistTrack.create({
-    data: {
-      playlistId: playlist.id,
-      trackId,
-      position: last ? last.position + 1 : 0,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.playlistTrack.create({
+      data: {
+        playlistId: playlist.id,
+        trackId,
+        position: last ? last.position + 1 : 0,
+      },
+    });
+    await touchPlaylistUpdatedAt(playlist.id, tx);
   });
 }
 
@@ -78,9 +85,12 @@ export async function removeFromLikedPlaylist(userId: string, trackId: string) {
   const playlist = await getLikedPlaylist(userId);
   if (!playlist) return;
 
-  await prisma.playlistTrack.deleteMany({
+  const deleted = await prisma.playlistTrack.deleteMany({
     where: { playlistId: playlist.id, trackId },
   });
+  if (deleted.count > 0) {
+    await touchPlaylistUpdatedAt(playlist.id);
+  }
 }
 
 /** Create «Любимые» inside user registration transaction */

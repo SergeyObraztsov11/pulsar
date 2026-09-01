@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
+
 /**
  * POST /api/auth/login — вход и сессия.
  * Body: { email, password }
@@ -9,26 +11,17 @@ export default defineEventHandler(async (event) => {
   const password = body.password ?? "";
 
   if (!email || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "email and password are required",
-    });
+    throwApiError(400, ApiErrorCode.EMAIL_PASSWORD_REQUIRED);
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Invalid email or password",
-    });
+    throwApiError(401, ApiErrorCode.INVALID_CREDENTIALS);
   }
 
   const valid = await verifyPassword(user.passwordHash, password);
   if (!valid) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Invalid email or password",
-    });
+    throwApiError(401, ApiErrorCode.INVALID_CREDENTIALS);
   }
 
   // Старый формат хеша (сид) → перехешируем на формат nuxt-auth-utils

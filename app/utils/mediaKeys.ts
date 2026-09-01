@@ -1,5 +1,6 @@
 /**
- * Ключи объектов в бакете media.
+ * mediaKeys — ключи объектов в бакете media и константы seed-данных.
+ * Upload, seed, генерация путей audio / covers / avatars.
  */
 export function audioObjectKey(trackId: string) {
   return `audio/${trackId}.mp3`;
@@ -10,7 +11,7 @@ export function albumCoverKey(albumId: string, ext: "jpg" | "webp" = "webp") {
 }
 
 export function playlistCoverKey(playlistId: string) {
-  return `covers/playlists/${playlistId}.jpg`;
+  return `covers/playlists/${playlistId}.webp`;
 }
 
 export function avatarObjectKey(userId: string) {

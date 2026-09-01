@@ -4,6 +4,7 @@
  * (треки, лайки, жанры — каскадом).
  */
 import { deleteS3Object } from "../../utils/s3";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 
 /** Ключ в бакете, не публичный путь вроде /covers/c1.jpg */
 function isObjectKey(src: string | null | undefined): src is string {
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: "Album id is required" });
+    throwApiError(400, ApiErrorCode.ALBUM_ID_REQUIRED);
   }
 
   const album = await prisma.album.findUnique({
@@ -28,11 +29,11 @@ export default defineEventHandler(async (event) => {
   });
 
   if (!album) {
-    throw createError({ statusCode: 404, statusMessage: "Album not found" });
+    throwApiError(404, ApiErrorCode.ALBUM_NOT_FOUND);
   }
 
   if (album.artistId !== userId) {
-    throw createError({ statusCode: 403, statusMessage: "Forbidden" });
+    throwApiError(403, ApiErrorCode.FORBIDDEN);
   }
 
   const keys = [

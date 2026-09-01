@@ -9,4 +9,5 @@
   </NuxtLayout>
   <!-- Глобальная модалка (открывается через useModal) -->
   <ModalHost />
+  <AppToasts />
 </template>

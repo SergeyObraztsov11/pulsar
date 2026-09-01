@@ -43,6 +43,7 @@ type AlbumDetailRow = {
 export function serializeAlbumDetail<T extends AlbumDetailRow>(
   album: T,
   likedTrackIds: Set<string>,
+  listenersCount: number,
 ) {
   const { genres, likes, tracks, _count, ...rest } = album;
   return {
@@ -50,10 +51,20 @@ export function serializeAlbumDetail<T extends AlbumDetailRow>(
     genres: genres.map((row) => row.genre),
     isLiked: likes.length > 0,
     likesCount: _count.likes,
+    listenersCount,
     trackCount: _count.tracks,
     totalDurationSec: tracks.reduce((sum, track) => sum + track.durationSec, 0),
     tracks: tracks.map((track) =>
       serializeTrackRow(track, likedTrackIds),
     ),
   };
+}
+
+/** Уникальные пользователи с хотя бы одним listen на треках альбома */
+export async function getAlbumListenersCount(albumId: string) {
+  const groups = await prisma.trackListen.groupBy({
+    by: ["userId"],
+    where: { track: { albumId } },
+  });
+  return groups.length;
 }

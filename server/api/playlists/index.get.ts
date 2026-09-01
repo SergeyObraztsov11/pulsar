@@ -1,6 +1,7 @@
 import { getOrCreateLikedPlaylist, isLikedTracksPlaylist } from "../../utils/likedPlaylist";
 import { requireAuthUserId } from "../../utils/getAuthUserId";
 import { serializePlaylistSummary } from "../../utils/playlistDetail";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 
 /**
  * GET /api/playlists — current user's playlists (incl. system «Любимые»)
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
       select: { id: true },
     });
     if (!track) {
-      throw createError({ statusCode: 404, statusMessage: "Track not found" });
+      throwApiError(404, ApiErrorCode.TRACK_NOT_FOUND);
     }
 
     const rows = await prisma.playlistTrack.findMany({

@@ -1,4 +1,5 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
 /**
  * DELETE /api/artists/:id/like
@@ -7,10 +8,7 @@ export default defineEventHandler(async (event) => {
   const userId = requireAuthUserId(event);
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Artist id is required",
-    });
+    throwApiError(400, ApiErrorCode.ARTIST_ID_REQUIRED);
   }
 
   await prisma.artistLike.deleteMany({

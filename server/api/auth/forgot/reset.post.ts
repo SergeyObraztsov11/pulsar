@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
+
 /**
  * POST /api/auth/forgot/reset — новый пароль по коду, затем сессия.
  * Body: { email, code, password }
@@ -14,17 +16,11 @@ export default defineEventHandler(async (event) => {
   const password = body.password ?? "";
 
   if (!email || code.length !== REGISTER_OTP_LENGTH) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Введите код из письма.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_REQUIRED);
   }
 
   if (password.length < 8) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Пароль должен быть не короче 8 символов.",
-    });
+    throwApiError(400, ApiErrorCode.PASSWORD_TOO_SHORT);
   }
 
   const otp = await prisma.passwordResetOtp.findUnique({ where: { email } });
@@ -32,18 +28,12 @@ export default defineEventHandler(async (event) => {
     if (otp) {
       await prisma.passwordResetOtp.delete({ where: { email } });
     }
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Код неверный или срок истёк. Запросите новый.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_EXPIRED_OR_INVALID);
   }
 
   if (otp.attempts >= REGISTER_OTP_MAX_ATTEMPTS) {
     await prisma.passwordResetOtp.delete({ where: { email } });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Слишком много попыток. Запросите код снова.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_TOO_MANY_ATTEMPTS);
   }
 
   const valid = await verifyPassword(otp.codeHash, code);
@@ -52,10 +42,7 @@ export default defineEventHandler(async (event) => {
       where: { email },
       data: { attempts: { increment: 1 } },
     });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Неверный код.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_INVALID);
   }
 
   const user = await prisma.user.findUnique({
@@ -69,10 +56,7 @@ export default defineEventHandler(async (event) => {
   });
   if (!user) {
     await prisma.passwordResetOtp.delete({ where: { email } });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Код неверный или срок истёк. Запросите новый.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_EXPIRED_OR_INVALID);
   }
 
   const passwordHash = await hashPassword(password);

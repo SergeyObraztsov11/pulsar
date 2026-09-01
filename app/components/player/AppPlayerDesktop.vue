@@ -3,7 +3,14 @@
  * AppPlayerDesktop — мини-плеер для lg+ (h-16).
  * Chrome: полоса gray-dark; play white; остальные ghost (читаются на gray-dark).
  */
+import { formatTimeMmSs } from "~/utils/formatTime";
+
 const playerStore = usePlayerStore();
+
+/** Mini: есть трек и expanded закрыт */
+const showMiniPlayer = computed(
+  () => playerStore.showPlayer && !playerStore.isExpanded,
+);
 
 /** Иконка громкости по mute / уровню */
 const volumeIcon = computed(() => {
@@ -14,15 +21,7 @@ const volumeIcon = computed(() => {
   return "SpeakerLow" as const;
 });
 
-/** mm:ss из секунд */
-function formatTime(totalSeconds: number) {
-  const seconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(seconds / 60);
-  const rest = seconds % 60;
-  return `${minutes}:${rest.toString().padStart(2, "0")}`;
-}
-
-const currentTimeLabel = computed(() => formatTime(playerStore.currentTime));
+const currentTimeLabel = computed(() => formatTimeMmSs(playerStore.currentTime));
 
 const volumePct = computed({
   get: () => Math.round(playerStore.volume * 100),
@@ -75,6 +74,7 @@ function onSeekCommit(event: Event) {
 
 <template>
   <div
+    v-if="showMiniPlayer"
     class="relative hidden h-16 w-full shrink-0 bg-primary-gray-dark lg:block"
   >
     <!-- Как HeaderLayout: max-w-5xl + px-8 -->
@@ -158,7 +158,7 @@ function onSeekCommit(event: Event) {
 
         <!-- Время: текущее / всего -->
         <p class="shrink-0 text-xs leading-none text-primary-gray tabular-nums">
-          {{ currentTimeLabel }} / {{ formatTime(playerStore.duration) }}
+          {{ currentTimeLabel }} / {{ formatTimeMmSs(playerStore.duration) }}
         </p>
 
         <!-- Громкость (hover) + раскрытие -->

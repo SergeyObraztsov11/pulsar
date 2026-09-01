@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
+
 /**
  * GET /api/auth/me — текущий пользователь (публичные поля + email).
  */
@@ -20,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   if (!user) {
     await clearUserSession(event);
-    throw createError({ statusCode: 401, statusMessage: "User not found" });
+    throwApiError(401, ApiErrorCode.USER_NOT_FOUND);
   }
 
   return user;

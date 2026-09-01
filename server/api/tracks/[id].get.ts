@@ -1,4 +1,5 @@
 import { getAuthUserId } from "../../utils/getAuthUserId";
+import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 import { serializeTrackRow } from "../../utils/playlistDetail";
 
@@ -8,7 +9,7 @@ import { serializeTrackRow } from "../../utils/playlistDetail";
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: "Track id is required" });
+    throwApiError(400, ApiErrorCode.TRACK_ID_REQUIRED);
   }
 
   const userId = getAuthUserId(event);
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
   ]);
 
   if (!track) {
-    throw createError({ statusCode: 404, statusMessage: "Track not found" });
+    throwApiError(404, ApiErrorCode.TRACK_NOT_FOUND);
   }
 
   return serializeTrackRow(track, likedTrackIds);

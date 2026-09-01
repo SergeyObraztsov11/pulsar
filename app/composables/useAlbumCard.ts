@@ -82,6 +82,8 @@ export function useAlbumCard(
         id,
         title: detail.name,
       });
+    } catch {
+      // Album unavailable — ignore play from card
     } finally {
       playPending.value = false;
     }

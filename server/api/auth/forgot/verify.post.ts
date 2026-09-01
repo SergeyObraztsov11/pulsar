@@ -1,3 +1,5 @@
+import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
+
 /**
  * POST /api/auth/forgot/verify — проверка кода сброса.
  * Body: { email, code }
@@ -9,10 +11,7 @@ export default defineEventHandler(async (event) => {
   const code = body.code?.trim() ?? "";
 
   if (!email || code.length !== REGISTER_OTP_LENGTH) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Введите код из письма.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_REQUIRED);
   }
 
   const otp = await prisma.passwordResetOtp.findUnique({ where: { email } });
@@ -20,18 +19,12 @@ export default defineEventHandler(async (event) => {
     if (otp) {
       await prisma.passwordResetOtp.delete({ where: { email } });
     }
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Код неверный или срок истёк. Запросите новый.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_EXPIRED_OR_INVALID);
   }
 
   if (otp.attempts >= REGISTER_OTP_MAX_ATTEMPTS) {
     await prisma.passwordResetOtp.delete({ where: { email } });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Слишком много попыток. Запросите код снова.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_TOO_MANY_ATTEMPTS);
   }
 
   const valid = await verifyPassword(otp.codeHash, code);
@@ -40,10 +33,7 @@ export default defineEventHandler(async (event) => {
       where: { email },
       data: { attempts: { increment: 1 } },
     });
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Неверный код.",
-    });
+    throwApiError(400, ApiErrorCode.CODE_INVALID);
   }
 
   return { ok: true };
