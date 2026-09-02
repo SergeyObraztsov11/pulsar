@@ -67,7 +67,7 @@ const {
     <template #meta>
       <NuxtLink
         :to="playlistTo"
-        class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300"
       >
         {{ nameLabel }}
       </NuxtLink>
@@ -93,7 +93,7 @@ const {
     <template #meta>
       <NuxtLink
         :to="playlistTo"
-        class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        class="min-w-0 truncate text-base font-medium text-primary-white transition-colors duration-300"
       >
         {{ nameLabel }}
       </NuxtLink>

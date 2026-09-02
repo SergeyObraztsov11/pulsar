@@ -51,6 +51,7 @@ export function useTrackCard(
     if (sec == null) return "0:00";
     return formatTimeMmSs(sec);
   });
+  const isExplicit = computed(() => trackValue.value?.isExplicit ?? false);
   const coverSrc = computed(
     () => trackValue.value?.album?.coverSrc ?? undefined,
   );
@@ -152,6 +153,7 @@ export function useTrackCard(
     nameLabel,
     artistLabel,
     durationLabel,
+    isExplicit,
     coverSrc,
     trackTo,
     artistTo,

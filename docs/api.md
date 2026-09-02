@@ -42,7 +42,7 @@ Query: `search`, `liked=true`, `sort=newest|oldest|name|likedAt`
 Создать альбом с треками. Auth. `multipart/form-data`:
 
 - `name` — название альбома
-- `cover` — картинка ≤10MB (необязательно): JPEG / PNG / WebP / AVIF → в бакете `covers/albums/{id}.webp` (800×800); `coverColor` — dominant hex (sharp.stats, L не ниже 0.35)
+- `cover` — картинка ≤10MB (необязательно): JPEG / PNG / WebP / AVIF → в бакете `covers/albums/{id}.webp` (800×800); `coverColor` — accent hex для hero (`#rrggbb`, сэмпл 48×48, hue-bin по насыщенным пикселям, нормализация L≈0.38)
 - `tracks[0][name]`, `tracks[0][audio]` — имя и MP3 (≤30MB); индексы `0…n`
 - `tracks[i][isExplicit]` — необязательно (`true`/`1`)
 - длительность не с клиента: `music-metadata` по файлу; не аудио → 400

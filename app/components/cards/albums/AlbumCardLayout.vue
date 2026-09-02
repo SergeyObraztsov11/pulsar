@@ -11,7 +11,7 @@ defineOptions({ inheritAttrs: false });
   <div class="w-48 shrink-0 flex-col gap-2" v-bind="$attrs">
     <!-- Cover: fixed 192×192 -->
     <div
-      class="relative size-48 shrink-0 overflow-hidden rounded-xl bg-primary-gray-dark"
+      class="relative size-48 shrink-0 overflow-hidden rounded-xl bg-tone-surface"
     >
       <slot name="cover" />
     </div>

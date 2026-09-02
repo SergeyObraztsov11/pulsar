@@ -112,13 +112,13 @@ function onSelect(item: MenuItem) {
         <!-- Затемнение -->
         <button
           type="button"
-          class="menu-sheet-backdrop absolute inset-0 bg-primary-black/80"
+          class="menu-sheet-backdrop absolute inset-0 bg-tone-shell/80"
           @click="requestClose"
         />
 
         <!-- Sheet -->
         <div
-          class="menu-sheet-panel relative z-10 mt-16 flex max-h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden rounded-t-4xl bg-primary-gray-dark text-primary-white"
+          class="menu-sheet-panel relative z-10 mt-16 flex max-h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden bg-tone-surface text-tone-white"
           @click.stop
         >
           <!-- Grabber -->
@@ -128,7 +128,7 @@ function onSelect(item: MenuItem) {
             @click="requestClose"
           >
             <span
-              class="h-1 w-10 rounded-full bg-primary-gray"
+              class="h-1 w-10 bg-tone-muted"
             />
           </button>
 

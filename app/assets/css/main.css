@@ -9,22 +9,54 @@
   --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
 
   /*
-   * Grayscale: чистые нейтрали (тёплый undertone убрали — было кофейно).
-   * Архив исходная: white #fff · gray-light #b3b3b3 · gray #6a6a6a ·
-   * gray-dark #141414 · black #0a0a0a
-   * Accent удалён (был #5a60e0 / #6b73ff + accent-1…4).
+   * ── Legacy: primary-* ─────────────────────────────────────
+   * Текущий UI. Не удалять до постепенной миграции на tone-*.
+   * Имена light/dark не совпадают с яркостью — не ориентироваться на суффикс.
    */
-  --color-primary-white: #ffffff;
-  /* --color-primary-gray-extra-light: #2e2d2d; */
-  --color-primary-gray-light: #2e2d2d;
-  
-  --color-primary-gray: #6a6a6a;
 
+  /** Основной текст, белые CTA, иконки на тёмном фоне */
+  --color-primary-white: #ffffff;
+
+  /** Legacy: hover gray-кнопок, заливки полей (сейчас #6a6a6a — средний серый) */
+  --color-primary-gray-light: #6a6a6a;
+
+  /** Legacy: muted-текст и тёмные заливки (сейчас #2e2d2d — почти surface) */
+  --color-primary-gray: #2e2d2d;
+
+  /** Карточки, мини-плеер, меню, модалки, hover строк треков */
   --color-primary-gray-dark: #1a1a1a;
+
+  /** Фон main, sidebar, layout приложения */
   --color-primary-black: #111111;
 
-  /* Ошибки форм */
+  /** Ошибки форм, валидация (общий для legacy и tone-*) */
   --color-danger: #f25f5f;
+
+  /*
+   * ── v2: tone-* ────────────────────────────────────────────
+   * Новая шкала: роль в UI, не «light/dark» в названии.
+   * Фоны: shell (внешний) → canvas (контент) → surface (панели).
+   * Текст: white (primary) · muted (secondary).
+   * Ошибки — тот же danger выше.
+   */
+
+  /** Primary-текст, белые кнопки Play / Submit */
+  --color-tone-white: #ffffff;
+
+  /** Secondary-текст: артист, мета, duration, placeholder-подписи */
+  --color-tone-muted: #a7a7a7;
+
+  /** Hover строк, покой gray-кнопки, фон выпадающего меню */
+  --color-tone-surface: #282828;
+
+  /** Hover gray-кнопки и пунктов меню */
+  --color-tone-surface-hover: #3a3a3a;
+
+  /** Фон main / sidebar; строка трека в покое (прозрачно) */
+  --color-tone-canvas: #121212;
+
+  /** Край экрана: html/body, зазор вокруг rounded main (AppLayout shell) */
+  --color-tone-shell: #000000;
 
   /* Именованные анимации для утилит animate-* */
   --animate-fade-up: fade-up 0.55s ease-out both;
@@ -72,7 +104,7 @@ html,
 body {
   height: 100%;
   overflow: hidden;
-  background-color: var(--color-primary-black);
+  background-color: var(--color-tone-shell);
 }
 
 html {
@@ -81,12 +113,20 @@ html {
 
 /* Выделение текста */
 ::selection {
-  background-color: color-mix(in srgb, var(--color-primary-white) 50%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-primary-white) 50%,
+    transparent
+  );
   color: var(--color-primary-white);
 }
 
 ::-moz-selection {
-  background-color: color-mix(in srgb, var(--color-primary-white) 50%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-primary-white) 50%,
+    transparent
+  );
   color: var(--color-primary-white);
 }
 

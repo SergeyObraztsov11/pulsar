@@ -28,6 +28,7 @@ const {
   nameLabel,
   artistLabel,
   durationLabel,
+  isExplicit,
   trackTo,
   artistTo,
   albumTo,
@@ -41,9 +42,9 @@ const {
 
 <template>
   <TrackCardLayout
-    class="flex items-center lg:transition-transform lg:duration-200 lg:hover:bg-primary-gray-dark lg:motion-reduce:transform-none lg:motion-reduce:transition-none"
+    class="flex items-center lg:transition-colors lg:duration-200 lg:hover:bg-tone-surface lg:motion-reduce:transition-none"
     :class="[
-      isCurrent ? 'bg-primary-gray-dark' : '',
+      isCurrent ? 'bg-tone-surface' : '',
       interactive && !isLgUp ? 'cursor-pointer' : '',
     ]"
     @mouseenter="isHovered = true"
@@ -52,13 +53,13 @@ const {
   >
     <!-- Cover -->
     <div
-      class="relative size-12 shrink-0 overflow-hidden rounded-md bg-primary-gray-dark"
+      class="relative size-12 shrink-0 overflow-hidden rounded-md bg-tone-surface"
     >
       <UiCoverImage :src="coverSrc" />
 
       <div
         v-if="interactive && showCoverOverlayPanel"
-        class="absolute inset-0 flex items-center justify-center bg-primary-black/50"
+        class="absolute inset-0 flex items-center justify-center bg-tone-shell/50"
       >
         <UiEqualizerIcon
           v-show="showCoverEqualizer"
@@ -67,7 +68,7 @@ const {
         <button
           v-show="showCoverPlay"
           type="button"
-          class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
+          class="flex size-8 items-center justify-center text-tone-white transition-colors duration-150"
           @click.stop="onPlayClick()"
         >
           <PhPause v-if="isPlayingCurrent" :size="16" weight="fill" />
@@ -92,6 +93,7 @@ const {
       :artist-to="artistTo"
       :is-playing-current="isPlayingCurrent"
       :is-liked="isLiked"
+      :is-explicit="isExplicit"
       :duration-label="durationLabel"
       @play="onPlayClick"
       @toggle-like="toggleLike"

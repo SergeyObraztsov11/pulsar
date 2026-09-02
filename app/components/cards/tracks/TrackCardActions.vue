@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * TrackCardActions — duration, like, more menu.
+ * TrackCardActions — explicit, duration, like, more menu.
  */
-import { PhDotsThree, PhHeart } from "@phosphor-icons/vue";
+import { PhDotsThree, PhPlusSquare } from "@phosphor-icons/vue";
 
 defineProps<{
   interactive: boolean;
@@ -11,6 +11,7 @@ defineProps<{
   artistTo: string;
   isPlayingCurrent: boolean;
   isLiked: boolean;
+  isExplicit: boolean;
   durationLabel: string;
 }>();
 
@@ -23,9 +24,9 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex items-center justify-center gap-3" @click.stop>
+  <div class="flex shrink-0 items-center gap-2" @click.stop>
     <span
-      class="flex min-w-8 items-center justify-center text-xs tabular-nums text-primary-gray select-none"
+      class="inline-flex size-10 shrink-0 items-center justify-center text-xs leading-none tabular-nums text-tone-white select-none"
     >
       {{ durationLabel }}
     </span>
@@ -33,10 +34,10 @@ const emit = defineEmits<{
     <button
       v-if="interactive"
       type="button"
-      class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
+      class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
       @click="emit('toggle-like')"
     >
-      <PhHeart :size="20" :weight="isLiked ? 'fill' : 'light'" />
+      <PhPlusSquare :size="24" :weight="isLiked ? 'fill' : 'light'" />
     </button>
 
     <TrackMoreMenu
@@ -53,7 +54,7 @@ const emit = defineEmits<{
       <template #trigger>
         <button
           type="button"
-          class="flex size-8 items-center justify-center text-primary-white transition-colors duration-150"
+          class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
         >
           <PhDotsThree :size="24" weight="light" />
         </button>

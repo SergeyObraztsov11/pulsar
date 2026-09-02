@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * SearchField — компактный underline-поиск в шапке (у логотипа) + suggest.
+ * SearchField — pill-поиск для AppHeader + floating suggest.
  */
 import {
   autoUpdate,
@@ -12,6 +12,7 @@ import {
 } from "@floating-ui/vue";
 import { onClickOutside } from "@vueuse/core";
 import { PhMagnifyingGlass } from "@phosphor-icons/vue";
+import { MENU_FLOATING_PANEL_CLASS } from "~/components/menus/menu.types";
 
 const route = useRoute();
 
@@ -24,7 +25,7 @@ const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
 const { tracks, albums, artists, trimmedQuery, hasResults, showEmpty } =
   useSearchSuggest(query);
 
-/** Панель видна при фокусе, непустом запросе и готовом ответе */
+/** Панель при фокусе и непустом запросе */
 const isOpen = computed(
   () =>
     isFocused.value &&
@@ -48,7 +49,6 @@ const { floatingStyles } = useFloating(fieldEl, panelEl, {
     size({
       apply({ rects, elements, availableHeight }) {
         Object.assign(elements.floating.style, {
-          /* Поле узкое — панель не уже 18rem */
           width: `${Math.max(rects.reference.width, 288)}px`,
           maxHeight: `${Math.max(120, availableHeight - 8)}px`,
         });
@@ -57,7 +57,6 @@ const { floatingStyles } = useFloating(fieldEl, panelEl, {
   ],
 });
 
-/** Снять фокус с поля */
 function blurField() {
   isFocused.value = false;
   inputEl.value?.blur();
@@ -72,7 +71,6 @@ watch(
   },
 );
 
-/** Enter — /search; Escape — закрыть */
 function onFieldKeydown(event: KeyboardEvent) {
   if (event.key === "Enter" && trimmedQuery.value) {
     event.preventDefault();
@@ -88,40 +86,39 @@ function onFieldKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="relative w-44 shrink-0 sm:w-52">
-    <!-- Underline-строка: белый chrome -->
+  <div class="relative min-w-0 shrink-0">
+    <!-- Pill: tone-surface на shell -->
     <div
       ref="fieldEl"
-      class="group box-border flex h-10 min-w-0 w-full items-center gap-2 border-b border-primary-white px-1 leading-none transition-opacity"
-      :class="isFocused ? 'opacity-100' : 'opacity-80'"
+      class="flex h-10 w-full min-w-0 items-center gap-2 rounded-full bg-tone-surface px-4 leading-none transition-colors focus-within:bg-tone-surface-hover"
     >
       <PhMagnifyingGlass
-        :size="18"
+        :size="20"
         weight="light"
-        class="shrink-0 text-primary-white"
+        class="shrink-0 text-tone-muted"
       />
       <input
         ref="inputEl"
         v-model="query"
-        type="text"
+        type="search"
         name="search"
         autocomplete="off"
-        placeholder="Поиск…"
-        class="h-full min-w-0 flex-1 bg-transparent text-left text-sm leading-none text-primary-white outline-none placeholder:text-primary-white/50"
+        placeholder="Что хотите послушать?"
+        class="h-full min-w-0 flex-1 bg-transparent text-sm leading-none text-tone-white outline-none placeholder:text-tone-muted"
         @focus="isFocused = true"
         @blur="isFocused = false"
         @keydown="onFieldKeydown"
       />
     </div>
 
-    <!-- Подсказки поверх страницы -->
     <Teleport to="body">
       <div
         v-if="isOpen"
         ref="panelEl"
         data-menu-floating-panel
         :style="floatingStyles"
-        class="z-60 overflow-y-auto rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white"
+        :class="MENU_FLOATING_PANEL_CLASS"
+        class="overflow-y-auto rounded-none"
         @mousedown.prevent
       >
         <SearchSuggestPanel

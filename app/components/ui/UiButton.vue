@@ -22,6 +22,7 @@ import {
   PhPause,
   PhPencilSimple,
   PhPlay,
+  PhPlusSquare,
   PhQueue,
   PhRepeat,
   PhShareNetwork,
@@ -64,6 +65,7 @@ const ICONS = {
   Pause: PhPause,
   PencilSimple: PhPencilSimple,
   Play: PhPlay,
+  PlusSquare: PhPlusSquare,
   Queue: PhQueue,
   Repeat: PhRepeat,
   ShareNetwork: PhShareNetwork,
@@ -138,13 +140,13 @@ const linkRel = computed(() => {
 
 const VARIANT_CLASS = {
   white:
-    "border-transparent bg-primary-white text-primary-black hover:bg-primary-gray-extra-light disabled:bg-primary-gray-light disabled:text-primary-gray disabled:hover:bg-primary-gray-light",
-  gray: "border-transparent bg-primary-gray-dark text-primary-white hover:bg-primary-gray-light",
-  ghost: "border-transparent text-primary-white hover:text-primary-gray",
+    "border-transparent bg-tone-white text-tone-canvas hover:opacity-90 disabled:bg-tone-surface disabled:text-tone-muted disabled:hover:bg-tone-surface",
+  gray: "border-transparent bg-tone-surface text-tone-white hover:bg-tone-surface-hover",
+  ghost: "border-transparent text-tone-white hover:text-tone-muted",
   outline:
-    "border-primary-gray-dark text-primary-white hover:border-primary-white disabled:hover:border-primary-gray-dark",
+    "border-tone-surface text-tone-white hover:border-tone-white disabled:hover:border-tone-surface",
   loading:
-    "pointer-events-none relative overflow-hidden border-transparent bg-primary-gray-dark",
+    "pointer-events-none relative overflow-hidden border-transparent bg-tone-surface",
 } as const;
 
 const rootClass = computed(() => {
@@ -196,7 +198,7 @@ const rootClass = computed(() => {
     <!-- Перелив загрузки -->
     <span
       v-if="isLoading"
-      class="pointer-events-none absolute inset-y-0 left-0 w-2/3 bg-linear-to-r from-transparent via-primary-gray to-transparent animate-progress-sheen motion-reduce:hidden"
+      class="pointer-events-none absolute inset-y-0 left-0 w-2/3 bg-linear-to-r from-transparent via-tone-muted to-transparent animate-progress-sheen motion-reduce:hidden"
       aria-hidden="true"
     />
 

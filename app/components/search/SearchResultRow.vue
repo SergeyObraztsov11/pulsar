@@ -12,7 +12,7 @@ const props = defineProps<{
 <template>
   <NuxtLink
     :to="props.to"
-    class="group flex min-w-0 w-full flex-row items-center gap-2 rounded-lg p-2 text-primary-white transition-colors hover:bg-primary-gray/25"
+    class="group flex min-w-0 w-full flex-row items-center gap-2 p-2 text-tone-white transition-colors hover:bg-tone-surface-hover"
   >
     <PhMagnifyingGlass class="size-4" weight="light" />
     <span class="truncate">{{ props.title }}</span>

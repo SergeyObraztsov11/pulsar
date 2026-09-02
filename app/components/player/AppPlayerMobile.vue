@@ -33,14 +33,14 @@ function openExpanded() {
       v-if="showMiniPlayer"
       role="button"
       tabindex="0"
-      class="relative mx-4 flex h-16 cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-primary-gray-dark bg-primary-gray-dark px-3 lg:hidden"
+      class="relative mx-4 flex h-16 cursor-pointer items-center gap-3 overflow-hidden rounded-xl border border-tone-surface bg-tone-surface px-3 lg:hidden"
       aria-label="Развернуть плеер"
       @click="openExpanded"
       @keydown.enter.prevent="openExpanded"
       @keydown.space.prevent="openExpanded"
     >
     <div
-      class="size-10 shrink-0 overflow-hidden rounded-md bg-primary-black"
+      class="size-10 shrink-0 overflow-hidden rounded-md bg-tone-canvas"
     >
       <UiCoverImage
         :src="track?.album?.coverSrc"
@@ -49,15 +49,15 @@ function openExpanded() {
     </div>
 
     <div class="min-w-0 flex-1 leading-tight">
-      <p class="truncate text-base font-medium text-primary-white">
+      <p class="truncate text-base font-medium text-tone-white">
         {{ nameLabel }}
       </p>
-      <p class="truncate text-sm text-primary-gray">{{ artistLabel }}</p>
+      <p class="truncate text-sm text-tone-muted">{{ artistLabel }}</p>
     </div>
 
     <button
       type="button"
-      class="flex size-10 shrink-0 items-center justify-center text-primary-white disabled:opacity-40"
+      class="flex size-10 shrink-0 items-center justify-center text-tone-white disabled:opacity-40"
       :disabled="!track || pending"
       :aria-label="isLiked ? 'Убрать из любимых' : 'В любимое'"
       @click.stop="toggleLike()"
@@ -67,7 +67,7 @@ function openExpanded() {
 
     <button
       type="button"
-      class="flex size-10 shrink-0 items-center justify-center text-primary-white"
+      class="flex size-10 shrink-0 items-center justify-center text-tone-white"
       :aria-label="playerStore.isPlaying ? 'Пауза' : 'Слушать'"
       @click.stop="playerStore.togglePlaying()"
     >
@@ -77,11 +77,11 @@ function openExpanded() {
 
     <!-- Тонкий прогресс у нижнего края карточки -->
     <div
-      class="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-primary-black"
+      class="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-tone-canvas"
       aria-hidden="true"
     >
       <div
-        class="h-full bg-primary-white transition-[width] duration-100 ease-linear motion-reduce:transition-none"
+        class="h-full bg-tone-white transition-[width] duration-100 ease-linear motion-reduce:transition-none"
         :style="{ width: `${playerStore.progressRatio * 100}%` }"
       />
     </div>

@@ -109,7 +109,7 @@ const hrefByKind = computed(() => {
   return map;
 });
 
-/** Прокрутка к секции (скролл — контейнер app-layout) */
+/** Прокрутка к секции (скролл — main в app-layout) */
 function onNavClick(id: (typeof navItems)[number]["id"]) {
   activeId.value = id;
   document.getElementById(id)?.scrollIntoView({

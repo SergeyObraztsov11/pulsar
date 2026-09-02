@@ -18,7 +18,7 @@ const props = withDefaults(
 <template>
   <NuxtLink
     :to="props.to"
-    class="inline-flex shrink-0 items-center gap-1 leading-none text-primary-white transition-colors hover:text-primary-gray"
+    class="inline-flex shrink-0 items-center gap-1 leading-none text-tone-white transition-colors hover:text-tone-muted"
     aria-label="Pulsar"
   >
     <AppLogoMark :class="props.size === 'lg' ? 'size-10' : 'size-8'" />

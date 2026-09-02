@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * AppPlayerDesktop — мини-плеер для lg+ (h-16).
- * Chrome: полоса gray-dark; play white; остальные ghost (читаются на gray-dark).
+ * Chrome: прозрачный на чёрной подложке; play white; остальные ghost.
  */
 import { formatTimeMmSs } from "~/utils/formatTime";
 
@@ -75,10 +75,9 @@ function onSeekCommit(event: Event) {
 <template>
   <div
     v-if="showMiniPlayer"
-    class="relative hidden h-16 w-full shrink-0 bg-primary-gray-dark lg:block"
+    class="relative hidden h-16 w-full shrink-0 bg-transparent lg:block"
   >
-    <!-- Как HeaderLayout: max-w-5xl + px-8 -->
-    <div class="mx-auto h-full w-full max-w-5xl px-8">
+    <div class="mx-auto h-full w-full px-2">
       <div class="flex h-full w-full items-center gap-5">
         <!-- Transport: слева -->
         <div class="flex shrink-0 items-center gap-2">
@@ -107,7 +106,7 @@ function onSeekCommit(event: Event) {
         <!-- Meta: обложка + название -->
         <div class="flex max-w-56 min-w-0 shrink-0 items-center gap-3">
           <div
-            class="size-10 shrink-0 overflow-hidden rounded-md bg-primary-black"
+            class="size-10 shrink-0 overflow-hidden rounded-md bg-tone-canvas"
           >
             <UiCoverImage
               :src="track?.album.coverSrc"
@@ -115,13 +114,13 @@ function onSeekCommit(event: Event) {
             />
           </div>
           <div class="min-w-0 leading-tight">
-            <p class="truncate text-base font-medium text-primary-white">
+            <p class="truncate text-base font-medium text-tone-white">
               <NuxtLink v-if="trackTo" :to="trackTo" class="hover:underline">
                 {{ nameLabel }}
               </NuxtLink>
               <span v-else>{{ nameLabel }}</span>
             </p>
-            <p class="truncate text-sm text-primary-gray">
+            <p class="truncate text-sm text-tone-muted">
               <NuxtLink v-if="artistTo" :to="artistTo" class="hover:underline">
                 {{ artistLabel }}
               </NuxtLink>
@@ -135,7 +134,7 @@ function onSeekCommit(event: Event) {
           class="progress-panel group relative flex h-3 min-w-0 flex-1 items-center"
         >
           <div
-            class="pointer-events-none absolute bottom-full mb-1 -translate-x-1/2 rounded-md bg-primary-black px-2 py-1 text-xs leading-none text-primary-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
+            class="pointer-events-none absolute bottom-full mb-1 -translate-x-1/2 rounded-md bg-tone-surface px-2 py-1 text-xs leading-none text-tone-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
             :style="{ left: `${playerStore.progressRatio * 100}%` }"
           >
             {{ currentTimeLabel }}
@@ -157,7 +156,7 @@ function onSeekCommit(event: Event) {
         </div>
 
         <!-- Время: текущее / всего -->
-        <p class="shrink-0 text-xs leading-none text-primary-gray tabular-nums">
+        <p class="shrink-0 text-xs leading-none text-tone-muted tabular-nums">
           {{ currentTimeLabel }} / {{ formatTimeMmSs(playerStore.duration) }}
         </p>
 
@@ -180,7 +179,7 @@ function onSeekCommit(event: Event) {
               class="pointer-events-none absolute bottom-full left-1/2 z-10 flex -translate-x-1/2 flex-col items-center pb-3 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 motion-reduce:transition-none"
             >
               <div
-                class="volume-panel flex items-center justify-center rounded-full border border-primary-gray-dark bg-primary-gray-dark p-2"
+                class="volume-panel flex items-center justify-center rounded-full border border-tone-surface bg-tone-surface p-2"
               >
                 <input
                   v-model.number="volumePct"
@@ -219,13 +218,13 @@ function onSeekCommit(event: Event) {
 /*
   Высота input = размер бегунка → кружок по центру.
   Тонкий трек — через background-size.
-  На gray-dark трек — black, fill — white; бегунок только на hover.
-*/
+  На чёрной подложке трек — gray-dark, fill — white; бегунок только на hover.
+ */
 .progress-slider {
   height: 0.75rem;
   border-radius: 9999px;
-  --progress-fill: var(--color-primary-white);
-  --progress-track: var(--color-primary-black);
+  --progress-fill: var(--color-tone-white);
+  --progress-track: var(--color-tone-surface);
   background: linear-gradient(
     to right,
     var(--progress-fill) 0%,
@@ -282,8 +281,8 @@ function onSeekCommit(event: Event) {
   writing-mode: vertical-lr;
   direction: rtl;
   border-radius: 9999px;
-  --volume-fill: var(--color-primary-white);
-  --volume-track: var(--color-primary-black);
+  --volume-fill: var(--color-tone-white);
+  --volume-track: var(--color-tone-canvas);
   background: linear-gradient(
     to top,
     var(--volume-fill) 0%,

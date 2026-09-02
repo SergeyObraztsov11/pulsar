@@ -30,4 +30,4 @@ export const MENU_SHEET_BACK_ID = "__back";
 
 /** Классы панели floating (корень + flyout) — как suggest поиска; выше модалок (z-100) */
 export const MENU_FLOATING_PANEL_CLASS =
-  "z-110 w-max rounded-xl border border-primary-gray-dark bg-primary-gray-dark p-1 text-sm text-primary-white";
+  "z-110 w-max border border-tone-surface-hover bg-tone-surface p-1 text-sm text-tone-white";

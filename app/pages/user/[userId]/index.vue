@@ -229,7 +229,7 @@ async function onShareClick() {
   <div class="relative flex flex-col">
     <!-- Wash: серый (позже coverColor), blur сглаживает полосы -->
     <div
-      class="pointer-events-none absolute -top-24 left-1/2 z-0 h-140 w-screen -translate-x-1/2 overflow-hidden lg:h-96"
+      class="pointer-events-none absolute -top-24 inset-x-0 z-0 h-140 overflow-hidden lg:h-96"
       aria-hidden="true"
     >
       <div

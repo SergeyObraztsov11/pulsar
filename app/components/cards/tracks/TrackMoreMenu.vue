@@ -128,7 +128,7 @@ function buildPlaylistRow(playlist: PlaylistSummary): MenuItem {
     id: `playlist-${playlist.id}`,
     label,
     icon: inPlaylist ? PhMinus : PhPlus,
-    labelClass: inPlaylist ? "text-primary-white" : undefined,
+    labelClass: inPlaylist ? "text-tone-white" : undefined,
     onClick: () => void togglePlaylistTrack(playlist),
     keepOpen: true,
   };
@@ -193,8 +193,8 @@ const items = computed<MenuItem[]>(() => [
       : `Добавить в «${LIKED_PLAYLIST_MENU_LABEL}»`,
     icon: PhHeart,
     iconWeight: props.isLiked ? "fill" : "light",
-    iconClass: props.isLiked ? "text-primary-white" : undefined,
-    labelClass: props.isLiked ? "text-primary-white" : undefined,
+    iconClass: props.isLiked ? "text-tone-white" : undefined,
+    labelClass: props.isLiked ? "text-tone-white" : undefined,
     onClick: () => emit("toggle-like"),
   },
   {

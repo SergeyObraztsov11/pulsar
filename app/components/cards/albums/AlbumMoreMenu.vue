@@ -6,8 +6,8 @@
 import {
   PhDisc,
   PhFlag,
-  PhHeart,
   PhPlay,
+  PhPlusSquare,
   PhShareNetwork,
   PhUser,
 } from "@phosphor-icons/vue";
@@ -38,10 +38,10 @@ const items = computed<MenuItem[]>(() => [
   {
     id: "like",
     label: props.isLiked ? "Unlike" : "Like",
-    icon: PhHeart,
-    iconWeight: props.isLiked ? "fill" : "light",
-    iconClass: props.isLiked ? "text-primary-white" : undefined,
-    labelClass: props.isLiked ? "text-primary-white" : undefined,
+    icon: PhPlusSquare,
+    iconWeight: props.isLiked ? "fill" : "regular",
+    iconClass: props.isLiked ? "text-tone-white" : undefined,
+    labelClass: props.isLiked ? "text-tone-white" : undefined,
     onClick: () => emit("toggle-like"),
   },
   {

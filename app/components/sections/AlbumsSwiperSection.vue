@@ -21,10 +21,13 @@ const props = withDefaults(
     description?: string;
     /** Заголовок как ссылка */
     to?: string;
+    /** false — без строки артиста под названием */
+    showArtist?: boolean;
   }>(),
   {
     interactive: true,
     skeletonCount: 6,
+    showArtist: true,
   },
 );
 
@@ -71,14 +74,14 @@ function slideNext() {
         <NuxtLink
           v-if="props.to"
           :to="props.to"
-          class="text-2xl font-bold text-primary-white transition-colors hover:underline"
+          class="text-2xl font-bold text-tone-white transition-colors hover:underline"
         >
           {{ props.title }}
         </NuxtLink>
-        <h2 v-else class="text-2xl font-bold text-primary-white">
+        <h2 v-else class="text-2xl font-bold text-tone-white">
           {{ props.title }}
         </h2>
-        <p v-if="props.description" class="text-primary-gray">
+        <p v-if="props.description" class="text-tone-muted">
           {{ props.description }}
         </p>
       </div>
@@ -137,7 +140,11 @@ function slideNext() {
             :key="album.id"
             class="w-48! shrink-0"
           >
-            <AlbumCard :album="album" :interactive="props.interactive" />
+            <AlbumCard
+              :album="album"
+              :interactive="props.interactive"
+              :show-artist="props.showArtist"
+            />
           </SwiperSlide>
         </Swiper>
 

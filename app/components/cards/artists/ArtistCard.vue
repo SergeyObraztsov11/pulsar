@@ -96,7 +96,7 @@ const {
     <template #meta>
       <NuxtLink
         :to="artistTo"
-        class="truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        class="truncate text-base font-medium text-tone-white transition-colors duration-300 hover:text-tone-muted"
       >
         {{ nameLabel }}
       </NuxtLink>
@@ -119,7 +119,7 @@ const {
     <template #meta>
       <NuxtLink
         :to="artistTo"
-        class="truncate text-base font-medium text-primary-white transition-colors duration-300 hover:underline"
+        class="truncate text-base font-medium text-tone-white transition-colors duration-300 hover:text-tone-muted"
       >
         {{ nameLabel }}
       </NuxtLink>

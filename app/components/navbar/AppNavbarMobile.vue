@@ -32,9 +32,13 @@ function isNavActive(path: string) {
       :key="item.to"
       :to="item.to"
       class="flex flex-col items-center justify-center gap-1"
-      :class="isNavActive(item.to) ? 'text-primary-white' : 'text-primary-gray'"
+      :class="isNavActive(item.to) ? 'text-tone-white' : 'text-tone-muted'"
     >
-      <component :is="item.icon" :size="24" weight="light" />
+      <component
+        :is="item.icon"
+        :size="24"
+        :weight="isNavActive(item.to) ? 'fill' : 'light'"
+      />
     </NuxtLink>
   </nav>
 </template>
