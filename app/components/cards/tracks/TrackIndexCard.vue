@@ -14,89 +14,69 @@ const props = withDefaults(
   { interactive: true },
 );
 
-const {
-  interactive,
-  track,
-  isCurrent,
-  isLiked,
-  isHovered,
-  moreOpen,
-  isLgUp,
-  isPlayingCurrent,
-  showTrackNumber,
-  showIndexEqualizer,
-  showIndexPlay,
-  nameLabel,
-  artistLabel,
-  durationLabel,
-  isExplicit,
-  trackTo,
-  artistTo,
-  albumTo,
-  trackId,
-  onRowClick,
-  onPlayClick,
-  toggleLike,
-} = useTrackCard(() => props.track, { interactive: () => props.interactive });
+const card = reactive(
+  useTrackCard(() => props.track, {
+    interactive: () => props.interactive,
+  }),
+);
 </script>
 
 <template>
   <TrackCardLayout
     class="flex items-center lg:transition-colors lg:duration-200 lg:hover:bg-tone-surface lg:motion-reduce:transition-none"
     :class="[
-      isCurrent ? 'bg-tone-surface' : '',
-      interactive && !isLgUp ? 'cursor-pointer' : '',
+      card.isCurrent ? 'bg-tone-surface' : null,
+      props.interactive ? 'max-lg:cursor-pointer' : null,
     ]"
-    @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false"
-    @click="onRowClick"
+    @mouseenter="card.isHovered = true"
+    @mouseleave="card.isHovered = false"
+    @click="card.onRowClick"
   >
     <!-- Index / play -->
     <div class="flex size-10 shrink-0 items-center justify-center">
       <span
-        v-show="showTrackNumber"
+        v-show="card.showTrackNumber"
         class="select-none text-sm font-semibold text-tone-white"
       >
-        {{ track?.trackNumber }}
+        {{ card.track?.trackNumber }}
       </span>
 
       <UiEqualizerIcon
-        v-if="interactive"
-        v-show="showIndexEqualizer"
-        :active="isPlayingCurrent"
+        v-if="props.interactive"
+        v-show="card.showIndexEqualizer"
+        :active="card.isPlayingCurrent"
       />
 
       <button
-        v-if="showIndexPlay"
+        v-if="card.showIndexPlay"
         type="button"
-        class="flex size-8 items-center justify-center text-tone-white hover:text-tone-muted transition-colors duration-150"
-        @click.stop="onPlayClick()"
+        class="flex size-8 items-center justify-center text-tone-white transition-colors duration-150 hover:text-tone-muted"
+        @click.stop="card.onPlayClick()"
       >
-        <PhPause v-if="isPlayingCurrent" :size="16" weight="fill" />
+        <PhPause v-if="card.isPlayingCurrent" :size="16" weight="fill" />
         <PhPlay v-else :size="16" weight="fill" />
       </button>
     </div>
 
     <TrackCardMeta
-      :name-label="nameLabel"
-      :artist-label="artistLabel"
-      :track-to="trackTo"
-      :artist-to="artistTo"
-      :is-lg-up="isLgUp"
+      :name-label="card.nameLabel"
+      :artist-label="card.artistLabel"
+      :track-to="card.trackTo"
+      :artist-to="card.artistTo"
     />
 
     <TrackCardActions
-      v-model:open="moreOpen"
-      :interactive="interactive"
-      :track-id="trackId ?? ''"
-      :album-to="albumTo"
-      :artist-to="artistTo"
-      :is-playing-current="isPlayingCurrent"
-      :is-liked="isLiked"
-      :is-explicit="isExplicit"
-      :duration-label="durationLabel"
-      @play="onPlayClick"
-      @toggle-like="toggleLike"
+      v-model:open="card.moreOpen"
+      :interactive="props.interactive"
+      :track-id="card.trackId ?? ''"
+      :album-to="card.albumTo"
+      :artist-to="card.artistTo"
+      :is-playing-current="card.isPlayingCurrent"
+      :is-liked="card.isLiked"
+      :is-explicit="card.isExplicit"
+      :duration-label="card.durationLabel"
+      @play="card.onPlayClick"
+      @toggle-like="card.toggleLike"
     />
   </TrackCardLayout>
 </template>

@@ -1,5 +1,6 @@
 import { requireAuthUserId } from "../../utils/getAuthUserId";
 import { ApiErrorCode, throwApiError } from "../../utils/apiError";
+import { serializePlaylistSummary } from "../../utils/playlistDetail";
 
 /**
  * POST /api/playlists — create user playlist (not system)
@@ -23,15 +24,5 @@ export default defineEventHandler(async (event) => {
     include: { _count: { select: { tracks: true } } },
   });
 
-  return {
-    id: playlist.id,
-    userId: playlist.userId,
-    name: playlist.name,
-    coverSrc: playlist.coverSrc,
-    isPublic: playlist.isPublic,
-    systemKind: playlist.systemKind,
-    isSystem: false,
-    trackCount: playlist._count.tracks,
-    createdAt: playlist.createdAt,
-  };
+  return serializePlaylistSummary(playlist);
 });

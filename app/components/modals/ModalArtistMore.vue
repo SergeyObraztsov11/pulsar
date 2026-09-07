@@ -129,96 +129,105 @@ const profileUrlLabel = computed(() => {
 
 <template>
   <ModalLayout :title="props.artistName" @close="onClose">
-    <div
-      class="flex w-[min(calc(100vw-4rem),24rem)] flex-col gap-8 sm:w-96"
-    >
+    <div class="flex w-[min(100vw-4rem,24rem)] flex-col gap-6">
       <!-- Описание -->
-      <section class="flex flex-col gap-3">
-        <h3 class="text-base font-bold text-primary-white">Описание</h3>
+      <section class="flex flex-col gap-2">
+        <h3 class="text-base font-bold text-tone-white">Описание</h3>
         <p
           class="whitespace-pre-wrap text-sm leading-relaxed"
-          :class="hasBio ? 'text-primary-white' : 'text-primary-gray'"
+          :class="hasBio ? 'text-tone-white' : 'text-tone-muted'"
         >
           {{ bioDisplay }}
         </p>
       </section>
 
       <!-- Ссылки -->
-      <section
-        v-if="props.links.length"
-        class="flex flex-col gap-3"
-      >
-        <h3 class="text-base font-bold text-primary-white">Ссылки</h3>
-        <ul class="flex flex-col gap-4">
-          <li
-            v-for="link in props.links"
-            :key="link.kind"
-            class="flex flex-row items-start gap-3"
-          >
-            <div
-              class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-black text-primary-white"
+      <section v-if="props.links.length" class="flex flex-col gap-3">
+        <h3 class="text-base font-bold text-tone-white">Ссылки</h3>
+        <ul class="flex flex-col gap-1">
+          <li v-for="link in props.links" :key="link.kind">
+            <a
+              :href="link.href"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-tone-surface-hover"
             >
-              <component
-                :is="LINK_ICONS[link.kind] ?? PhLink"
-                :size="20"
-                weight="light"
-              />
-            </div>
-            <div class="min-w-0 flex flex-col gap-0.5">
-              <span class="truncate text-sm font-semibold text-primary-white">
-                {{ LINK_LABELS[link.kind] }}
-              </span>
-              <a
-                :href="link.href"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="truncate text-sm text-primary-white hover:underline"
+              <div
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white"
               >
-                {{ linkHost(link.href) }}
-              </a>
-            </div>
+                <component
+                  :is="LINK_ICONS[link.kind] ?? PhLink"
+                  :size="20"
+                  weight="light"
+                />
+              </div>
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="truncate text-sm font-medium text-tone-white">
+                  {{ LINK_LABELS[link.kind] }}
+                </span>
+                <span class="truncate text-sm text-tone-muted">
+                  {{ linkHost(link.href) }}
+                </span>
+              </div>
+            </a>
           </li>
         </ul>
       </section>
 
       <!-- Доп. информация -->
       <section class="flex flex-col gap-3">
-        <h3 class="text-base font-bold text-primary-white">
+        <h3 class="text-base font-bold text-tone-white">
           Дополнительная информация
         </h3>
         <ul class="flex flex-col gap-3">
-          <li class="flex flex-row items-center gap-3 text-sm text-primary-white">
-            <PhLink :size="20" weight="light" class="shrink-0" />
+          <li class="flex items-center gap-3 text-sm text-tone-white">
+            <PhLink :size="20" weight="light" class="shrink-0 text-tone-muted" />
             <a
               :href="profileUrl"
-              class="min-w-0 truncate text-primary-white hover:underline"
+              class="min-w-0 truncate transition-colors hover:text-tone-muted"
             >
               {{ profileUrlLabel }}
             </a>
           </li>
-          <li class="flex flex-row items-center gap-3 text-sm text-primary-white">
-            <PhGlobe :size="20" weight="light" class="shrink-0" />
+          <li class="flex items-center gap-3 text-sm text-tone-white">
+            <PhGlobe
+              :size="20"
+              weight="light"
+              class="shrink-0 text-tone-muted"
+            />
             <span>{{ props.country || "Россия" }}</span>
           </li>
           <li
-            class="flex flex-row items-center gap-3 text-sm"
-            :class="hasListeners ? 'text-primary-white' : 'text-primary-gray'"
+            class="flex items-center gap-3 text-sm"
+            :class="hasListeners ? 'text-tone-white' : 'text-tone-muted'"
           >
-            <PhUser :size="20" weight="light" class="shrink-0" />
+            <PhUser
+              :size="20"
+              weight="light"
+              class="shrink-0 text-tone-muted"
+            />
             <span>{{ listenersLabel }}</span>
           </li>
           <li
-            class="flex flex-row items-center gap-3 text-sm"
-            :class="hasAlbums ? 'text-primary-white' : 'text-primary-gray'"
+            class="flex items-center gap-3 text-sm"
+            :class="hasAlbums ? 'text-tone-white' : 'text-tone-muted'"
           >
-            <PhDisc :size="20" weight="light" class="shrink-0" />
+            <PhDisc
+              :size="20"
+              weight="light"
+              class="shrink-0 text-tone-muted"
+            />
             <span>{{ albumsLabel }}</span>
           </li>
           <li
-            class="flex flex-row items-center gap-3 text-sm"
-            :class="hasTracks ? 'text-primary-white' : 'text-primary-gray'"
+            class="flex items-center gap-3 text-sm"
+            :class="hasTracks ? 'text-tone-white' : 'text-tone-muted'"
           >
-            <PhHeadphones :size="20" weight="light" class="shrink-0" />
+            <PhHeadphones
+              :size="20"
+              weight="light"
+              class="shrink-0 text-tone-muted"
+            />
             <span>{{ tracksLabel }}</span>
           </li>
         </ul>

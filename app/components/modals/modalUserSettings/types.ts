@@ -6,6 +6,7 @@ export type MeSettingsUser = {
   email: string;
   name: string;
   avatarSrc: string | null;
+  avatarColor: string | null;
   bio: string | null;
   country: string | null;
   birthDate: string | null;

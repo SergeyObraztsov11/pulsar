@@ -2,10 +2,11 @@
  * useTrackCard — shared play / like / more / labels for track row cards.
  */
 import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from "vue";
-import { useMediaQuery } from "@vueuse/core";
 import type { Track } from "~/types/track";
-import type { PlayerQueueSource } from "~/stores/player";
+import { usePlayerStore, type PlayerQueueSource } from "~/stores/player";
 import { formatTimeMmSs } from "~/utils/formatTime";
+import { useLike } from "~/composables/useLike";
+import { useLgUp } from "~/composables/useLgUp";
 
 /** Колонка отдаёт полный список + источник очереди */
 export const playerQueueKey: InjectionKey<{
@@ -36,7 +37,7 @@ export function useTrackCard(
   const moreOpen = ref(false);
   const isHovered = ref(false);
   /** Один TrackMoreMenu на карточку — desktop/mobile не дублируют v-model */
-  const isLgUp = useMediaQuery("(min-width: 1024px)");
+  const isLgUp = useLgUp();
 
   const isPlayingCurrent = computed(
     () => isCurrent.value && playerStore.isPlaying,

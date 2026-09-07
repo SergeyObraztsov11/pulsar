@@ -13,6 +13,8 @@ model User {
   passwordHash String
   name         String
   avatarSrc    String?
+  /// Accent hex для hero страницы артиста (`#rrggbb`)
+  avatarColor  String?
   bio          String?
   /// Страна (публично, для профиля артиста)
   country      String?
@@ -134,15 +136,16 @@ model Track {
 }
 
 model Playlist {
-  id         String              @id @default(cuid())
-  userId     String
-  name        String
+  id          String              @id @default(cuid())
+  userId      String
+  name         String
   description String?
   coverSrc    String?
-  isPublic   Boolean             @default(false)
-  systemKind PlaylistSystemKind?
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  coverColor  String?
+  isPublic    Boolean             @default(false)
+  systemKind  PlaylistSystemKind?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   tracks PlaylistTrack[]

@@ -2,7 +2,7 @@
 
 Nitro, префикс `/api`. Сессия: `nuxt-auth-utils` (cookie). Middleware кладёт `event.context.userId`. Без сессии: `isLiked = false`; `liked` / `sort=likedAt` / лайки / me → **401**.
 
-Публичный user: `id`, `name`, `avatarSrc`, `bio`. Id — cuid.
+Публичный user: `id`, `name`, `avatarSrc`, `avatarColor`, `bio`, `country`. Id — cuid.
 
 ## Auth
 
@@ -23,7 +23,13 @@ Body: `{ email, password }`. Сессия.
 
 ### `GET /api/auth/me`
 
-Текущий user (+ email). Auth. `401`
+Текущий user (+ email). Auth. `401`  
+В ответе также `avatarColor` (`#rrggbb` или `null`).
+
+### `POST /api/auth/me/avatar`
+
+Multipart, поле `avatar` ≤10MB. JPEG/PNG/WebP/AVIF → `avatars/{id}.jpg` (512×512) + `avatarColor` (тот же accent-алгоритм, что у обложки альбома). Auth.  
+`DELETE` — сбрасывает `avatarSrc` и `avatarColor`.
 
 ## Albums
 
@@ -106,9 +112,24 @@ Meta + `tracks[]` (как `GET /api/tracks`). Владелец или `isPublic`
 
 Только user playlists; system «Любимые» нельзя. Auth. `400` / `403` / `404`
 
+### `POST /api/playlists/:id/cover` · `DELETE /api/playlists/:id/cover`
+
+Своя обложка. Auth, только редактируемый user-плейлист.  
+POST: multipart `cover` ≤10MB → `covers/playlists/{id}.webp` + `coverColor` (`#rrggbb`).  
+DELETE: сбрасывает `coverSrc` и `coverColor`.  
+Без своей обложки `coverColor` всегда `null` (в т.ч. «Любимые» с дефолтной картинкой).
+
 ### `POST /api/playlists/:id/tracks` · `DELETE /api/playlists/:id/tracks/:trackId`
 
 Body (POST): `{ trackId }`. Auth. `403` / `404`
+
+### `PATCH /api/playlists/:id/tracks`
+
+Переставить один трек. Auth, только владелец (включая «Любимые»).  
+Body: `{ trackId: string, toPosition: number }` — `toPosition` 0-based индекс в текущем списке.  
+`400` (`playlist_track_id_required` · `playlist_position_invalid`) · `403` · `404` (`playlist_track_not_found`)
+
+Порядок в GET всегда по `position` asc. Новый лайк в «Любимые» — в начало (`position` 0).
 
 ## Artists
 
@@ -230,7 +251,7 @@ Query: `search` (имя), `liked=true`, `sort=newest|oldest|name|likedAt` (по 
 | `track_id_required` · `played_sec_required` · `listen_threshold_not_met` | треки |
 | `playlist_id_required` · `playlist_not_found` · `playlist_name_required` | плейлисты |
 | `system_playlist_not_editable` · `system_playlist_not_deletable` | «Любимые» |
-| `playlist_track_id_required` · `playlist_ids_required` | tracks в плейлисте |
+| `playlist_track_id_required` · `playlist_track_not_found` · `playlist_position_invalid` · `playlist_ids_required` | tracks в плейлисте |
 | `artist_id_required` | артисты |
 | `invalid_media_key` | media |
 

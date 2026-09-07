@@ -42,17 +42,20 @@ export async function processAlbumCover(input: Buffer) {
 }
 
 /**
- * Аватар: квадрат JPEG 512×512 (cover), EXIF-поворот.
+ * Аватар: квадрат JPEG 512×512 (cover), EXIF-поворот + accent hex для hero.
  * Ключ в бакете — avatars/{userId}.jpg.
  */
 export async function processUserAvatar(input: Buffer) {
   try {
-    return await sharp(input)
+    const body = await sharp(input)
       .rotate()
       .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: "cover" })
       .jpeg({ quality: 85 })
       .toBuffer();
-  } catch {
+    const avatarColor = await coverColorFromImage(body);
+    return { body, avatarColor };
+  } catch (error) {
+    if (typeof error === "object" && error && "statusCode" in error) throw error;
     throwApiError(400, ApiErrorCode.AVATAR_MUST_BE_IMAGE);
   }
 }

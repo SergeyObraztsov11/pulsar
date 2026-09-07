@@ -136,7 +136,7 @@ async function onRemove() {
       class="flex w-[min(100vw-4rem,22rem)] flex-col gap-4"
       @submit.prevent="onSave"
     >
-      <p class="text-sm text-primary-gray">
+      <p class="text-sm text-tone-muted">
         Выберите фото, затем сдвиньте и масштабируйте кадр в круге.
       </p>
 
@@ -150,7 +150,7 @@ async function onRemove() {
         />
         <div
           v-else
-          class="relative size-[280px] shrink-0 overflow-hidden rounded-full bg-primary-black"
+          class="relative size-[280px] shrink-0 overflow-hidden rounded-full bg-tone-surface"
         >
           <img
             v-if="currentAvatarSrc"
@@ -160,7 +160,7 @@ async function onRemove() {
           />
           <div
             v-else
-            class="flex size-full items-center justify-center text-primary-white"
+            class="flex size-full items-center justify-center text-tone-white"
           >
             <PhUser :size="72" weight="light" />
           </div>
@@ -177,6 +177,7 @@ async function onRemove() {
         <div class="flex flex-row flex-wrap items-center justify-center gap-2">
           <UiButton
             variant="gray"
+            icon="UploadSimple"
             text="Выбрать фото"
             type="button"
             :disabled="saving || removing"
@@ -205,7 +206,7 @@ async function onRemove() {
         {{ errorMessage }}
       </p>
 
-      <div class="flex flex-row justify-end">
+      <div class="flex justify-end gap-2">
         <UiButton
           :variant="saving ? 'loading' : 'white'"
           text="Сохранить"

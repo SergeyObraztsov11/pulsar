@@ -10,6 +10,8 @@ export type PlaylistSummary = {
   name: string;
   description: string | null;
   coverSrc: string | null;
+  /** Accent hex для hero; null если своей обложки нет */
+  coverColor: string | null;
   isPublic: boolean;
   systemKind: PlaylistSystemKind | null;
   isSystem: boolean;

@@ -2,20 +2,27 @@
 /**
  * TrackCardActions — explicit, duration, like, more menu.
  */
-import { PhDotsThree, PhPlusSquare } from "@phosphor-icons/vue";
+import { PhDotsThree, PhHeart } from "@phosphor-icons/vue";
 
-defineProps<{
-  interactive: boolean;
-  trackId: string;
-  albumTo: string;
-  artistTo: string;
-  isPlayingCurrent: boolean;
-  isLiked: boolean;
-  isExplicit: boolean;
-  durationLabel: string;
-}>();
+withDefaults(
+  defineProps<{
+    interactive?: boolean;
+    trackId: string;
+    albumTo: string;
+    artistTo: string;
+    isPlayingCurrent: boolean;
+    isLiked: boolean;
+    isExplicit?: boolean;
+    durationLabel?: string;
+  }>(),
+  {
+    interactive: true,
+    isExplicit: false,
+    durationLabel: "",
+  },
+);
 
-const moreOpen = defineModel<boolean>("moreOpen", { default: false });
+const open = defineModel<boolean>("open", { default: false });
 
 const emit = defineEmits<{
   play: [];
@@ -37,12 +44,12 @@ const emit = defineEmits<{
       class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
       @click="emit('toggle-like')"
     >
-      <PhPlusSquare :size="24" :weight="isLiked ? 'fill' : 'light'" />
+      <PhHeart :size="24" :weight="isLiked ? 'fill' : 'light'" />
     </button>
 
     <TrackMoreMenu
       v-if="interactive"
-      v-model:open="moreOpen"
+      v-model:open="open"
       :track-id="trackId"
       :album-to="albumTo"
       :artist-to="artistTo"

@@ -1,5 +1,6 @@
 import { requireAuthUserId } from "../../../utils/getAuthUserId";
 import { isLikedTracksPlaylist } from "../../../utils/likedPlaylist";
+import { shiftPlaylistPositionsForInsert } from "../../../utils/playlistPosition";
 import { touchPlaylistUpdatedAt } from "../../../utils/touchPlaylistUpdatedAt";
 import { ApiErrorCode, throwApiError } from "../../../utils/apiError";
 
@@ -44,17 +45,13 @@ export default defineEventHandler(async (event) => {
   }
 
   if (isLikedTracksPlaylist(playlist.systemKind)) {
-    const last = await prisma.playlistTrack.findFirst({
-      where: { playlistId },
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
     await prisma.$transaction(async (tx) => {
+      await shiftPlaylistPositionsForInsert(tx, playlistId, 0);
       await tx.playlistTrack.create({
         data: {
           playlistId,
           trackId,
-          position: last ? last.position + 1 : 0,
+          position: 0,
         },
       });
       await touchPlaylistUpdatedAt(playlistId, tx);

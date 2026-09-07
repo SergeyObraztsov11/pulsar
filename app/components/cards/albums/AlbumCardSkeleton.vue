@@ -1,20 +1,17 @@
 <script setup lang="ts">
 /**
- * AlbumCardSkeleton — pulse placeholder for AlbumCard.
- * Shares size via AlbumCardLayout (cover size-48).
+ * AlbumCardSkeleton — pulse placeholder размера AlbumCard.
  */
 </script>
 
 <template>
-  <AlbumCardLayout class="flex">
-    <template #cover>
-      <div class="size-full animate-pulse bg-tone-surface" />
-    </template>
-    <template #meta>
-      <div class="flex flex-col gap-2">
-        <div class="h-4 w-3/4 animate-pulse rounded bg-tone-surface" />
-        <div class="h-3 w-1/2 animate-pulse rounded bg-tone-surface" />
-      </div>
-    </template>
-  </AlbumCardLayout>
+  <div class="flex w-48 shrink-0 flex-col gap-2 rounded p-2">
+    <div
+      class="size-44 shrink-0 animate-pulse rounded bg-tone-surface-hover"
+    />
+    <div class="flex flex-col gap-2">
+      <div class="h-4 w-3/4 animate-pulse rounded bg-tone-surface" />
+      <div class="h-3 w-1/2 animate-pulse rounded bg-tone-surface" />
+    </div>
+  </div>
 </template>

@@ -21,6 +21,9 @@ const props = withDefaults(
     description?: string;
     /** Заголовок как ссылка */
     to?: string;
+    /** Ссылка справа в строке заголовка */
+    moreTo?: string;
+    moreLabel?: string;
     /** false — без строки артиста под названием */
     showArtist?: boolean;
   }>(),
@@ -86,22 +89,31 @@ function slideNext() {
         </p>
       </div>
 
-      <!-- Swiper prev / next -->
+      <!-- «Показать все» или prev / next -->
       <div class="flex shrink-0 items-center gap-2">
-        <UiButton
-          variant="outline"
-          icon="CaretLeft"
-          aria-label="Previous"
-          :disabled="isBeginning || isLoading"
-          @click="slidePrev"
-        />
-        <UiButton
-          variant="outline"
-          icon="CaretRight"
-          aria-label="Next"
-          :disabled="isEnd || isLoading"
-          @click="slideNext"
-        />
+        <NuxtLink
+          v-if="props.moreTo"
+          :to="props.moreTo"
+          class="text-sm font-medium text-tone-muted transition-colors hover:text-tone-white"
+        >
+          {{ props.moreLabel ?? "Показать все" }}
+        </NuxtLink>
+        <template v-else>
+          <UiButton
+            variant="outline"
+            icon="CaretLeft"
+            aria-label="Previous"
+            :disabled="isBeginning || isLoading"
+            @click="slidePrev"
+          />
+          <UiButton
+            variant="outline"
+            icon="CaretRight"
+            aria-label="Next"
+            :disabled="isEnd || isLoading"
+            @click="slideNext"
+          />
+        </template>
       </div>
     </div>
 

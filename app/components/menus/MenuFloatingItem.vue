@@ -94,6 +94,14 @@ onBeforeUnmount(() => {
       >
         {{ props.item.label }}
       </span>
+      <component
+        :is="props.item.trailingIcon"
+        v-if="props.item.trailingIcon && !hasSubmenu"
+        class="shrink-0"
+        :class="props.item.trailingIconClass"
+        :size="20"
+        :weight="props.item.trailingIconWeight ?? 'light'"
+      />
       <PhCaretRight
         v-if="hasSubmenu"
         class="shrink-0"

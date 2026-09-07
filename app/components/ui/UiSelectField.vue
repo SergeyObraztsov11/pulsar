@@ -138,17 +138,15 @@ defineExpose({ focus });
     <input type="hidden" v-bind="$attrs" :value="model" />
 
     <div
-      class="flex h-11 w-full box-border items-center rounded-lg bg-primary-gray-light px-4 leading-none transition-[border-color,background-color] duration-200 motion-reduce:transition-none"
+      class="box-border flex h-11 w-full items-center rounded-md border bg-tone-surface px-4 leading-none transition-[border-color] duration-200 motion-reduce:transition-none"
       :class="
-        isFloating
-          ? 'border border-primary-gray'
-          : 'border border-transparent'
+        isFloating ? 'border-tone-surface-hover' : 'border-transparent'
       "
     >
       <button
         ref="triggerEl"
         type="button"
-        class="group flex min-h-0 min-w-0 flex-1 items-center gap-3 bg-transparent leading-none text-primary-white outline-none"
+        class="group flex min-h-0 min-w-0 flex-1 items-center gap-3 bg-transparent leading-none text-tone-white outline-none"
         :aria-expanded="open"
         aria-haspopup="listbox"
         :aria-label="props.placeholder || undefined"
@@ -158,14 +156,14 @@ defineExpose({ focus });
         @blur="focused = false"
       >
         <span
-          class="min-w-0 flex-1 truncate text-left text-base leading-none text-primary-white"
+          class="min-w-0 flex-1 truncate text-left text-base leading-none text-tone-white"
         >
           {{ selected?.label ?? "" }}
         </span>
         <PhCaretDown
           :size="20"
           weight="light"
-          class="shrink-0 text-primary-gray transition-transform duration-200"
+          class="shrink-0 text-tone-muted transition-transform duration-200"
           :class="{ 'rotate-180': open }"
         />
       </button>
@@ -176,8 +174,8 @@ defineExpose({ focus });
       class="pointer-events-none absolute z-10 origin-left leading-none transition-all duration-200 motion-reduce:transition-none"
       :class="[
         isFloating
-          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs text-primary-white'
-          : 'top-1/2 left-4 -translate-y-1/2 text-sm text-primary-gray',
+          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs text-tone-white'
+          : 'top-1/2 left-4 -translate-y-1/2 text-sm text-tone-muted',
       ]"
     >
       <span
@@ -197,18 +195,18 @@ defineExpose({ focus });
         :class="MENU_FLOATING_PANEL_CLASS"
         role="listbox"
       >
-        <div class="flex flex-col max-h-48 overflow-y-auto">
+        <div class="flex max-h-48 flex-col overflow-y-auto">
           <button
             v-for="(item, index) in props.options"
             :id="`${optionIdPrefix}-${index}`"
             :key="item.value"
             type="button"
             role="option"
-            class="flex w-full items-center gap-2 p-2 text-left leading-none transition-colors hover:text-primary-gray"
+            class="flex w-full items-center gap-2 p-2 text-left leading-none text-tone-white transition-colors hover:bg-tone-surface-hover"
             :class="
-              index === highlightedIndex
-                ? 'text-primary-gray'
-                : 'text-primary-white'
+              index === highlightedIndex || item.value === model
+                ? 'bg-tone-surface-hover'
+                : null
             "
             :aria-selected="item.value === model"
             @click="selectOption(item.value)"

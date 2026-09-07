@@ -1,17 +1,17 @@
 <template>
-  <!-- Guest layout — sticky GuestHeader; колонка main + AppFooter -->
+  <!-- Guest layout — full-bleed shell для лендинга -->
   <div
-    class="h-dvh overflow-x-hidden overflow-y-auto bg-primary-black text-primary-white [scrollbar-color:var(--color-primary-gray-dark)_transparent] [scrollbar-width:thin]"
+    class="h-dvh overflow-x-hidden overflow-y-auto bg-tone-shell text-tone-white [scrollbar-color:var(--color-tone-muted)_transparent] [scrollbar-width:thin]"
   >
-    <GuestHeader />
+    <div class="sticky top-0 z-50 bg-tone-shell/80 backdrop-blur-md">
+      <GuestHeader />
+    </div>
 
-    <div
-      class="mx-auto flex min-h-[calc(100%-5.5rem)] w-full max-w-5xl flex-col gap-10 px-8 pb-8"
-    >
-      <main class="flex flex-1 flex-col">
-        <slot />
-      </main>
+    <main class="flex w-full flex-1 flex-col">
+      <slot />
+    </main>
 
+    <div class="mx-auto w-full max-w-5xl px-4 pb-8 pt-10 lg:px-6">
       <AppFooter />
     </div>
   </div>

@@ -1,17 +1,13 @@
 import { getAuthUserId } from "../../utils/getAuthUserId";
 import { ApiErrorCode, throwApiError } from "../../utils/apiError";
-import {
-  getLikedTrackIdSet,
-  isLikedTracksPlaylist,
-} from "../../utils/likedPlaylist";
+import { getLikedTrackIdSet } from "../../utils/likedPlaylist";
 import {
   fetchPlaylistTracks,
-  fetchPlaylistTracksByAddedAt,
   serializePlaylistDetail,
 } from "../../utils/playlistDetail";
 
 /**
- * GET /api/playlists/:id — playlist meta + tracks
+ * GET /api/playlists/:id — playlist meta + tracks (порядок по position)
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -35,9 +31,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const [trackRows, likedTrackIds] = await Promise.all([
-    isLikedTracksPlaylist(playlist.systemKind)
-      ? fetchPlaylistTracksByAddedAt(id)
-      : fetchPlaylistTracks(id),
+    fetchPlaylistTracks(id),
     getLikedTrackIdSet(userId),
   ]);
 

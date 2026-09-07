@@ -170,7 +170,7 @@ async function onSave() {
 <template>
   <ModalLayout title="Настройки плейлиста" @close="onClose">
     <form
-      class="flex w-[min(100vw-4rem,26rem)] flex-col gap-6"
+      class="flex w-[min(100vw-4rem,26rem)] flex-col gap-4"
       @submit.prevent="onSave"
     >
       <!-- Обложка -->
@@ -185,7 +185,7 @@ async function onSave() {
 
         <button
           type="button"
-          class="group relative size-36 shrink-0 overflow-hidden rounded-xl bg-primary-black ring-1 ring-primary-gray-dark transition-[transform,ring-color] duration-300 hover:scale-[1.02] hover:ring-primary-gray motion-reduce:transition-none motion-reduce:hover:scale-100"
+          class="group relative size-36 shrink-0 overflow-hidden rounded-md bg-tone-surface transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] motion-reduce:transform-none"
           :disabled="saving"
           aria-label="Загрузить обложку"
           @click="onPickCover"
@@ -198,20 +198,19 @@ async function onSave() {
           />
           <div
             v-else
-            class="flex size-full items-center justify-center text-primary-white"
+            class="flex size-full items-center justify-center text-tone-muted"
           >
             <PhQueue :size="48" weight="light" />
           </div>
 
-          <!-- Hover: сменить обложку -->
           <div
-            class="absolute inset-0 flex items-center justify-center bg-primary-black/55 opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:opacity-100"
+            class="absolute inset-0 flex items-center justify-center bg-tone-shell/55 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           >
-            <PhCamera :size="28" weight="light" class="text-primary-white" />
+            <PhCamera :size="28" weight="light" class="text-tone-white" />
           </div>
         </button>
 
-        <div class="flex flex-row flex-wrap items-center justify-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-2">
           <UiButton
             type="button"
             variant="gray"
@@ -231,37 +230,35 @@ async function onSave() {
       </div>
 
       <!-- Поля -->
-      <div class="flex flex-col gap-4">
-        <UiTextField
-          v-model="name"
-          placeholder="Название"
-          autocomplete="off"
-          maxlength="120"
-        />
+      <UiTextField
+        v-model="name"
+        placeholder="Название"
+        autocomplete="off"
+        maxlength="120"
+      />
 
-        <div class="flex flex-col gap-1.5">
-          <UiTextArea
-            v-model="description"
-            placeholder="Описание"
-            hint="Добавь описание (необязательно)"
-            :rows="4"
-            maxlength="1000"
-          />
-          <p class="text-right text-xs tabular-nums text-primary-gray">
-            {{ trimmedDescription.length }} / 1000
-          </p>
-        </div>
+      <div class="flex flex-col gap-1.5">
+        <UiTextArea
+          v-model="description"
+          placeholder="Описание"
+          hint="Необязательно"
+          :rows="4"
+          maxlength="1000"
+        />
+        <p class="text-right text-xs tabular-nums text-tone-muted">
+          {{ trimmedDescription.length }} / 1000
+        </p>
       </div>
 
       <!-- Видимость -->
       <div
-        class="flex w-full flex-row items-center justify-between gap-4 rounded-xl bg-primary-black px-4 py-3 ring-1 ring-primary-gray-dark"
+        class="flex w-full items-center justify-between gap-4 rounded-md bg-tone-surface px-4 py-3"
       >
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-medium leading-none text-primary-white">
+          <p class="text-sm font-medium leading-none text-tone-white">
             Публичный плейлист
           </p>
-          <p class="mt-1.5 text-xs leading-snug text-primary-gray">
+          <p class="mt-1.5 text-xs leading-snug text-tone-muted">
             {{ isPublic ? "Доступен всем по ссылке" : "Виден только вам" }}
           </p>
         </div>
@@ -277,8 +274,7 @@ async function onSave() {
         {{ errorMessage }}
       </p>
 
-      <!-- Действия -->
-      <div class="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+      <div class="flex justify-end gap-2">
         <UiButton
           type="button"
           variant="ghost"
@@ -287,7 +283,6 @@ async function onSave() {
         />
         <UiButton
           type="submit"
-          class="w-full sm:w-auto"
           :variant="saving ? 'loading' : 'white'"
           text="Сохранить"
           :disabled="!canSave"

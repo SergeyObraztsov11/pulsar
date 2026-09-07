@@ -71,33 +71,33 @@ defineExpose({ requestClose });
       <!-- Затемнение -->
       <div
         v-if="show"
-        class="fixed inset-0 z-100 flex items-center justify-center bg-primary-black/80 p-8"
+        class="fixed inset-0 z-100 flex items-center justify-center bg-tone-shell/80 p-8"
       >
         <!-- Модальное окно -->
         <div
           ref="panel"
-          class="flex max-h-full w-max max-w-full flex-col overflow-hidden rounded-xl bg-primary-gray-dark text-primary-white"
+          class="flex max-h-full w-max max-w-full flex-col overflow-hidden rounded-md bg-tone-canvas text-tone-white"
         >
           <!-- Шапка модального окна -->
-          <header class="flex shrink-0 items-center gap-3 p-4 pb-2">
+          <header class="flex shrink-0 items-center gap-3 p-6 border-b border-tone-surface">
             <h2
               v-if="props.title"
-              class="min-w-0 flex-1 truncate text-base font-semibold leading-none text-primary-white"
+              class="min-w-0 flex-1 truncate text-base font-semibold leading-none text-tone-white"
             >
               {{ props.title }}
             </h2>
             <button
               type="button"
-              class="ml-auto shrink-0 text-primary-white transition-[color,transform] duration-200 hover:text-primary-gray active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+              class="ml-auto shrink-0 text-tone-white transition-[color,transform] duration-200 hover:text-tone-muted active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
               aria-label="Закрыть"
               @click="requestClose"
             >
-              <PhX :size="16" weight="light" />
+              <PhX :size="16" weight="bold" />
             </button>
           </header>
 
           <!-- Контент модального окна -->
-          <div class="min-h-0 flex-1 overflow-y-auto p-4 pt-2">
+          <div class="min-h-0 flex-1 overflow-y-auto p-6">
             <slot />
           </div>
         </div>

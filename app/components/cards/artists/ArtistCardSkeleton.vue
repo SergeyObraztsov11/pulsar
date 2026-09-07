@@ -1,19 +1,14 @@
 <script setup lang="ts">
 /**
- * ArtistCardSkeleton — pulse placeholder for ArtistCard.
- * Shares size via ArtistCardLayout (w-48, square avatar).
+ * ArtistCardSkeleton — pulse placeholder размера ArtistCard.
  */
 </script>
 
 <template>
-  <ArtistCardLayout class="flex">
-    <template #avatar>
-      <div
-        class="absolute inset-0 animate-pulse rounded-full bg-primary-gray-dark"
-      />
-    </template>
-    <template #meta>
-      <div class="h-4 w-2/3 animate-pulse rounded bg-primary-gray-dark" />
-    </template>
-  </ArtistCardLayout>
+  <div class="flex w-48 shrink-0 flex-col gap-2 rounded p-2">
+    <div
+      class="size-44 shrink-0 animate-pulse rounded-full bg-tone-surface-hover"
+    />
+    <div class="mx-auto h-4 w-2/3 animate-pulse rounded bg-tone-surface" />
+  </div>
 </template>

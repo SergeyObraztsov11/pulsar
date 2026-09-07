@@ -1,19 +1,13 @@
 <script setup lang="ts">
 /**
- * AlbumCard — album cover card.
- * Desktop + Mobile in one file; shared behavior via useAlbumCard.
+ * AlbumCard — обложка, play на hover, more у названия.
  */
-import {
-  PhDotsThree,
-  PhPause,
-  PhPlay,
-  PhPlusSquare,
-} from "@phosphor-icons/vue";
+import { PhDotsThree, PhPause, PhPlay } from "@phosphor-icons/vue";
 import type { Album } from "./albumCard.types";
 
 const props = withDefaults(
   defineProps<{
-    /** false — preview without play / like / more (guest) */
+    /** false — без play / more (guest) */
     interactive?: boolean;
     /** false — только название (полка одного артиста) */
     showArtist?: boolean;
@@ -34,7 +28,6 @@ const {
   playPending,
   nameLabel,
   artistLabel,
-  showDesktopActions,
   onPlayClick,
   toggleLike,
   openShare,
@@ -47,115 +40,72 @@ const {
 </script>
 
 <template>
-  <!-- Desktop -->
-  <AlbumCardLayout class="group hidden lg:flex">
-    <template #cover>
+  <div
+    class="group flex w-48 shrink-0 flex-col gap-2 rounded-md p-2 lg:hover:bg-tone-surface"
+  >
+    <div
+      class="relative size-44 shrink-0 overflow-hidden rounded-md bg-tone-surface-hover"
+    >
       <UiCoverImage :src="album?.coverSrc" />
+      <NuxtLink
+        :to="albumTo"
+        class="absolute inset-0"
+        :aria-label="nameLabel"
+      />
 
-      <!-- Клик по обложке → альбом -->
-      <NuxtLink :to="albumTo" class="absolute inset-0" :aria-label="nameLabel" />
+      <button
+        v-if="interactive"
+        type="button"
+        class="absolute bottom-3 left-3 z-10 hidden size-14 items-center justify-center rounded-full bg-tone-white text-tone-canvas opacity-0 transition-[transform,opacity] duration-200 group-hover:opacity-100 hover:scale-105 active:scale-95 lg:flex motion-reduce:transform-none"
+        :disabled="playPending"
+        :aria-label="isPlaying ? 'Пауза' : 'Слушать'"
+        @click.stop="onPlayClick()"
+      >
+        <PhPause v-if="isPlaying" :size="28" weight="fill" />
+        <PhPlay v-else :size="28" weight="fill" />
+      </button>
+    </div>
 
-      <template v-if="interactive">
-        <!-- Действия: ряд снизу слева -->
-        <div
-          class="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100"
-          :class="showDesktopActions ? 'opacity-100' : ''"
+    <div class="flex min-w-0 flex-col">
+      <div class="flex min-w-0 items-center gap-1">
+        <NuxtLink
+          :to="albumTo"
+          class="min-w-0 flex-1 truncate text-base font-medium text-tone-white hover:text-tone-muted"
         >
-          <div
-            class="pointer-events-auto absolute bottom-3 left-3 flex items-center gap-3"
-          >
+          {{ nameLabel }}
+        </NuxtLink>
+
+        <AlbumMoreMenu
+          v-if="interactive && isLgUp"
+          v-model:open="moreOpen"
+          :is-liked="isLiked"
+          :is-playing="isPlaying"
+          @play="onPlayClick"
+          @toggle-like="toggleLike"
+          @go-album="goToAlbum"
+          @go-artist="goToArtist"
+          @share="openShare"
+          @report="openReport"
+        >
+          <template #trigger>
             <button
               type="button"
-              class="flex size-12 shrink-0 items-center justify-center rounded-full bg-tone-white text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none motion-reduce:hover:scale-100"
-              :disabled="playPending"
-              :aria-label="isPlaying ? 'Пауза' : 'Слушать'"
-              @click.stop="onPlayClick()"
+              class="flex size-8 shrink-0 items-center justify-center text-tone-muted hover:text-tone-white"
+              aria-label="Ещё"
             >
-              <PhPause v-if="isPlaying" :size="24" weight="fill" />
-              <PhPlay v-else :size="24" weight="fill" />
+              <PhDotsThree :size="20" weight="bold" />
             </button>
+          </template>
+        </AlbumMoreMenu>
+      </div>
 
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-colors duration-200 hover:bg-tone-surface-hover"
-                :aria-label="isLiked ? 'Убрать из избранного' : 'В избранное'"
-                :aria-pressed="isLiked"
-                @click.stop="toggleLike()"
-              >
-                <PhPlusSquare
-                  :size="20"
-                  :weight="isLiked ? 'fill' : 'regular'"
-                />
-              </button>
-
-              <AlbumMoreMenu
-                v-if="isLgUp"
-                v-model:open="moreOpen"
-                :is-liked="isLiked"
-                @play="onPlayClick"
-                @toggle-like="toggleLike"
-                @go-album="goToAlbum"
-                @go-artist="goToArtist"
-                @share="openShare"
-                @report="openReport"
-              >
-                <template #trigger>
-                  <button
-                    type="button"
-                    class="flex size-9 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-colors duration-200 hover:bg-tone-surface-hover"
-                    aria-label="Ещё"
-                  >
-                    <PhDotsThree :size="20" weight="bold" />
-                  </button>
-                </template>
-              </AlbumMoreMenu>
-            </div>
-          </div>
-        </div>
-      </template>
-    </template>
-
-    <template #meta>
-      <NuxtLink
-        :to="albumTo"
-        class="min-w-0 truncate text-base font-medium text-tone-white transition-colors duration-300 hover:text-tone-muted"
-      >
-        {{ nameLabel }}
-      </NuxtLink>
       <NuxtLink
         v-if="props.showArtist"
         :to="artistTo"
-        class="truncate text-sm text-tone-muted transition-colors duration-300 hover:text-tone-white"
+        class="truncate text-sm text-tone-white hover:text-tone-white"
       >
         {{ artistLabel }}
       </NuxtLink>
-    </template>
-  </AlbumCardLayout>
-
-  <!-- Mobile -->
-  <AlbumCardLayout class="group flex lg:hidden">
-    <template #cover>
-      <UiCoverImage :src="album?.coverSrc" />
-
-      <!-- Тап по обложке → альбом -->
-      <NuxtLink :to="albumTo" class="absolute inset-0 z-10" />
-    </template>
-
-    <template #meta>
-      <NuxtLink
-        :to="albumTo"
-        class="min-w-0 truncate text-base font-medium text-tone-white transition-colors duration-300 hover:text-tone-muted"
-      >
-        {{ nameLabel }}
-      </NuxtLink>
-      <NuxtLink
-        v-if="props.showArtist"
-        :to="artistTo"
-        class="truncate text-sm text-tone-muted transition-colors duration-300 hover:text-tone-white"
-      >
-        {{ artistLabel }}
-      </NuxtLink>
-    </template>
-  </AlbumCardLayout>
+    </div>
+  </div>
 </template>

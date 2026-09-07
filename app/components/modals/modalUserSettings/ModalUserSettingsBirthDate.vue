@@ -132,7 +132,7 @@ async function onSave() {
       class="flex w-[min(100vw-4rem,22rem)] flex-col gap-4"
       @submit.prevent="onSave"
     >
-      <p class="text-sm text-primary-gray">
+      <p class="text-sm text-tone-muted">
         Укажите дату полностью — день, месяц и год.
       </p>
 
@@ -161,7 +161,7 @@ async function onSave() {
         {{ errorMessage }}
       </p>
 
-      <div class="flex flex-row justify-end">
+      <div class="flex justify-end gap-2">
         <UiButton
           :variant="saving ? 'loading' : 'white'"
           text="Сохранить"

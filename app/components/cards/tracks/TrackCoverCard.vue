@@ -14,89 +14,70 @@ const props = withDefaults(
   { interactive: true },
 );
 
-const {
-  interactive,
-  isCurrent,
-  isLiked,
-  isHovered,
-  moreOpen,
-  isLgUp,
-  isPlayingCurrent,
-  showCoverOverlayPanel,
-  showCoverEqualizer,
-  showCoverPlay,
-  nameLabel,
-  artistLabel,
-  durationLabel,
-  isExplicit,
-  trackTo,
-  artistTo,
-  albumTo,
-  trackId,
-  coverSrc,
-  onRowClick,
-  onPlayClick,
-  toggleLike,
-} = useTrackCard(() => props.track, { interactive: () => props.interactive });
+/** reactive — стабильный unwrap refs в шаблоне (без деструктуризации) */
+const card = reactive(
+  useTrackCard(() => props.track, {
+    interactive: () => props.interactive,
+  }),
+);
 </script>
 
 <template>
   <TrackCardLayout
     class="flex items-center lg:transition-colors lg:duration-200 lg:hover:bg-tone-surface lg:motion-reduce:transition-none"
     :class="[
-      isCurrent ? 'bg-tone-surface' : '',
-      interactive && !isLgUp ? 'cursor-pointer' : '',
+      card.isCurrent ? 'bg-tone-surface' : null,
+      props.interactive ? 'max-lg:cursor-pointer' : null,
     ]"
-    @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false"
-    @click="onRowClick"
+    @mouseenter="card.isHovered = true"
+    @mouseleave="card.isHovered = false"
+    @click="card.onRowClick"
   >
     <!-- Cover -->
     <div
       class="relative size-12 shrink-0 overflow-hidden rounded-md bg-tone-surface"
     >
-      <UiCoverImage :src="coverSrc" />
+      <UiCoverImage :src="card.coverSrc" />
 
       <div
-        v-if="interactive && showCoverOverlayPanel"
+        v-if="props.interactive && card.showCoverOverlayPanel"
         class="absolute inset-0 flex items-center justify-center bg-tone-shell/50"
       >
         <UiEqualizerIcon
-          v-show="showCoverEqualizer"
-          :active="isPlayingCurrent"
+          v-show="card.showCoverEqualizer"
+          :active="card.isPlayingCurrent"
         />
         <button
-          v-show="showCoverPlay"
+          v-show="card.showCoverPlay"
           type="button"
           class="flex size-8 items-center justify-center text-tone-white transition-colors duration-150"
-          @click.stop="onPlayClick()"
+          @click.stop="card.onPlayClick()"
         >
-          <PhPause v-if="isPlayingCurrent" :size="16" weight="fill" />
+          <PhPause v-if="card.isPlayingCurrent" :size="16" weight="fill" />
           <PhPlay v-else :size="16" weight="fill" />
         </button>
       </div>
     </div>
 
     <TrackCardMeta
-      :name-label="nameLabel"
-      :artist-label="artistLabel"
-      :track-to="trackTo"
-      :artist-to="artistTo"
-      :is-lg-up="isLgUp"
+      :name-label="card.nameLabel"
+      :artist-label="card.artistLabel"
+      :track-to="card.trackTo"
+      :artist-to="card.artistTo"
     />
 
     <TrackCardActions
-      v-model:open="moreOpen"
-      :interactive="interactive"
-      :track-id="trackId ?? ''"
-      :album-to="albumTo"
-      :artist-to="artistTo"
-      :is-playing-current="isPlayingCurrent"
-      :is-liked="isLiked"
-      :is-explicit="isExplicit"
-      :duration-label="durationLabel"
-      @play="onPlayClick"
-      @toggle-like="toggleLike"
+      v-model:open="card.moreOpen"
+      :interactive="props.interactive"
+      :track-id="card.trackId ?? ''"
+      :album-to="card.albumTo"
+      :artist-to="card.artistTo"
+      :is-playing-current="card.isPlayingCurrent"
+      :is-liked="card.isLiked"
+      :is-explicit="card.isExplicit"
+      :duration-label="card.durationLabel"
+      @play="card.onPlayClick"
+      @toggle-like="card.toggleLike"
     />
   </TrackCardLayout>
 </template>

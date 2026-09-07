@@ -12,6 +12,7 @@ const meSelect = {
   email: true,
   name: true,
   avatarSrc: true,
+  avatarColor: true,
   bio: true,
   country: true,
   birthDate: true,
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
     throwApiError(400, ApiErrorCode.AVATAR_TOO_LARGE);
   }
 
-  const body = await processUserAvatar(part.data);
+  const { body, avatarColor } = await processUserAvatar(part.data);
   const key = avatarObjectKey(session.user.id);
 
   await putS3Object({
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { avatarSrc: key },
+    data: { avatarSrc: key, avatarColor },
     select: meSelect,
   });
 

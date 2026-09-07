@@ -95,6 +95,7 @@ export default defineEventHandler(async (event) => {
       email: true,
       name: true,
       avatarSrc: true,
+      avatarColor: true,
       bio: true,
       country: true,
       birthDate: true,

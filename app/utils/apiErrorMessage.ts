@@ -78,6 +78,8 @@ const messages: Record<ApiErrorCodeType, string> = {
   [ApiErrorCode.SYSTEM_PLAYLIST_NOT_DELETABLE]:
     "Системный плейлист нельзя удалить.",
   [ApiErrorCode.PLAYLIST_TRACK_ID_REQUIRED]: "Не указан трек.",
+  [ApiErrorCode.PLAYLIST_TRACK_NOT_FOUND]: "Трека нет в этом плейлисте.",
+  [ApiErrorCode.PLAYLIST_POSITION_INVALID]: "Некорректная позиция трека.",
   [ApiErrorCode.PLAYLIST_IDS_REQUIRED]: "Не указан плейлист или трек.",
 
   [ApiErrorCode.ARTIST_ID_REQUIRED]: "Не указан артист.",

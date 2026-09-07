@@ -69,6 +69,7 @@ type PlaylistRow = {
   name: string;
   description: string | null;
   coverSrc: string | null;
+  coverColor: string | null;
   isPublic: boolean;
   systemKind: PlaylistSystemKind | null;
   createdAt: Date;
@@ -89,6 +90,8 @@ export function serializePlaylistSummary(playlist: PlaylistRow) {
       (isLikedTracksPlaylist(playlist.systemKind)
         ? LIKED_PLAYLIST_COVER_SRC
         : null),
+    /** Accent только от своей загруженной обложки; у «Любимых» без upload — null */
+    coverColor: playlist.coverColor,
     isPublic: playlist.isPublic,
     systemKind: playlist.systemKind,
     isSystem: playlist.systemKind != null,

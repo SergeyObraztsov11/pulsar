@@ -8,8 +8,16 @@ import {
   PhPlay,
   PhPause,
   PhDotsThree,
-  PhPlusSquare,
+  PhHeart,
+  PhSortAscending,
+  PhSortDescending,
+  PhCheck,
+  PhNotePencil,
+  PhArrowUp,
+  PhArrowDown,
+  PhCaretUp,
 } from "@phosphor-icons/vue";
+import type { MenuItem } from "~/components/menus/menu.types";
 import type { Album, AlbumDetail } from "~/types/album";
 import { ApiErrorCode } from "#shared/apiErrorCodes";
 import { isSameQueueSource } from "~/stores/player";
@@ -32,6 +40,7 @@ definePageMeta({
 
 const route = useRoute();
 const { open: openModal } = useModal();
+const { user } = useUserSession();
 const albumId = computed(() => String(route.params.albumId ?? ""));
 
 const { data: album, error } = await useFetch<AlbumDetail>(
@@ -47,13 +56,90 @@ if (error.value) {
   });
 }
 
+/** Свой альбом — кнопка редактирования у названия */
+const isOwnAlbum = computed(
+  () =>
+    Boolean(user.value?.id) &&
+    Boolean(album.value?.artist.id) &&
+    user.value?.id === album.value?.artist.id,
+);
+
 const albumIdForLike = computed(() => album.value?.id);
 const { isLiked, toggleLike } = useLike("album", albumIdForLike, {
   initial: computed(() => album.value?.isLiked),
 });
 
 const moreOpen = ref(false);
-const compactMoreOpen = ref(false);
+const sortOpen = ref(false);
+
+type AlbumSortField = "order" | "name" | "duration";
+type AlbumSortDir = "asc" | "desc";
+
+const albumSortField = ref<AlbumSortField>("order");
+const albumSortDir = ref<AlbumSortDir>("asc");
+
+/** Поле сортировки; повторный клик по name/duration — смена направления */
+function selectSortField(field: AlbumSortField) {
+  if (field === "order") {
+    albumSortField.value = "order";
+    albumSortDir.value = "asc";
+    return;
+  }
+  if (albumSortField.value === field) {
+    albumSortDir.value = albumSortDir.value === "asc" ? "desc" : "asc";
+    return;
+  }
+  albumSortField.value = field;
+  albumSortDir.value = "asc";
+}
+
+const canToggleSortDir = computed(() => albumSortField.value !== "order");
+
+/** Подпись текущей сортировки слева от кнопки */
+const sortLabel = computed(() => {
+  if (albumSortField.value === "name") return "По названию";
+  if (albumSortField.value === "duration") return "По длительности";
+  return "По порядку";
+});
+
+const sortItems = computed<MenuItem[]>(() => {
+  const field = albumSortField.value;
+  const dir = albumSortDir.value;
+
+  const item = (id: AlbumSortField, label: string): MenuItem => {
+    const selected = field === id;
+    const showArrow = selected && id !== "order";
+
+    return {
+      id,
+      label,
+      icon: showArrow ? (dir === "desc" ? PhArrowDown : PhArrowUp) : PhCheck,
+      iconClass: selected ? "text-tone-white" : "text-transparent",
+      keepOpen: true,
+      onClick: () => {
+        selectSortField(id);
+      },
+    };
+  };
+
+  return [
+    item("order", "По порядку"),
+    item("name", "По названию"),
+    item("duration", "По длительности"),
+  ];
+});
+
+const sortedTracks = computed(() => {
+  const tracks = album.value?.tracks;
+  if (tracks == null) return null;
+  if (albumSortField.value === "order") return tracks;
+
+  const dir = albumSortDir.value === "asc" ? 1 : -1;
+  if (albumSortField.value === "name") {
+    return [...tracks].sort((a, b) => a.name.localeCompare(b.name, "ru") * dir);
+  }
+  return [...tracks].sort((a, b) => (a.durationSec - b.durationSec) * dir);
+});
 
 const artistId = computed(() => album.value?.artist.id ?? "");
 
@@ -186,6 +272,19 @@ const compactHeaderStyle = computed(() => {
 });
 
 const heroRef = ref<HTMLElement | null>(null);
+const titleRef = ref<HTMLElement | null>(null);
+
+/** Макс. размер названия: mobile text-5xl, desktop text-8xl */
+const lgUp = useLgUp();
+const titleMaxPx = computed(() => (lgUp.value ? 96 : 48));
+
+const { style: titleFitStyle } = useFitText(titleRef, {
+  maxPx: titleMaxPx,
+  minPx: 24,
+  watchSources: [() => album.value?.name],
+});
+
+
 const showCompactHeader = ref(false);
 
 /** Компактный хедер: показываем, когда большая шапка ушла из видимости */
@@ -204,75 +303,111 @@ onMounted(() => {
   observer.observe(hero);
   onUnmounted(() => observer.disconnect());
 });
+
+/** Листать main вверх к шапке альбома */
+function scrollToTop() {
+  const scrollRoot = heroRef.value?.closest("main");
+  scrollRoot?.scrollTo({ top: 0, behavior: "smooth" });
+}
 </script>
 
 <template>
   <div>
-    <!-- Шапка альбома -->
+    <!-- Шапка альбома: mobile — колонка, desktop — ряд -->
     <header
       ref="heroRef"
-      class="relative flex shrink-0 items-end gap-6 overflow-hidden rounded-t-lg bg-tone-surface p-6 text-tone-white"
+      class="relative flex shrink-0 flex-col items-center gap-4 overflow-hidden rounded-t-lg bg-tone-surface p-4 text-tone-white sm:gap-5 sm:p-5 lg:flex-row lg:items-end lg:gap-6 lg:p-6"
       :style="heroBgStyle"
     >
       <div
-        class="size-64 shrink-0 overflow-hidden rounded-2xl bg-tone-shell shadow-2xl"
+        class="size-48 shrink-0 overflow-hidden rounded-xl bg-tone-shell shadow-2xl sm:size-56 sm:rounded-2xl lg:size-64"
       >
         <UiCoverImage :src="album?.coverSrc" :alt="album?.name" />
       </div>
 
-      <div class="flex min-w-0 flex-1 flex-col gap-3">
-        <!-- Имя альбома, explicit -->
-
-        <h1 class="min-w-0 truncate text-8xl font-extrabold leading-none">
+      <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
+        <!-- Название: максимум, уменьшается только если не влезает в строку -->
+        <h1
+          ref="titleRef"
+          class="w-full min-w-0 text-center font-extrabold leading-none lg:text-left"
+          :style="titleFitStyle"
+        >
           {{ album?.name }}
         </h1>
 
-        <!-- Артист, год выпуска, слушатели, треки, длительность -->
-        <p class="flex flex-row items-center gap-x-1.5 text-sm text-tone-white">
-          <NuxtLink
-            :to="artistTo"
-            class="inline-flex max-w-full items-center gap-1.5 font-bold hover:text-tone-muted"
+        <!-- Mobile: ник артиста отдельно под названием -->
+        <NuxtLink
+          :to="artistTo"
+          class="mx-auto inline-flex max-w-full items-center gap-1.5 text-sm font-bold text-tone-white hover:text-tone-muted lg:hidden"
+        >
+          <div
+            class="size-6 shrink-0 overflow-hidden rounded-full bg-tone-shell"
           >
-            <div
-              v-if="album?.artist.avatarSrc"
-              class="size-6 shrink-0 overflow-hidden rounded-full"
+            <UiCoverImage
+              :src="album?.artist.avatarSrc"
+              :icon="PhUser"
+              :alt="album?.artist.name ?? 'Исполнитель'"
+            />
+          </div>
+          <span class="truncate">{{ album?.artist.name ?? "…" }}</span>
+        </NuxtLink>
+
+        <!-- Мета: на desktop — с артистом; на mobile — без (ник выше) -->
+        <div
+          class="flex min-w-0 justify-center overflow-x-hidden lg:justify-start"
+        >
+          <div
+            class="inline-flex max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm text-tone-white lg:w-max lg:flex-nowrap lg:justify-start lg:whitespace-nowrap"
+          >
+            <NuxtLink
+              :to="artistTo"
+              class="hidden shrink-0 items-center gap-1.5 font-bold hover:text-tone-muted lg:inline-flex"
             >
-              <UiCoverImage
-                :src="album?.artist.avatarSrc"
-                :icon="PhUser"
-                :alt="album?.artist.name"
-                :icon-size="55"
-              />
-            </div>
-            <span class="truncate">{{ album?.artist.name }}</span>
-          </NuxtLink>
-          <span aria-hidden="true">·</span>
-          <span>{{ releaseYear }}</span>
-          <template v-if="listenersLabel">
+              <div
+                class="size-6 shrink-0 overflow-hidden rounded-full bg-tone-shell"
+              >
+                <UiCoverImage
+                  :src="album?.artist.avatarSrc"
+                  :icon="PhUser"
+                  :alt="album?.artist.name ?? 'Исполнитель'"
+                />
+              </div>
+              <span>{{ album?.artist.name }}</span>
+            </NuxtLink>
+            <span class="hidden lg:inline" aria-hidden="true">·</span>
+            <span>{{ releaseYear }}</span>
+            <template v-if="listenersLabel">
+              <span aria-hidden="true">·</span>
+              <span>{{ listenersLabel }}</span>
+            </template>
             <span aria-hidden="true">·</span>
-            <span>{{ listenersLabel }}</span>
-          </template>
-          <span aria-hidden="true">·</span>
-          <span>{{ trackCountLabel }}</span>
-          <span aria-hidden="true">·</span>
-          <span>{{ totalDurationLabel }}</span>
-        </p>
-        <!-- Действия: play, лайк, ещё -->
-        <div class="flex items-center gap-6">
+            <span>{{ trackCountLabel }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ totalDurationLabel }}</span>
+          </div>
+        </div>
+
+        <!-- Действия: mobile — Слушать + like + more по центру; desktop — + сортировка -->
+        <div
+          class="flex w-full items-center justify-center gap-4 lg:justify-start lg:gap-6"
+        >
           <button
             type="button"
-            class="flex size-14 shrink-0 items-center justify-center rounded-full bg-tone-white text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100"
+            class="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-tone-white px-5 text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100 lg:size-14 lg:px-0"
             :aria-label="isPlayingAlbum ? 'Пауза' : 'Слушать альбом'"
             @click="onListenClick"
           >
             <PhPause v-if="isPlayingAlbum" :size="28" weight="fill" />
             <PhPlay v-else :size="28" weight="fill" />
+            <span class="text-sm font-medium leading-none lg:hidden">
+              {{ isPlayingAlbum ? "Пауза" : "Слушать" }}
+            </span>
           </button>
 
           <div class="flex items-center gap-4">
             <button
               type="button"
-              class="flex size-12 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
+              class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted lg:size-12"
               :aria-label="
                 isLiked
                   ? `Убрать из любимых, ${likesCountButtonLabel}`
@@ -281,12 +416,13 @@ onMounted(() => {
               :aria-pressed="isLiked"
               @click="toggleLike"
             >
-              <PhPlusSquare :size="32" :weight="isLiked ? 'fill' : 'regular'" />
+              <PhHeart :size="32" :weight="isLiked ? 'fill' : 'light'" />
             </button>
 
             <AlbumMoreMenu
               v-model:open="moreOpen"
               :is-liked="isLiked"
+              :is-playing="isPlayingAlbum"
               @play="onListenClick"
               @toggle-like="toggleLike"
               @go-album="() => navigateTo(albumTo)"
@@ -297,13 +433,42 @@ onMounted(() => {
               <template #trigger>
                 <button
                   type="button"
-                  class="flex size-12 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
+                  class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted lg:size-12"
                   aria-label="Ещё"
                 >
                   <PhDotsThree :size="32" weight="bold" />
                 </button>
               </template>
             </AlbumMoreMenu>
+          </div>
+
+          <div class="ml-auto hidden min-w-0 lg:block">
+            <MenuResponsive v-model:open="sortOpen" :items="sortItems">
+              <template #trigger>
+                <button
+                  type="button"
+                  class="inline-flex h-12 max-w-full shrink-0 items-center gap-2 rounded-full pl-3 pr-1 text-tone-white transition-colors duration-200 hover:text-tone-muted"
+                  :aria-label="`Сортировка: ${sortLabel}`"
+                  :aria-expanded="sortOpen"
+                >
+                  <span class="truncate leading-none">
+                    {{ sortLabel }}
+                  </span>
+                  <PhSortDescending
+                    v-if="canToggleSortDir && albumSortDir === 'desc'"
+                    :size="28"
+                    weight="light"
+                    class="shrink-0"
+                  />
+                  <PhSortAscending
+                    v-else
+                    :size="28"
+                    weight="light"
+                    class="shrink-0"
+                  />
+                </button>
+              </template>
+            </MenuResponsive>
           </div>
         </div>
       </div>
@@ -319,9 +484,10 @@ onMounted(() => {
         :style="compactHeaderStyle"
         :aria-hidden="!showCompactHeader"
       >
+        <!-- Play только на desktop -->
         <button
           type="button"
-          class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tone-white text-tone-canvas transition-opacity duration-200 hover:opacity-90"
+          class="hidden size-8 shrink-0 items-center justify-center rounded-full bg-tone-white text-tone-canvas transition-opacity duration-200 hover:opacity-90 lg:flex"
           :aria-label="isPlayingAlbum ? 'Пауза' : 'Слушать альбом'"
           @click="onListenClick"
         >
@@ -336,37 +502,11 @@ onMounted(() => {
         <button
           type="button"
           class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
-          :aria-label="
-            isLiked
-              ? `Убрать из любимых, ${likesCountButtonLabel}`
-              : `В любимое, ${likesCountButtonLabel}`
-          "
-          :aria-pressed="isLiked"
-          @click="toggleLike"
+          aria-label="Наверх"
+          @click="scrollToTop"
         >
-          <PhPlusSquare :size="24" :weight="isLiked ? 'fill' : 'regular'" />
+          <PhCaretUp :size="24" weight="bold" />
         </button>
-
-        <AlbumMoreMenu
-          v-model:open="compactMoreOpen"
-          :is-liked="isLiked"
-          @play="onListenClick"
-          @toggle-like="toggleLike"
-          @go-album="() => navigateTo(albumTo)"
-          @go-artist="() => navigateTo(artistTo)"
-          @share="openShare"
-          @report="openReport"
-        >
-          <template #trigger>
-            <button
-              type="button"
-              class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
-              aria-label="Ещё"
-            >
-              <PhDotsThree :size="24" weight="bold" />
-            </button>
-          </template>
-        </AlbumMoreMenu>
       </div>
     </div>
 
@@ -374,8 +514,8 @@ onMounted(() => {
     <section class="flex flex-col gap-16 p-6">
       <TracksColumnSection
         variant="index"
-        :items="album?.tracks ?? null"
-        :limit="album?.tracks.length ?? 0"
+        :items="sortedTracks"
+        :limit="sortedTracks?.length ?? 0"
         :queue-source="
           album?.id ? { type: 'album', id: album.id, title: album.name } : null
         "
@@ -383,9 +523,11 @@ onMounted(() => {
 
       <AlbumsSwiperSection
         v-if="showArtistAlbums"
-        title="Ещё у артиста"
+        :title="`Альбомы «${album?.artist.name ?? '…'}»`"
         :items="artistAlbums"
         :limit="8"
+        :more-to="artistId ? `/user/${artistId}/albums` : undefined"
+        more-label="Показать все"
         :show-artist="false"
       />
     </section>

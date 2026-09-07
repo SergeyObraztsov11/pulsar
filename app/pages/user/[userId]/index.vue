@@ -1,21 +1,28 @@
 <script setup lang="ts">
 /**
- * Артист — три блока: шапка, плашка владельца, основной контент.
+ * Артист — шапка, популярные треки, полка альбомов.
  * Данные: GET /api/artists/:id.
  */
-import { PhEmpty, PhLink, PhUser } from "@phosphor-icons/vue";
+import {
+  PhEmpty,
+  PhUser,
+  PhPlay,
+  PhPause,
+  PhDotsThree,
+  PhHeart,
+  PhCaretUp,
+} from "@phosphor-icons/vue";
 import ModalArtistMore, {
   type ModalArtistMoreProps,
 } from "~/components/modals/ModalArtistMore.vue";
-import type { ArtistDetail, ArtistLink, ArtistLinkKind } from "~/types/artist";
+import type { ArtistDetail } from "~/types/artist";
 import { ApiErrorCode } from "#shared/apiErrorCodes";
 import { isSameQueueSource } from "~/stores/player";
 import { formatCompactCount } from "~/utils/formatCompactCount";
-import { formatListenersLabel } from "~/utils/formatListenersLabel";
-import { pluralizeRu } from "~/utils/pluralizeRu";
 
 definePageMeta({
   layout: "app-layout",
+  pageTransition: false,
   key: (route) => `artist-${route.params.userId}`,
 });
 
@@ -24,7 +31,7 @@ const userId = computed(() => String(route.params.userId ?? ""));
 
 const { user } = useUserSession();
 
-/** Свой профиль — плашка владельца */
+/** Свой профиль — hover-камера на аватаре */
 const isOwnProfile = computed(
   () => Boolean(user.value?.id) && user.value?.id === userId.value,
 );
@@ -105,66 +112,76 @@ const isPlayingArtist = computed(
   () => isCurrentArtist.value && playerStore.isPlaying,
 );
 
-/** Плейсхолдер, если bio не заполнен */
-const bioPlaceholder = computed(() =>
-  isOwnProfile.value
-    ? "Здесь будет ваше описание — расскажите слушателям, кто вы и какую музыку делаете."
-    : "Артист пока не добавил описание. Загляните позже — здесь появится пара слов о нём.",
-);
-
 const hasBio = computed(() => Boolean(artist.value?.bio?.trim()));
 
-/** Есть ли ненулевые слушатели (для цвета подписи) */
-const hasListeners = computed(() => (artist.value?.listenersCount ?? 0) > 0);
-
-/** «Нет слушателей» / «1,2 млн слушателей» */
-const listenersLabel = computed(() =>
-  formatListenersLabel(artist.value?.listenersCount),
-);
-
-const LINK_LABELS: Record<ArtistLinkKind, string> = {
-  spotify: "Spotify",
-  appleMusic: "Apple Music",
-  yandexMusic: "Яндекс Музыка",
-  instagram: "Instagram",
-  telegram: "Telegram",
-  youtube: "YouTube",
-  tiktok: "TikTok",
-  vk: "VK",
-};
-
-const artistLinks = computed(() => artist.value?.links ?? []);
-
-const primaryLink = computed(() => artistLinks.value[0] ?? null);
-
-const moreLinksCount = computed(() =>
-  Math.max(0, artistLinks.value.length - 1),
-);
-
-/** Подпись «и ещё N ссылки» */
-const moreLinksLabel = computed(() => {
-  const count = moreLinksCount.value;
-  if (count <= 0) return null;
-  return pluralizeRu(
-    count,
-    `и ещё ${count} ссылка`,
-    `и ещё ${count} ссылки`,
-    `и ещё ${count} ссылок`,
-  );
+/** Accent из аватара для hero; fallback — coverColor первого альбома */
+const heroColor = computed(() => {
+  const fromAvatar = artist.value?.avatarColor?.trim();
+  if (fromAvatar && /^#[0-9a-fA-F]{6}$/.test(fromAvatar)) return fromAvatar;
+  const fromAlbum = artist.value?.albums?.[0]?.coverColor?.trim();
+  if (fromAlbum && /^#[0-9a-fA-F]{6}$/.test(fromAlbum)) return fromAlbum;
+  return null;
 });
 
-const linksExpanded = ref(false);
+/** Фон hero: avatarColor / coverColor + мягкая тень к tone-canvas */
+const heroBgStyle = computed(() => {
+  const color = heroColor.value;
+  if (!color) return undefined;
+  return {
+    backgroundImage: `linear-gradient(to bottom, ${color} 0%, ${color} 55%, color-mix(in srgb, ${color} 70%, var(--color-tone-canvas)) 100%)`,
+  };
+});
 
-function linkLabel(link: ArtistLink): string {
-  return LINK_LABELS[link.kind] ?? link.href;
-}
+/** Компактный хедер — нижний тон градиента */
+const compactHeaderStyle = computed(() => {
+  const color = heroColor.value;
+  if (!color) return undefined;
+  return {
+    backgroundColor: `color-mix(in srgb, ${color} 70%, var(--color-tone-canvas))`,
+  };
+});
 
-/** Атмосфера шапки: пока серый (позже — coverColor) */
-const headerWashStyle = {
-  backgroundImage: `radial-gradient(ellipse 120% 100% at 50% 0%, var(--color-primary-gray) 0%, transparent 75%)`,
-};
+const moreOpen = ref(false);
 
 const { open: openModal } = useModal();
+
+const heroRef = ref<HTMLElement | null>(null);
+const titleRef = ref<HTMLElement | null>(null);
+
+/** Макс. размер названия: mobile text-5xl, desktop text-8xl */
+const lgUp = useLgUp();
+const titleMaxPx = computed(() => (lgUp.value ? 96 : 48));
+
+const { style: titleFitStyle } = useFitText(titleRef, {
+  maxPx: titleMaxPx,
+  minPx: 24,
+  watchSources: [() => artist.value?.name],
+});
+
+const showCompactHeader = ref(false);
+
+/** Компактный хедер: показываем, когда большая шапка ушла из видимости */
+onMounted(() => {
+  const hero = heroRef.value;
+  const scrollRoot = hero?.closest("main");
+  if (!hero || !scrollRoot) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry) showCompactHeader.value = !entry.isIntersecting;
+    },
+    { root: scrollRoot, threshold: 0 },
+  );
+
+  observer.observe(hero);
+  onUnmounted(() => observer.disconnect());
+});
+
+/** Листать main вверх к шапке артиста */
+function scrollToTop() {
+  const scrollRoot = heroRef.value?.closest("main");
+  scrollRoot?.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 /** Треки уже на странице — без второго запроса */
 function onListenClick() {
@@ -185,7 +202,7 @@ function onListenClick() {
 }
 
 /** Модалка «О артисте» */
-function onMoreClick() {
+function onAboutClick() {
   const detail = artist.value;
   if (!detail) return;
   openModal<ModalArtistMoreProps>({
@@ -226,24 +243,15 @@ async function onShareClick() {
 </script>
 
 <template>
-  <div class="relative flex flex-col">
-    <!-- Wash: серый (позже coverColor), blur сглаживает полосы -->
-    <div
-      class="pointer-events-none absolute -top-24 inset-x-0 z-0 h-140 overflow-hidden lg:h-96"
-      aria-hidden="true"
-    >
-      <div
-        class="absolute -inset-16 opacity-55 blur-3xl motion-reduce:blur-none motion-reduce:opacity-40"
-        :style="headerWashStyle"
-      />
-    </div>
-
-    <!-- 1. Шапка -->
+  <div>
+    <!-- Шапка артиста: mobile — колонка, desktop — ряд -->
     <header
-      class="relative z-10 flex flex-col items-center gap-4 animate-fade-up motion-reduce:animate-none lg:flex-row lg:items-stretch lg:gap-6"
+      ref="heroRef"
+      class="relative flex shrink-0 flex-col items-center gap-4 overflow-hidden rounded-t-lg bg-tone-surface p-4 text-tone-white sm:gap-5 sm:p-5 lg:flex-row lg:items-end lg:gap-6 lg:p-6"
+      :style="heroBgStyle"
     >
       <div
-        class="group relative size-36 shrink-0 overflow-hidden rounded-full bg-primary-gray-dark sm:size-52 lg:size-64"
+        class="group relative size-48 shrink-0 overflow-hidden rounded-full bg-tone-shell shadow-2xl sm:size-56 lg:size-64"
       >
         <UiCoverImage
           :src="artist?.avatarSrc"
@@ -252,192 +260,151 @@ async function onShareClick() {
         />
 
         <!-- Свой профиль: hover → редактировать аватар -->
-        <template v-if="isOwnProfile">
-          <div
-            class="pointer-events-none absolute inset-0 bg-primary-black/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 motion-reduce:transition-none"
-          />
-          <div
-            class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 motion-reduce:transition-none"
-          >
-            <UiButton
-              class="pointer-events-auto scale-150"
-              variant="gray"
-              icon="Camera"
-              aria-label="Редактировать"
-              href="/settings"
-              target="_self"
-            />
-          </div>
-        </template>
       </div>
 
-      <div
-        class="flex w-full min-w-0 max-w-sm flex-col items-center gap-3 text-center sm:max-w-md lg:min-h-64 lg:max-w-none lg:flex-1 lg:items-start lg:gap-3 lg:text-left"
-      >
-        <div
-          class="flex w-full min-w-0 flex-col items-center gap-2 lg:flex-1 lg:items-start lg:justify-center lg:gap-3"
+      <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
+        <!-- Название: максимум, уменьшается только если не влезает в строку -->
+        <h1
+          ref="titleRef"
+          class="w-full min-w-0 text-center font-extrabold leading-none lg:text-left"
+          :style="titleFitStyle"
         >
-          <h1
-            class="max-w-full py-1 text-5xl font-bold leading-none wrap-break-word text-primary-white lg:truncate lg:break-normal"
-          >
-            {{ artist?.name }}
-          </h1>
-          <p
-            class="line-clamp-3 max-w-prose"
-            :class="
-              hasBio
-                ? 'text-base text-primary-white'
-                : 'text-sm text-primary-gray'
-            "
-          >
-            {{ hasBio ? artist?.bio : bioPlaceholder }}
-          </p>
-        </div>
+          {{ artist?.name }}
+        </h1>
 
-        <div
-          class="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2 lg:items-start"
+        <!-- Описание; у себя без bio — приглашение добавить -->
+        <p
+          v-if="hasBio"
+          class="mx-auto line-clamp-2 max-w-prose text-center text-base text-tone-white lg:mx-0 lg:text-left"
         >
-          <p
-            v-if="listenersLabel"
-            class="text-sm"
-            :class="hasListeners ? 'text-primary-white' : 'text-primary-gray'"
-          >
-            {{ listenersLabel }}
-          </p>
-
-          <div
-            v-if="primaryLink"
-            class="flex max-w-full flex-row flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm lg:justify-start"
-          >
-            <PhLink
-              :size="16"
-              weight="light"
-              class="shrink-0 text-primary-white"
-            />
-
-            <template v-if="!linksExpanded">
-              <a
-                :href="primaryLink.href"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="truncate text-primary-white hover:underline"
-              >
-                {{ linkLabel(primaryLink) }}
-              </a>
-              <button
-                v-if="moreLinksLabel"
-                type="button"
-                class="shrink-0 text-primary-white underline decoration-primary-white/40 underline-offset-2 hover:decoration-primary-white"
-                @click="linksExpanded = true"
-              >
-                {{ moreLinksLabel }}
-              </button>
-            </template>
-
-            <template v-else>
-              <template v-for="(link, index) in artistLinks" :key="link.kind">
-                <span
-                  v-if="index > 0"
-                  class="text-primary-white"
-                  aria-hidden="true"
-                  >·</span
-                >
-                <a
-                  :href="link.href"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="truncate text-primary-white hover:underline"
-                >
-                  {{ linkLabel(link) }}
-                </a>
-              </template>
-            </template>
-          </div>
-        </div>
-
-        <!-- Кнопки всегда на месте; на своём профиле лайк / пустой listen — disabled -->
-        <div
-          class="flex w-full flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 lg:justify-start"
+          {{ artist?.bio }}
+        </p>
+        <NuxtLink
+          v-else-if="isOwnProfile"
+          to="/settings"
+          class="mx-auto max-w-prose text-center text-sm text-tone-white underline transition-colors hover:text-tone-muted lg:mx-0 lg:text-left"
         >
-          <UiButton
-            :icon="isPlayingArtist ? 'Pause' : 'Play'"
-            filled
-            variant="white"
-            :text="isPlayingArtist ? 'Пауза' : 'Слушать'"
+          Добавить описание
+        </NuxtLink>
+
+        <!-- Действия: mobile — Слушать + like + more по центру -->
+        <div
+          class="flex w-full items-center justify-center gap-4 lg:justify-start lg:gap-6"
+        >
+          <button
+            type="button"
+            class="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-tone-white px-5 text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100 disabled:pointer-events-none disabled:opacity-40 lg:size-14 lg:px-0"
+            :aria-label="isPlayingArtist ? 'Пауза' : 'Слушать'"
             :disabled="!canListen"
             @click="onListenClick"
-          />
-          <UiButton
-            variant="gray"
-            icon="Heart"
-            :filled="isLiked"
-            :text="likesCountButtonLabel"
-            @click="toggleLike"
-          />
-          <UiButton
-            variant="gray"
-            icon="DotsThree"
-            aria-label="Ещё"
-            @click="onMoreClick"
-          />
-          <UiButton
-            variant="gray"
-            icon="ShareNetwork"
-            aria-label="Поделиться"
-            @click="onShareClick"
-          />
+          >
+            <PhPause v-if="isPlayingArtist" :size="28" weight="fill" />
+            <PhPlay v-else :size="28" weight="fill" />
+            <span class="text-sm font-medium leading-none lg:hidden">
+              {{ isPlayingArtist ? "Пауза" : "Слушать" }}
+            </span>
+          </button>
+
+          <div class="flex items-center gap-4">
+            <button
+              type="button"
+              class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted lg:size-12"
+              :aria-label="
+                isLiked
+                  ? `Убрать из любимых, ${likesCountButtonLabel}`
+                  : `В любимое, ${likesCountButtonLabel}`
+              "
+              :aria-pressed="isLiked"
+              @click="toggleLike"
+            >
+              <PhHeart :size="32" :weight="isLiked ? 'fill' : 'light'" />
+            </button>
+
+            <ArtistMoreMenu
+              v-model:open="moreOpen"
+              :is-liked="isLiked"
+              :is-playing="isPlayingArtist"
+              @play="onListenClick"
+              @toggle-like="toggleLike"
+              @about="onAboutClick"
+              @share="onShareClick"
+            >
+              <template #trigger>
+                <button
+                  type="button"
+                  class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted lg:size-12"
+                  aria-label="Ещё"
+                >
+                  <PhDotsThree :size="32" weight="bold" />
+                </button>
+              </template>
+            </ArtistMoreMenu>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- 2. Плашка владельца -->
-    <!-- <aside
-      v-if="isOwnProfile"
-      class="relative z-10 mt-6 flex w-full flex-row items-center justify-between gap-3 bg-primary-gray-dark p-2"
-      aria-label="Управление профилем"
-    >
-      <p
-        class="min-w-0 truncate px-2  leading-none text-primary-gray"
+    <!-- Компактный хедер: overlay, не сдвигает layout -->
+    <div class="sticky top-0 z-12 h-0">
+      <div
+        class="absolute inset-x-0 top-0 flex h-14 items-center gap-3 bg-tone-surface px-4 transition-opacity duration-200 motion-reduce:transition-none lg:px-6"
+        :class="
+          showCompactHeader ? 'opacity-100' : 'pointer-events-none opacity-0'
+        "
+        :style="compactHeaderStyle"
+        :aria-hidden="!showCompactHeader"
       >
-        Вы смотрите свой профиль
-      </p>
-      <div class="flex shrink-0 flex-row items-center gap-1">
-        <UiButton
-          variant="ghost"
-          text="Редактировать"
+        <!-- Play только на desktop -->
+        <button
           type="button"
-          href="/settings"
-          target="_self"
-        />
-        <UiButton variant="ghost" text="Статистика" type="button" disabled />
-      </div>
-    </aside> -->
+          class="hidden size-8 shrink-0 items-center justify-center rounded-full bg-tone-white text-tone-canvas transition-opacity duration-200 hover:opacity-90 disabled:pointer-events-none disabled:opacity-40 lg:flex"
+          :aria-label="isPlayingArtist ? 'Пауза' : 'Слушать'"
+          :disabled="!canListen"
+          @click="onListenClick"
+        >
+          <PhPause v-if="isPlayingArtist" :size="16" weight="fill" />
+          <PhPlay v-else :size="16" weight="fill" />
+        </button>
 
-    <!-- 3. Основной контент -->
-    <main
-      class="relative z-10 flex flex-col gap-10 lg:gap-16"
-      :class="isOwnProfile ? 'mt-6' : 'mt-10 lg:mt-16'"
-    >
+        <p class="min-w-0 flex-1 truncate text-base font-bold text-tone-white">
+          {{ artist?.name }}
+        </p>
+
+        <button
+          type="button"
+          class="flex size-10 shrink-0 items-center justify-center text-tone-white transition-colors duration-200 hover:text-tone-muted"
+          aria-label="Наверх"
+          @click="scrollToTop"
+        >
+          <PhCaretUp :size="24" weight="bold" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Треки и полки -->
+    <section class="flex flex-col gap-16 p-6">
       <div
         v-if="showEmptyContent"
-        class="flex flex-col items-center justify-center gap-3 py-20 text-center text-primary-gray sm:py-28"
+        class="flex flex-col items-center justify-center gap-3 py-20 text-center text-tone-muted sm:py-28"
       >
         <PhEmpty :size="48" weight="light" class="shrink-0" />
-        <p class="text-2xl font-bold text-primary-white">
+        <p class="text-2xl font-bold text-tone-white">
           {{ emptyContentTitle }}
         </p>
-        <p class="max-w-sm text-sm text-primary-gray">
+        <p class="max-w-sm text-sm text-tone-white">
           {{ emptyContentDescription }}
         </p>
       </div>
 
       <template v-else>
-        <TracksSwiperSection
+        <TracksColumnSection
           v-if="showTracks"
-          title="Треки"
+          title="Популярное"
           variant="cover"
           :items="artist?.tracks ?? null"
-          :limit="artist?.tracks.length ?? 20"
+          :limit="5"
+          :more-to="artist?.id ? `/user/${artist.id}/tracks` : undefined"
+          more-label="Показать все"
           :queue-source="
             artist?.id
               ? { type: 'artist', id: artist.id, title: artist.name }
@@ -450,8 +417,11 @@ async function onShareClick() {
           title="Альбомы"
           :items="artist?.albums ?? null"
           :limit="8"
+          :more-to="artist?.id ? `/user/${artist.id}/albums` : undefined"
+          more-label="Показать все"
+          :show-artist="false"
         />
       </template>
-    </main>
+    </section>
   </div>
 </template>

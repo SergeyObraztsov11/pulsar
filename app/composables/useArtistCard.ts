@@ -1,9 +1,9 @@
 /**
- * useArtistCard — shared play / like / more / labels for artist cards.
+ * useArtistCard — play / like / more / labels для карточки артиста.
  */
 import type { MaybeRefOrGetter } from "vue";
-import type { Artist } from "~/types/artist";
-import { useMediaQuery } from "@vueuse/core";
+import type { Artist, ArtistDetail } from "~/types/artist";
+import { isSameQueueSource } from "~/stores/player";
 
 export function useArtistCard(
   artist: MaybeRefOrGetter<Artist>,
@@ -11,8 +11,8 @@ export function useArtistCard(
 ) {
   const playerStore = usePlayerStore();
 
-  /** Tailwind lg — which layout hosts ArtistMoreMenu */
-  const isLgUp = useMediaQuery("(min-width: 1024px)");
+  /** Tailwind lg — меню и play только на desktop */
+  const isLgUp = useLgUp();
 
   const interactive = computed(() => toValue(options.interactive) ?? true);
   const artistValue = computed(() => toValue(artist));
@@ -29,17 +29,43 @@ export function useArtistCard(
   });
 
   const moreOpen = ref(false);
-  const isPlaying = ref(false);
+  const playPending = ref(false);
+
+  const isCurrentArtist = computed(() => {
+    const id = artistValue.value?.id;
+    if (!id) return false;
+    return isSameQueueSource(playerStore.queueSource, { type: "artist", id });
+  });
+
+  const isPlaying = computed(
+    () => isCurrentArtist.value && playerStore.isPlaying,
+  );
 
   const nameLabel = computed(() => artistValue.value?.name ?? "Artist");
 
-  /** Keep desktop overlay visible while menu is open */
-  const showDesktopActions = computed(() => moreOpen.value);
-
-  function onPlayClick() {
+  async function onPlayClick() {
     if (!interactive.value) return;
-    isPlaying.value = !isPlaying.value;
-    playerStore.isPlaying = isPlaying.value;
+    const id = artistValue.value?.id;
+    if (!id) return;
+    if (isCurrentArtist.value) {
+      playerStore.togglePlaying();
+      return;
+    }
+    playPending.value = true;
+    try {
+      const detail = await $fetch<ArtistDetail>(`/api/artists/${id}`);
+      const first = detail.tracks.find((track) => Boolean(track.audioSrc));
+      if (!first) return;
+      playerStore.play(first, detail.tracks, {
+        type: "artist",
+        id,
+        title: detail.name,
+      });
+    } catch {
+      // Артист недоступен — play с карточки игнорируем
+    } finally {
+      playPending.value = false;
+    }
   }
 
   function goToArtist() {
@@ -54,8 +80,8 @@ export function useArtistCard(
     isLiked,
     moreOpen,
     isPlaying,
+    playPending,
     nameLabel,
-    showDesktopActions,
     onPlayClick,
     toggleLike,
     goToArtist,

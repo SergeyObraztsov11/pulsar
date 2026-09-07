@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   const updated = await prisma.playlist.update({
     where: { id },
-    data: { coverSrc: null },
+    data: { coverSrc: null, coverColor: null },
     include: { _count: { select: { tracks: true } } },
   });
 

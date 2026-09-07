@@ -62,6 +62,7 @@
   --animate-fade-up: fade-up 0.55s ease-out both;
   --animate-glow-breathe: glow-breathe 5s ease-in-out infinite;
   --animate-progress-sheen: progress-sheen 1.6s ease-in-out infinite;
+  --animate-dnd-jiggle: dnd-jiggle 0.55s ease-in-out infinite;
 }
 
 /* Появление блоков (stagger на landing) */
@@ -96,6 +97,17 @@
   }
   100% {
     transform: translateX(220%);
+  }
+}
+
+/* Лёгкая дрожь строк в режиме сортировки плейлиста */
+@keyframes dnd-jiggle {
+  0%,
+  100% {
+    transform: rotate(-0.2deg);
+  }
+  50% {
+    transform: rotate(0.2deg);
   }
 }
 
@@ -154,7 +166,8 @@ html {
   .page-leave-active,
   .animate-fade-up,
   .animate-glow-breathe,
-  .animate-progress-sheen {
+  .animate-progress-sheen,
+  .animate-dnd-jiggle {
     animation: none !important;
     transition: none !important;
   }

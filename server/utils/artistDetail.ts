@@ -53,6 +53,7 @@ type ArtistDetailRow = {
   id: string;
   name: string;
   avatarSrc: string | null;
+  avatarColor: string | null;
   bio: string | null;
   country: string | null;
   artistLikesReceived: { userId: string }[];
@@ -81,6 +82,7 @@ export function serializeArtistDetail<T extends ArtistDetailRow>(
     id: rest.id,
     name: rest.name,
     avatarSrc: rest.avatarSrc,
+    avatarColor: rest.avatarColor,
     bio: rest.bio,
     country: rest.country,
   };

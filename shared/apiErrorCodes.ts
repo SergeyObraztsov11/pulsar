@@ -72,6 +72,8 @@ export const ApiErrorCode = {
   SYSTEM_PLAYLIST_NOT_EDITABLE: "system_playlist_not_editable",
   SYSTEM_PLAYLIST_NOT_DELETABLE: "system_playlist_not_deletable",
   PLAYLIST_TRACK_ID_REQUIRED: "playlist_track_id_required",
+  PLAYLIST_TRACK_NOT_FOUND: "playlist_track_not_found",
+  PLAYLIST_POSITION_INVALID: "playlist_position_invalid",
   PLAYLIST_IDS_REQUIRED: "playlist_ids_required",
 
   ARTIST_ID_REQUIRED: "artist_id_required",

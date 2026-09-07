@@ -51,11 +51,9 @@ defineExpose({ focus });
   <!-- Text field -->
   <div class="relative w-full bg-inherit">
     <div
-      class="flex h-11 w-full box-border bg-primary-gray-light items-center rounded-lg px-4 leading-none transition-[border-color,background-color] duration-200 motion-reduce:transition-none"
+      class="box-border flex h-11 w-full items-center rounded-md border bg-tone-surface px-4 leading-none transition-[border-color] duration-200 motion-reduce:transition-none"
       :class="
-        isFloating
-          ? 'border border-primary-gray '
-          : 'border border-transparent '
+        isFloating ? 'border-tone-surface-hover' : 'border-transparent'
       "
     >
       <input
@@ -66,7 +64,7 @@ defineExpose({ focus });
         :placeholder="
           isFloating && !model ? props.hint || undefined : undefined
         "
-        class="min-w-0 flex-1 bg-transparent text-base leading-none text-primary-white outline-none placeholder:text-primary-gray"
+        class="min-w-0 flex-1 bg-transparent text-base leading-none text-tone-white outline-none placeholder:text-tone-muted"
         :class="{ 'text-center': props.align === 'center' }"
         :aria-label="props.placeholder || props.hint || undefined"
         @input="onInput"
@@ -81,10 +79,10 @@ defineExpose({ focus });
       class="pointer-events-none absolute z-10 origin-left leading-none transition-all duration-200 motion-reduce:transition-none"
       :class="[
         isFloating
-          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs text-primary-white'
+          ? 'top-0 left-4 -translate-y-1/2 px-1 text-xs text-tone-white'
           : props.align === 'center'
-            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-primary-gray'
-            : 'top-1/2 left-4 -translate-y-1/2 text-sm text-primary-gray',
+            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-tone-muted'
+            : 'top-1/2 left-4 -translate-y-1/2 text-sm text-tone-muted',
       ]"
     >
       <span

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * PlaylistCardLayout — fixed playlist card size (w-48, cover size-48).
- * Display (`flex` / `hidden lg:flex`) comes via attrs — like AlbumCardLayout.
+ * Display (`flex` / `hidden lg:flex`) comes via attrs.
  */
 defineOptions({ inheritAttrs: false });
 </script>

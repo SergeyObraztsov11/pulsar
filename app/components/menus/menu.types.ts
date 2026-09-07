@@ -9,12 +9,18 @@ export type MenuItem = {
   id: string;
   /** Текст пункта */
   label: string;
-  /** Иконка Phosphor (опционально) */
+  /** Иконка Phosphor слева (опционально) */
   icon?: Component;
   /** Вес иконки */
   iconWeight?: "light" | "fill";
   /** Доп. классы иконки (например white при like) */
   iconClass?: string;
+  /** Иконка справа (сортировка ↑↓ и т.п.) */
+  trailingIcon?: Component;
+  /** Вес правой иконки */
+  trailingIconWeight?: "light" | "fill";
+  /** Доп. классы правой иконки */
+  trailingIconClass?: string;
   /** Доп. классы текста */
   labelClass?: string;
   /** Вложенный уровень: sheet — drill-down, desktop — flyout */

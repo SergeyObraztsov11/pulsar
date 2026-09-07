@@ -9,7 +9,7 @@ export type ModalCreatePlaylistProps = {
 
 <script setup lang="ts">
 /**
- * ModalCreatePlaylist — create user playlist; optionally add current track.
+ * ModalCreatePlaylist — создать плейлист; опционально добавить текущий трек.
  */
 const props = defineProps<ModalCreatePlaylistProps>();
 
@@ -24,7 +24,8 @@ const errorMessage = ref<string | null>(null);
 
 const trimmed = computed(() => name.value.trim());
 const canSave = computed(
-  () => trimmed.value.length > 0 && trimmed.value.length <= 120 && !saving.value,
+  () =>
+    trimmed.value.length > 0 && trimmed.value.length <= 120 && !saving.value,
 );
 
 function onClose() {
@@ -52,23 +53,33 @@ async function onSave() {
 
 <template>
   <ModalLayout title="Новый плейлист" @close="onClose">
-    <form class="flex w-80 flex-col gap-4" @submit.prevent="onSave">
+    <form
+      class="flex w-[min(100vw-4rem,22rem)] flex-col gap-4"
+      @submit.prevent="onSave"
+    >
+      <p class="text-sm text-tone-muted">
+        Название можно изменить позже в настройках плейлиста.
+      </p>
+
       <UiTextField
         v-model="name"
         placeholder="Название"
         autocomplete="off"
         maxlength="120"
       />
+
       <p v-if="errorMessage" class="text-sm text-danger">
         {{ errorMessage }}
       </p>
-      <UiButton
-        type="submit"
-        variant="white"
-        text="Создать"
-        :disabled="!canSave"
-        :loading="saving"
-      />
+
+      <div class="flex justify-end gap-2">
+        <UiButton
+          type="submit"
+          :variant="saving ? 'loading' : 'white'"
+          text="Создать"
+          :disabled="!canSave"
+        />
+      </div>
     </form>
   </ModalLayout>
 </template>

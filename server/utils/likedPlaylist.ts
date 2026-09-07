@@ -1,5 +1,6 @@
 import { PlaylistSystemKind } from "../../app/generated/prisma/client";
 import { touchPlaylistUpdatedAt } from "./touchPlaylistUpdatedAt";
+import { shiftPlaylistPositionsForInsert, compactPlaylistPositionsAfterDelete } from "./playlistPosition";
 
 /** Display name for the system liked-tracks playlist */
 export const LIKED_PLAYLIST_NAME = "Мне нравится";
@@ -51,7 +52,7 @@ export async function getLikedTrackIdSet(
   return new Set(rows.map((row) => row.trackId));
 }
 
-/** Add track to «Любимые»; order is by addedAt desc, position is append-only */
+/** Add track to «Любимые»; новый трек сверху (position 0) */
 export async function addToLikedPlaylist(userId: string, trackId: string) {
   const playlist = await getOrCreateLikedPlaylist(userId);
 
@@ -62,18 +63,13 @@ export async function addToLikedPlaylist(userId: string, trackId: string) {
   });
   if (existing) return;
 
-  const last = await prisma.playlistTrack.findFirst({
-    where: { playlistId: playlist.id },
-    orderBy: { position: "desc" },
-    select: { position: true },
-  });
-
   await prisma.$transaction(async (tx) => {
+    await shiftPlaylistPositionsForInsert(tx, playlist.id, 0);
     await tx.playlistTrack.create({
       data: {
         playlistId: playlist.id,
         trackId,
-        position: last ? last.position + 1 : 0,
+        position: 0,
       },
     });
     await touchPlaylistUpdatedAt(playlist.id, tx);
@@ -85,12 +81,23 @@ export async function removeFromLikedPlaylist(userId: string, trackId: string) {
   const playlist = await getLikedPlaylist(userId);
   if (!playlist) return;
 
-  const deleted = await prisma.playlistTrack.deleteMany({
-    where: { playlistId: playlist.id, trackId },
+  const row = await prisma.playlistTrack.findUnique({
+    where: {
+      playlistId_trackId: { playlistId: playlist.id, trackId },
+    },
+    select: { position: true },
   });
-  if (deleted.count > 0) {
-    await touchPlaylistUpdatedAt(playlist.id);
-  }
+  if (!row) return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.playlistTrack.delete({
+      where: {
+        playlistId_trackId: { playlistId: playlist.id, trackId },
+      },
+    });
+    await compactPlaylistPositionsAfterDelete(tx, playlist.id, row.position);
+    await touchPlaylistUpdatedAt(playlist.id, tx);
+  });
 }
 
 /** Create «Любимые» inside user registration transaction */

@@ -3,7 +3,6 @@
  * MenuResponsive — на lg показывает MenuFloating, иначе MenuSheet.
  * Только переключение breakpoint; API items одинаковый.
  */
-import { useMediaQuery } from "@vueuse/core";
 import type { MenuItem } from "./menu.types";
 
 /** Открыто ли меню (v-model:open) */
@@ -15,7 +14,7 @@ const props = defineProps<{
 }>();
 
 /** Desktop (Tailwind lg): floating, иначе sheet */
-const isLgUp = useMediaQuery("(min-width: 1024px)");
+const isLgUp = useLgUp();
 </script>
 
 <template>

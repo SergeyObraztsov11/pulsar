@@ -26,15 +26,19 @@ function onToggle() {
     type="button"
     role="switch"
     class="relative h-7 w-12 shrink-0 rounded-full transition-colors duration-300 disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
-    :class="model ? 'bg-primary-white' : 'bg-primary-gray-dark'"
+    :class="model ? 'bg-tone-white' : 'bg-tone-surface'"
     :aria-checked="model"
     :aria-label="ariaLabel"
     :disabled="disabled"
     @click="onToggle"
   >
     <span
-      class="absolute top-1 size-5 rounded-full bg-primary-black transition-[left] duration-300 motion-reduce:transition-none"
-      :class="model ? 'left-6' : 'left-1'"
+      class="absolute top-1 size-5 rounded-full transition-[left,background-color] duration-300 motion-reduce:transition-none"
+      :class="
+        model
+          ? 'left-6 bg-tone-canvas'
+          : 'left-1 bg-tone-muted'
+      "
     />
   </button>
 </template>

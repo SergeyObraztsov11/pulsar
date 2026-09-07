@@ -131,12 +131,8 @@ defineExpose({ focus });
       :autocomplete="index === 0 ? 'one-time-code' : 'off'"
       :name="index === 0 ? 'code' : undefined"
       :aria-label="`Цифра ${index + 1} из ${props.length}`"
-      class="box-border size-14 rounded-full border bg-primary-gray-dark text-center text-xl leading-none text-primary-white outline-none transition-colors"
-      :class="
-        props.invalid
-          ? 'border-danger'
-          : 'border-primary-gray'
-      "
+      class="box-border size-14 rounded-md border bg-tone-surface text-center text-xl leading-none text-tone-white outline-none transition-colors"
+      :class="props.invalid ? 'border-danger' : 'border-tone-surface-hover'"
       @input="onInput(index, $event)"
       @keydown="onKeydown(index, $event)"
       @paste="onPaste(index, $event)"

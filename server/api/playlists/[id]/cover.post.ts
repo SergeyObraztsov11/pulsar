@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     select: { coverSrc: true },
   });
 
-  const { body } = await processAlbumCover(part.data);
+  const { body, coverColor } = await processAlbumCover(part.data);
   const key = playlistCoverKey(id);
 
   await putS3Object({ key, body, contentType: "image/webp" });
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
 
   const updated = await prisma.playlist.update({
     where: { id },
-    data: { coverSrc: key },
+    data: { coverSrc: key, coverColor },
     include: { _count: { select: { tracks: true } } },
   });
 

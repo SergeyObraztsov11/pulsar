@@ -11,10 +11,13 @@ const props = withDefaults(
     interactive?: boolean;
     skeletonCount?: number;
     limit?: number;
+    /** false — без строки артиста под названием */
+    showArtist?: boolean;
   }>(),
   {
     interactive: true,
     skeletonCount: 10,
+    showArtist: true,
   },
 );
 
@@ -40,6 +43,7 @@ const visibleItems = computed(() => {
         :key="album.id"
         :album="album"
         :interactive="props.interactive"
+        :show-artist="props.showArtist"
       />
     </template>
   </div>

@@ -9,7 +9,6 @@ import ModalAlbumReport, {
 import ModalShareAlbum, {
   type ModalShareAlbumProps,
 } from "~/components/modals/ModalShareAlbum.vue";
-import { useMediaQuery } from "@vueuse/core";
 import { isSameQueueSource } from "~/stores/player";
 
 export function useAlbumCard(
@@ -20,7 +19,7 @@ export function useAlbumCard(
   const { open: openModal } = useModal();
 
   /** Tailwind lg — which layout hosts AlbumMoreMenu */
-  const isLgUp = useMediaQuery("(min-width: 1024px)");
+  const isLgUp = useLgUp();
 
   const interactive = computed(() => toValue(options.interactive) ?? true);
   const albumValue = computed(() => toValue(album));

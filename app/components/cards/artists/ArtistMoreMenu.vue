@@ -1,64 +1,63 @@
 <script setup lang="ts">
 /**
- * ArtistMoreMenu — artist “⋯” actions via MenuResponsive.
- * Trigger comes from #trigger slot (parent owns the button).
+ * ArtistMoreMenu — действия артиста через MenuResponsive.
+ * Триггер — слот #trigger (кнопку держит родитель).
  */
 import {
-  PhFlag,
   PhHeart,
+  PhInfo,
+  PhPause,
   PhPlay,
   PhShareNetwork,
-  PhUser,
 } from "@phosphor-icons/vue";
 import type { MenuItem } from "~/components/menus/menu.types";
+
+const LIKED_MENU_LABEL = "Мне нравится";
 
 const open = defineModel<boolean>("open", { default: false });
 
 const props = defineProps<{
   isLiked: boolean;
+  /** Артист сейчас играет в плеере */
+  isPlaying?: boolean;
 }>();
 
 const emit = defineEmits<{
   play: [];
   "toggle-like": [];
-  "go-artist": [];
+  about: [];
   share: [];
-  report: [];
 }>();
 
 const items = computed<MenuItem[]>(() => [
   {
     id: "play",
-    label: "Play",
-    icon: PhPlay,
+    label: props.isPlaying ? "Пауза" : "Слушать",
+    icon: props.isPlaying ? PhPause : PhPlay,
     onClick: () => emit("play"),
   },
   {
     id: "like",
-    label: props.isLiked ? "Unlike" : "Like",
+    label: props.isLiked
+      ? `Убрать из «${LIKED_MENU_LABEL}»`
+      : `Добавить в «${LIKED_MENU_LABEL}»`,
     icon: PhHeart,
     iconWeight: props.isLiked ? "fill" : "light",
-    iconClass: props.isLiked ? "text-primary-white" : undefined,
-    labelClass: props.isLiked ? "text-primary-white" : undefined,
+    iconClass: props.isLiked ? "text-tone-white" : undefined,
+    labelClass: props.isLiked ? "text-tone-white" : undefined,
     onClick: () => emit("toggle-like"),
   },
   {
-    id: "artist",
-    label: "Go to artist",
-    icon: PhUser,
-    onClick: () => emit("go-artist"),
+    id: "about",
+    label: "О артисте",
+    icon: PhInfo,
+    onClick: () => emit("about"),
   },
   {
     id: "share",
-    label: "Share",
+    label: "Поделиться",
     icon: PhShareNetwork,
     onClick: () => emit("share"),
-  },
-  {
-    id: "report",
-    label: "Report",
-    icon: PhFlag,
-    onClick: () => emit("report"),
   },
 ]);
 </script>

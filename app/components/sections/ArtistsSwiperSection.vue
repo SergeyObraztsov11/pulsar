@@ -71,14 +71,14 @@ function slideNext() {
         <NuxtLink
           v-if="props.to"
           :to="props.to"
-          class="text-2xl font-bold text-primary-white transition-colors hover:underline"
+          class="text-2xl font-bold text-tone-white transition-colors hover:underline"
         >
           {{ props.title }}
         </NuxtLink>
-        <h2 v-else class="text-2xl font-bold text-primary-white">
+        <h2 v-else class="text-2xl font-bold text-tone-white">
           {{ props.title }}
         </h2>
-        <p v-if="props.description" class="text-primary-gray">
+        <p v-if="props.description" class="text-tone-muted">
           {{ props.description }}
         </p>
       </div>
