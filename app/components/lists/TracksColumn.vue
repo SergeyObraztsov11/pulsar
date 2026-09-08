@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * TracksColumn — вертикальный столбик треков + скелетоны.
+ * TracksColumn — вертикальный столбик треков.
  * variant: cover | ranked | index → какая карточка.
  */
 import type { Track } from "~/types/track";
@@ -9,30 +9,20 @@ import { playerQueueKey } from "~/composables/useTrackCard";
 
 const props = withDefaults(
   defineProps<{
-    items?: Track[] | null;
+    items?: Track[];
     variant?: "cover" | "ranked" | "index";
     interactive?: boolean;
-    skeletonCount?: number;
-    limit?: number;
     /** Контекст очереди для play с карточки */
     queueSource?: PlayerQueueSource | null;
   }>(),
   {
+    items: () => [],
     variant: "cover",
     interactive: true,
-    skeletonCount: 5,
   },
 );
 
-const isLoading = computed(() => props.items == null);
-
-const visibleItems = computed(() => {
-  if (!props.items) return [];
-  return props.limit != null ? props.items.slice(0, props.limit) : props.items;
-});
-
-/** В очередь — весь список секции, не только видимый limit */
-const queueTracks = computed(() => props.items ?? []);
+const queueTracks = computed(() => props.items);
 const queueSource = computed(() => props.queueSource ?? null);
 
 provide(playerQueueKey, {
@@ -42,15 +32,10 @@ provide(playerQueueKey, {
 </script>
 
 <template>
-  <!-- Tracks column -->
-  <div class="flex flex-col gap-1">
-    <template v-if="isLoading">
-      <TrackCardSkeleton v-for="n in props.skeletonCount" :key="n" />
-    </template>
-
-    <template v-else-if="props.variant === 'cover'">
+  <div v-if="props.items.length" class="flex flex-col gap-1">
+    <template v-if="props.variant === 'cover'">
       <TrackCoverCard
-        v-for="track in visibleItems"
+        v-for="track in props.items"
         :key="track.id"
         :track="track"
         :interactive="props.interactive"
@@ -58,7 +43,7 @@ provide(playerQueueKey, {
     </template>
     <template v-else-if="props.variant === 'ranked'">
       <TrackRankedCard
-        v-for="(track, index) in visibleItems"
+        v-for="(track, index) in props.items"
         :key="track.id"
         :track="track"
         :rank="index + 1"
@@ -67,7 +52,7 @@ provide(playerQueueKey, {
     </template>
     <template v-else>
       <TrackIndexCard
-        v-for="track in visibleItems"
+        v-for="track in props.items"
         :key="track.id"
         :track="track"
         :interactive="props.interactive"

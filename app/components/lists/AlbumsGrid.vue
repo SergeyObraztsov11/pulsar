@@ -1,50 +1,35 @@
 <script setup lang="ts">
 /**
  * AlbumsGrid — плитка альбомов (библиотека / поиск / «все»).
- * items nullish → скелетоны; [] → пусто.
  */
 import type { Album } from "~/types/album";
 
 const props = withDefaults(
   defineProps<{
-    items?: Album[] | null;
+    items?: Album[];
     interactive?: boolean;
-    skeletonCount?: number;
-    limit?: number;
     /** false — без строки артиста под названием */
     showArtist?: boolean;
   }>(),
   {
+    items: () => [],
     interactive: true,
-    skeletonCount: 10,
     showArtist: true,
   },
 );
-
-const isLoading = computed(() => props.items == null);
-
-const visibleItems = computed(() => {
-  if (!props.items) return [];
-  return props.limit != null ? props.items.slice(0, props.limit) : props.items;
-});
 </script>
 
 <template>
-  <!-- Albums grid -->
   <div
+    v-if="props.items.length"
     class="grid w-full grid-cols-[repeat(auto-fill,12rem)] justify-around gap-6 md:justify-between"
   >
-    <template v-if="isLoading">
-      <AlbumCardSkeleton v-for="n in props.skeletonCount" :key="n" />
-    </template>
-    <template v-else>
-      <AlbumCard
-        v-for="album in visibleItems"
-        :key="album.id"
-        :album="album"
-        :interactive="props.interactive"
-        :show-artist="props.showArtist"
-      />
-    </template>
+    <AlbumCard
+      v-for="album in props.items"
+      :key="album.id"
+      :album="album"
+      :interactive="props.interactive"
+      :show-artist="props.showArtist"
+    />
   </div>
 </template>

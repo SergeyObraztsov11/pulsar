@@ -106,7 +106,7 @@ function scrollToTop() {
     </header>
 
     <section class="flex flex-col gap-6 p-6">
-      <AlbumsGrid :items="artist?.albums ?? null" :show-artist="false" />
+      <AlbumsGrid :items="artist?.albums ?? []" :show-artist="false" />
     </section>
   </div>
 </template>

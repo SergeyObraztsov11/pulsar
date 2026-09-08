@@ -1,7 +1,6 @@
 <script setup lang="ts">
 /**
- * TracksColumnSection — колонка треков + теги-жанры под ней.
- * items nullish → скелетоны (колонка и теги).
+ * TracksColumnSection — колонка треков с заголовком.
  */
 import type { Track } from "~/types/track";
 import type { PlayerQueueSource } from "~/stores/player";
@@ -9,12 +8,9 @@ import type { PlayerQueueSource } from "~/stores/player";
 const props = withDefaults(
   defineProps<{
     items?: Track[] | null;
-    /** Теги-жанры под лентой */
     title?: string;
     description?: string;
-    /** Заголовок как ссылка */
     to?: string;
-    /** Ссылка справа в строке заголовка */
     moreTo?: string;
     moreLabel?: string;
     limit?: number;
@@ -29,12 +25,15 @@ const props = withDefaults(
     interactive: true,
   },
 );
+
+const columnItems = computed(() => {
+  if (!props.items?.length) return [];
+  return props.limit != null ? props.items.slice(0, props.limit) : props.items;
+});
 </script>
 
 <template>
-  <!-- Feed -->
   <section class="flex flex-col gap-6">
-    <!-- Header -->
     <div
       v-if="props.title"
       class="flex min-w-0 items-end justify-between gap-4"
@@ -64,9 +63,8 @@ const props = withDefaults(
     </div>
 
     <TracksColumn
-      :items="props.items"
+      :items="columnItems"
       :variant="props.variant"
-      :limit="props.limit"
       :interactive="props.interactive"
       :queue-source="props.queueSource"
     />
