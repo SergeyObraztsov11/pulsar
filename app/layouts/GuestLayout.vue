@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * GuestLayout — full-bleed; хедер всегда виден, при скролле — canvas.
+ * GuestLayout — full-bleed; хедер всегда виден: сверху прозрачный,
+ * после скролла — canvas с тонкой линией.
  */
 const scroller = ref<HTMLElement | null>(null);
 const isScrolled = ref(false);
@@ -12,28 +13,25 @@ function onScroll() {
 </script>
 
 <template>
-  <div class="relative h-dvh overflow-hidden bg-tone-shell text-tone-white">
-    <!-- Хедер: прозрачный наверху, canvas после скролла -->
+  <div class="relative h-dvh overflow-hidden bg-tone-canvas text-tone-white">
+    <!-- Хедер: прозрачный наверху, canvas + линия после скролла -->
     <header
-      class="absolute inset-x-0 top-0 z-50 transition-colors duration-300 ease-out motion-reduce:transition-none"
-      :class="isScrolled ? 'bg-tone-canvas' : 'bg-transparent'"
+      class="absolute inset-x-0 top-0 z-50 border-b transition-colors duration-300 ease-out motion-reduce:transition-none"
+      :class="
+        isScrolled
+          ? 'border-tone-surface bg-tone-canvas'
+          : 'border-transparent bg-transparent'
+      "
     >
       <div
-        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-start gap-4 px-4 sm:px-8 lg:px-10"
+        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-8 lg:px-10"
       >
-        <AppLogoMark class="mr-auto size-10" />
-        <NuxtLink
-          to="/login"
-          class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium leading-none text-tone-white transition-colors hover:text-tone-muted"
-        >
-          Войти
-        </NuxtLink>
-        <NuxtLink
-          to="/register"
-          class="inline-flex h-10 items-center rounded-full bg-tone-white px-4 text-sm font-medium leading-none text-tone-canvas transition-opacity hover:opacity-90"
-        >
-          Создать аккаунт
-        </NuxtLink>
+        <AppLogo to="/" />
+
+        <div class="flex shrink-0 items-center gap-2">
+          <UiButton variant="ghost" text="Войти" @click="navigateTo('/login')" />
+          <UiButton text="Создать аккаунт" @click="navigateTo('/register')" />
+        </div>
       </div>
     </header>
 

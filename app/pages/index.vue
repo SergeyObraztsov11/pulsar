@@ -1,18 +1,14 @@
 <script setup lang="ts">
 /**
- * Landing Pulsar — своё:
- * SoundCloud: музыка вперёд, крупные заголовки, тёмный canvas
- * Spotify: полки обложек как вход в продукт
- * Своё: coverflow + wash как у альбома + стикеры
- * Без play для гостя.
+ * Landing Pulsar — лаконично, музыка вперёд.
+ * Hero: крупный заголовок + бегущая «стена обложек».
+ * Ниже: полка новых релизов, три возможности, цифры площадки, CTA.
+ * Гость: без play, лайков и очереди.
  */
-import type { Swiper as SwiperInstance } from "swiper";
-import { Autoplay, EffectCoverflow, FreeMode } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/vue";
-import "swiper/css";
-import "swiper/css/effect-coverflow";
 import type { Album } from "~/types/album";
+import type { Track } from "~/types/track";
 import { toMediaSrc } from "~/utils/mediaSrc";
+import { pluralizeRu } from "~/utils/pluralizeRu";
 
 definePageMeta({
   layout: "guest-layout",
@@ -22,92 +18,240 @@ const { data: albums } = await useFetch<Album[]>("/api/albums", {
   query: { sort: "newest" },
 });
 
-const heroItems = computed(() => (albums.value ?? []).slice(0, 5));
-const shelfItems = computed(() => (albums.value ?? []).slice(0, 14));
-
-const heroSlides = computed(() => {
-  const list = heroItems.value;
-  if (list.length !== 5) return [];
-  return [
-    ...list.map((album) => ({ album, key: `a-${album.id}` })),
-    ...list.map((album) => ({ album, key: `b-${album.id}` })),
-  ];
+/** Треки — только для счётчика, грузим после отрисовки */
+const { data: tracks } = useFetch<Track[]>("/api/tracks", {
+  query: { sort: "newest" },
+  lazy: true,
+  server: false,
+  default: () => [],
 });
 
-const activeIndex = ref(0);
-const activeAlbum = computed(() => heroItems.value[activeIndex.value] ?? null);
+const list = computed(() => albums.value ?? []);
+const withCover = computed(() =>
+  list.value.filter((album) => Boolean(album.coverSrc)),
+);
+
+const WALL_COLUMNS = 3;
+const MIN_PER_COLUMN = 6;
+
+/** Колонки стены обложек; каждая дополняется до минимума и дублируется для цикла */
+const wallColumns = computed(() => {
+  const source = withCover.value.slice(0, 24);
+  if (source.length === 0) return [];
+
+  const columns: Album[][] = Array.from({ length: WALL_COLUMNS }, () => []);
+  source.forEach((album, index) => {
+    columns[index % WALL_COLUMNS]!.push(album);
+  });
+
+  return columns.map((column) => {
+    const filled = [...column];
+    let i = 0;
+    while (filled.length < MIN_PER_COLUMN && source.length > 0) {
+      filled.push(source[i % source.length]!);
+      i += 1;
+    }
+    return [...filled, ...filled];
+  });
+});
+
+const SHELF_LIMIT = 14;
+/** Полку показываем, если в ней есть что листать */
+const SHELF_MIN = 3;
+
+type Shelf = {
+  key: string;
+  title: string;
+  description?: string;
+  items: Album[];
+  /** false — только название (полка одного артиста) */
+  showArtist?: boolean;
+};
+
+/** Полки подборок: новинки · самый частый жанр · артист с наибольшим числом релизов */
+const shelves = computed<Shelf[]>(() => {
+  const all = list.value;
+  const result: Shelf[] = [];
+
+  result.push({
+    key: "newest",
+    title: "Новые релизы",
+    description: "То, что вышло на площадке последним",
+    items: all.slice(0, SHELF_LIMIT),
+  });
+
+  // Жанр, у которого больше всего релизов
+  const genreCount = new Map<string, { name: string; count: number }>();
+  for (const album of all) {
+    for (const genre of album.genres) {
+      const entry = genreCount.get(genre.id) ?? { name: genre.name, count: 0 };
+      entry.count += 1;
+      genreCount.set(genre.id, entry);
+    }
+  }
+  const topGenre = [...genreCount.entries()].sort(
+    (a, b) => b[1].count - a[1].count,
+  )[0];
+  if (topGenre && topGenre[1].count >= SHELF_MIN) {
+    const [genreId, { name }] = topGenre;
+    result.push({
+      key: `genre:${genreId}`,
+      title: name,
+      description: "Самый большой жанр на Pulsar",
+      items: all
+        .filter((album) => album.genres.some((genre) => genre.id === genreId))
+        .slice(0, SHELF_LIMIT),
+    });
+  }
+
+  // Артист с наибольшим числом релизов
+  const artistCount = new Map<string, { name: string; count: number }>();
+  for (const album of all) {
+    const entry = artistCount.get(album.artistId) ?? {
+      name: album.artist.name,
+      count: 0,
+    };
+    entry.count += 1;
+    artistCount.set(album.artistId, entry);
+  }
+  const topArtist = [...artistCount.entries()].sort(
+    (a, b) => b[1].count - a[1].count,
+  )[0];
+  if (topArtist && topArtist[1].count >= SHELF_MIN) {
+    const [artistId, { name }] = topArtist;
+    result.push({
+      key: `artist:${artistId}`,
+      title: name,
+      description: "Больше всего релизов на площадке",
+      items: all
+        .filter((album) => album.artistId === artistId)
+        .slice(0, SHELF_LIMIT),
+      showArtist: false,
+    });
+  }
+
+  return result.filter((shelf) => shelf.items.length >= SHELF_MIN);
+});
 
 const reduceMotion = computed(() => {
   if (import.meta.server) return true;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 });
 
-const heroColor = computed(() => {
-  const color = activeAlbum.value?.coverColor?.trim();
-  if (color && /^#[0-9a-fA-F]{6}$/.test(color)) return color;
-  return "#282828";
+/** Цифры площадки: релизы · артисты · треки */
+const stats = computed(() => {
+  const albumsCount = list.value.length;
+  const artistsCount = new Set(list.value.map((album) => album.artistId)).size;
+  const tracksCount = tracks.value?.length ?? 0;
+  return [
+    {
+      key: "albums",
+      value: albumsCount,
+      label: pluralizeRu(albumsCount, "релиз", "релиза", "релизов"),
+    },
+    {
+      key: "artists",
+      value: artistsCount,
+      label: pluralizeRu(artistsCount, "артист", "артиста", "артистов"),
+    },
+    {
+      key: "tracks",
+      value: tracksCount,
+      label: pluralizeRu(tracksCount, "трек", "трека", "треков"),
+    },
+  ];
 });
 
-/** Сплошной coverColor с лёгким затемнением — без градиента */
-const heroBgStyle = computed(() => {
-  const c = heroColor.value;
-  return {
-    backgroundColor: `color-mix(in srgb, ${c} 88%, var(--color-tone-shell))`,
+/** Счётчики: анимируем от 0 к значению при появлении секции */
+const statsRef = ref<HTMLElement | null>(null);
+const statsVisible = ref(false);
+const shown = ref<Record<string, number>>({});
+
+const COUNT_MS = 900;
+let countRaf = 0;
+
+/** Ease-out — быстро стартует, мягко доезжает */
+function easeOut(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function runCount() {
+  cancelAnimationFrame(countRaf);
+  const targets = stats.value;
+
+  if (reduceMotion.value) {
+    shown.value = Object.fromEntries(targets.map((s) => [s.key, s.value]));
+    return;
+  }
+
+  const from = { ...shown.value };
+  const start = performance.now();
+
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / COUNT_MS);
+    const k = easeOut(t);
+    shown.value = Object.fromEntries(
+      targets.map((s) => {
+        const base = from[s.key] ?? 0;
+        return [s.key, Math.round(base + (s.value - base) * k)];
+      }),
+    );
+    if (t < 1) countRaf = requestAnimationFrame(step);
   };
+
+  countRaf = requestAnimationFrame(step);
+}
+
+onMounted(() => {
+  const el = statsRef.value;
+  if (!el) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry?.isIntersecting) {
+        statsVisible.value = true;
+        observer.disconnect();
+      }
+    },
+    { threshold: 0.4 },
+  );
+  observer.observe(el);
+  onUnmounted(() => observer.disconnect());
 });
 
-const whyItems = [
+/** Стартуем при появлении; догоняем, если треки подъехали позже */
+watch([statsVisible, stats], ([visible]) => {
+  if (visible) runCount();
+});
+
+onUnmounted(() => cancelAnimationFrame(countRaf));
+
+const features = [
   {
     title: "Слушай",
-    text: "Релизы и треки без лишнего шума.",
+    text: "Новые релизы без шума: альбомы, треки, очередь — в один клик.",
   },
   {
     title: "Собирай",
-    text: "Плейлисты и любимое всегда под рукой.",
+    text: "Плейлисты и любимое живут рядом с тем, что выходит сегодня.",
   },
   {
     title: "Выкладывай",
-    text: "Свои альбомы — бесплатно, без подписки.",
+    text: "Свой альбом на площадке за несколько минут. Бесплатно.",
   },
 ] as const;
-
-function onSwiper(swiper: SwiperInstance) {
-  activeIndex.value = swiper.realIndex % 5;
-  syncVisible(swiper);
-}
-
-function onSlideChange(swiper: SwiperInstance) {
-  activeIndex.value = swiper.realIndex % 5;
-}
-
-function syncVisible(swiper: SwiperInstance) {
-  for (const slide of swiper.slides) {
-    const el = slide as HTMLElement & { progress?: number };
-    const abs = Math.abs(el.progress ?? 0);
-    let opacity = 1;
-    if (abs > 1) {
-      opacity = Math.max(0, 1 - (abs - 1) / 0.4);
-    }
-    el.style.opacity = String(opacity);
-    el.style.visibility = opacity < 0.05 ? "hidden" : "visible";
-    el.style.pointerEvents = opacity > 0.1 ? "auto" : "none";
-  }
-}
 </script>
 
 <template>
-  <div class="bg-tone-shell text-tone-white">
-    <!-- Hero: discovery + CTA -->
-    <section
-      class="relative flex min-h-[82dvh] w-full flex-col justify-center pb-10 pt-20 transition-colors duration-500 motion-reduce:transition-none sm:pb-12 sm:pt-24"
-      :style="heroBgStyle"
-    >
+  <div class="bg-tone-canvas text-tone-white">
+    <!-- Hero: заголовок + стена обложек -->
+    <section class="px-4 pt-28 sm:px-8 sm:pt-32 lg:px-10 lg:pt-16">
       <div
-        class="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-center gap-12 px-4 sm:px-8 lg:grid-cols-2 lg:gap-8 lg:px-10"
+        class="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1.1fr_1fr] lg:gap-16"
       >
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-7 animate-fade-up">
           <h1
-            class="text-5xl font-bold leading-[0.95] tracking-tight text-tone-white sm:text-6xl lg:text-7xl"
+            class="text-6xl font-extrabold leading-[0.92] tracking-tight text-tone-white sm:text-7xl lg:text-8xl"
           >
             Слушай.<br />
             Собирай.<br />
@@ -116,145 +260,139 @@ function syncVisible(swiper: SwiperInstance) {
           <p
             class="max-w-md text-lg leading-relaxed text-tone-white sm:text-xl"
           >
-            Pulsar — место для релизов и плейлистов. Без подписки, с коротким
-            входом.
+            Pulsar — площадка для музыки, которую делают сейчас. Без подписки.
           </p>
-          <div class="flex flex-wrap items-center gap-3 pt-1">
+          <div class="flex flex-wrap items-center gap-5 pt-1">
             <NuxtLink
               to="/register"
-              class="inline-flex h-12 items-center rounded-full bg-tone-white px-6 text-base font-medium leading-none text-tone-canvas transition-opacity hover:opacity-90"
+              class="inline-flex h-14 items-center rounded-full bg-tone-white px-8 text-base font-medium leading-none text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100"
             >
               Создать аккаунт
             </NuxtLink>
             <NuxtLink
               to="/login"
-              class="inline-flex h-12 items-center rounded-full px-5 text-base font-medium leading-none text-tone-white transition-colors hover:text-tone-muted"
+              class="inline-flex h-14 items-center text-base font-medium leading-none text-tone-white transition-colors hover:text-tone-muted"
             >
               Войти
             </NuxtLink>
           </div>
         </div>
 
-        <div class="min-w-0">
-          <ClientOnly>
-            <Swiper
-              v-if="heroSlides.length"
-              :key="heroSlides.map((s) => s.key).join('|')"
-              :modules="[Autoplay, EffectCoverflow]"
-              effect="coverflow"
-              :grab-cursor="true"
-              :centered-slides="true"
-              :slides-per-view="'auto'"
-              :loop="true"
-              :speed="500"
-              :watch-slides-progress="true"
-              :autoplay="
-                reduceMotion
-                  ? false
-                  : {
-                      delay: 3200,
-                      disableOnInteraction: false,
-                      pauseOnMouseEnter: true,
-                    }
+        <!-- Стена обложек: колонки бегут с разной скоростью -->
+        <div
+          v-if="wallColumns.length"
+          class="cover-wall h-[60vh] min-h-96 overflow-hidden lg:h-[calc(100dvh-8rem)] lg:max-h-208"
+          aria-hidden="true"
+        >
+          <div class="grid h-full grid-cols-3 gap-4">
+            <div
+              v-for="(column, columnIndex) in wallColumns"
+              :key="columnIndex"
+              class="cover-wall__column flex flex-col gap-4"
+              :class="
+                columnIndex % 2 === 1 ? 'cover-wall__column--reverse' : ''
               "
-              :coverflow-effect="{
-                rotate: -42,
-                stretch: 0,
-                depth: 200,
-                modifier: 1,
-                slideShadows: false,
-              }"
-              class="coverflow-swiper w-full"
-              @swiper="onSwiper"
-              @slide-change="onSlideChange"
-              @set-translate="syncVisible"
+              :style="{ animationDuration: `${52 + columnIndex * 14}s` }"
             >
-              <SwiperSlide
-                v-for="slide in heroSlides"
-                :key="slide.key"
-                class="coverflow-swiper__slide"
+              <div
+                v-for="(album, index) in column"
+                :key="`${album.id}-${index}`"
+                class="aspect-square w-full shrink-0 overflow-hidden rounded-xl bg-tone-surface"
               >
-                <div class="coverflow-swiper__card">
-                  <img
-                    v-if="toMediaSrc(slide.album.coverSrc)"
-                    :src="toMediaSrc(slide.album.coverSrc)!"
-                    :alt="slide.album.name"
-                    class="aspect-square w-full size-full overflow-hidden rounded-xl object-cover"
-                    draggable="false"
-                  />
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </ClientOnly>
+                <img
+                  v-if="toMediaSrc(album.coverSrc)"
+                  :src="toMediaSrc(album.coverSrc)!"
+                  alt=""
+                  class="size-full object-cover"
+                  loading="lazy"
+                  draggable="false"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
-
-    
-
-    <!-- Creators — SoundCloud-энергия, наш стикер -->
-    <section class="px-4 py-16 sm:px-8 sm:py-20 lg:px-10">
-      <div
-        class="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16"
+    <!-- Цифры площадки: три числа, ничего лишнего -->
+    <section ref="statsRef" class="px-4 pt-24 sm:px-8 sm:pt-32 lg:px-10">
+      <dl
+        class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 border-t border-tone-surface pt-12 sm:grid-cols-3 sm:gap-8 sm:pt-14"
       >
-        <div class="flex items-center justify-center lg:justify-start">
-          <img
-            src="/stikers/s1.png"
-            alt=""
-            class="w-48 sm:w-56 lg:w-64"
-            draggable="false"
-          />
-        </div>
         <div
-          class="flex min-h-48 flex-col justify-around lg:min-h-56 lg:items-end lg:text-right"
+          v-for="stat in stats"
+          :key="stat.key"
+          class="flex flex-col items-center gap-3 text-center"
         >
-          <h2
-            class="max-w-lg text-4xl font-bold leading-[1.05] tracking-tight text-tone-white sm:text-5xl"
+          <dd
+            class="text-7xl font-extrabold leading-none tracking-tight tabular-nums text-tone-white sm:text-8xl lg:text-9xl"
           >
-            Всё начинается с загрузки
-          </h2>
-          <p
-            class="max-w-md text-lg leading-relaxed text-tone-white sm:text-xl"
+            {{ shown[stat.key] ?? 0 }}
+          </dd>
+          <dt class="text-base text-tone-white sm:text-lg">
+            {{ stat.label }}
+          </dt>
+        </div>
+      </dl>
+    </section>
+    <!-- CTA -->
+    <section class="px-4 pt-28 sm:px-8 sm:pt-36 lg:px-10">
+      <div
+        class="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 text-center"
+      >
+        <h2
+          class="max-w-3xl text-5xl font-extrabold leading-[0.95] tracking-tight text-tone-white sm:text-7xl"
+        >
+          Твоя музыка<br />уже здесь
+        </h2>
+        <NuxtLink
+          to="/register"
+          class="inline-flex h-14 items-center rounded-full bg-tone-white px-8 text-base font-medium leading-none text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100"
+        >
+          Создать аккаунт
+        </NuxtLink>
+      </div>
+    </section>
+    <!-- Три возможности — тот же ритм, что у цифр -->
+    <section class="px-4 pt-28 sm:px-8 sm:pt-36 lg:px-10">
+      <div
+        class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 pt-12 sm:grid-cols-3 sm:gap-8 sm:pt-14"
+      >
+        <div
+          v-for="feature in features"
+          :key="feature.title"
+          class="flex flex-col items-center gap-4 text-center"
+        >
+          <h3
+            class="text-4xl font-bold leading-none tracking-tight text-tone-white sm:text-5xl"
           >
-            Выложи альбом бесплатно и сразу будь на площадке рядом с другими
-            релизами.
+            {{ feature.title }}
+          </h3>
+          <p class="max-w-xs text-base leading-relaxed text-tone-white">
+            {{ feature.text }}
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Listeners -->
-    <section class="px-4 pb-20 pt-8 sm:px-8 sm:pb-28 sm:pt-10 lg:px-10">
-      <div
-        class="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16"
-      >
-        <div
-          class="flex min-h-48 flex-col justify-around lg:min-h-56 lg:items-start"
-        >
-          <h2
-            class="max-w-lg text-4xl font-bold leading-[1.05] tracking-tight text-tone-white sm:text-5xl"
-          >
-            А дальше — просто слушай
-          </h2>
-          <p
-            class="max-w-md text-lg leading-relaxed text-tone-white sm:text-xl"
-          >
-            После короткой регистрации открывается вся музыка: поиск, плейлисты
-            и любимое.
-          </p>
-        </div>
-        <div class="flex items-center justify-center lg:justify-end">
-          <img
-            src="/stikers/s3.png"
-            alt=""
-            class="w-48 sm:w-56 lg:w-64"
-            draggable="false"
-          />
-        </div>
+    <!-- Подборки: новинки · жанр · артист -->
+    <section
+      v-if="shelves.length"
+      class="px-4 pb-24 pt-28 sm:px-8 sm:pb-28 sm:pt-36 lg:px-10"
+    >
+      <div class="mx-auto flex w-full max-w-7xl flex-col gap-16 sm:gap-20">
+        <AlbumsSwiperSection
+          v-for="shelf in shelves"
+          :key="shelf.key"
+          :title="shelf.title"
+          :description="shelf.description"
+          :items="shelf.items"
+          :interactive="false"
+          :show-artist="shelf.showArtist ?? true"
+        />
       </div>
     </section>
 
-    <div class="border-t border-tone-surface px-4 py-10 sm:px-8 lg:px-10">
+    <div class="px-4 pb-10 sm:px-8 lg:px-10">
       <div class="mx-auto w-full max-w-7xl">
         <AppFooter />
       </div>
@@ -263,48 +401,48 @@ function syncVisible(swiper: SwiperInstance) {
 </template>
 
 <style scoped>
-.coverflow-swiper {
-  overflow: visible;
-  padding-block: 0.75rem;
+/* Стена обложек: края растворяются в фоне */
+.cover-wall {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 }
 
-.coverflow-swiper__slide {
-  width: 15rem;
+/* Колонка бежит вверх; вторая половина — копия для бесшовного цикла */
+.cover-wall__column {
+  animation: cover-wall-up linear infinite;
+  will-change: transform;
 }
 
-@media (min-width: 640px) {
-  .coverflow-swiper__slide {
-    width: 18rem;
+.cover-wall__column--reverse {
+  animation-name: cover-wall-down;
+}
+
+@keyframes cover-wall-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-50% - 0.5rem));
   }
 }
 
-@media (min-width: 1024px) {
-  .coverflow-swiper__slide {
-    width: 20rem;
+@keyframes cover-wall-down {
+  from {
+    transform: translateY(calc(-50% - 0.5rem));
   }
-}
-
-.coverflow-swiper__card {
-  transform: scale(0.92);
-  transition: transform 0.35s ease;
-  transform-origin: center center;
-}
-
-.coverflow-swiper :deep(.swiper-slide-active) .coverflow-swiper__card {
-  transform: scale(1.06);
-}
-
-.coverflow-swiper :deep(.swiper-wrapper) {
-  align-items: stretch;
-}
-
-.shelf-swiper :deep(.swiper-wrapper) {
-  display: flex;
+  to {
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .coverflow-swiper__card {
-    transition: none;
+  .cover-wall__column {
+    animation: none;
   }
 }
 </style>
