@@ -1,5 +1,6 @@
 /**
- * Альбом из GET /api/albums (list).
+ * Альбом из GET /api/albums (list item).
+ * List: GET /api/albums → ListPage<Album>
  */
 import type { Genre } from "./genre";
 import type { PublicUser } from "./publicUser";

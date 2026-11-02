@@ -5,8 +5,8 @@
 import {
   PhCaretDown,
   PhCaretLeft,
+  PhListPlus,
   PhMagnifyingGlass,
-  PhPlus,
   PhSortAscending,
   PhX,
 } from "@phosphor-icons/vue";
@@ -49,10 +49,10 @@ const emit = defineEmits<{
       <button
         type="button"
         class="ml-auto inline-flex size-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-tone-surface text-sm font-medium leading-none transition-colors duration-200 hover:bg-tone-surface-hover motion-reduce:transition-none @[260px]:h-10 @[260px]:w-auto @[260px]:px-3"
-        aria-label="Создать"
+        aria-label="Создать плейлист"
         @click="emit('create')"
       >
-        <PhPlus :size="16" weight="bold" />
+        <PhListPlus :size="16" weight="bold" />
         <span class="hidden @[260px]:inline">Создать</span>
       </button>
 

@@ -1,5 +1,6 @@
 /**
  * Артист из GET /api/artists (list) = публичный user + isLiked.
+ * List: GET /api/artists → ListPage<Artist>
  */
 import type { Album } from "./album";
 import type { PublicUser } from "./publicUser";

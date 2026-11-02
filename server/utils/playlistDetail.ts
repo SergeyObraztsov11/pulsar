@@ -2,7 +2,6 @@ import type { H3Event } from "h3";
 import type { PlaylistSystemKind } from "../../app/generated/prisma/client";
 import {
   isLikedTracksPlaylist,
-  LIKED_PLAYLIST_COVER_SRC,
   LIKED_PLAYLIST_NAME,
 } from "./likedPlaylist";
 import { requireAuthUserId } from "./getAuthUserId";
@@ -85,11 +84,7 @@ export function serializePlaylistSummary(playlist: PlaylistRow) {
       ? LIKED_PLAYLIST_NAME
       : playlist.name,
     description: playlist.description,
-    coverSrc:
-      playlist.coverSrc ??
-      (isLikedTracksPlaylist(playlist.systemKind)
-        ? LIKED_PLAYLIST_COVER_SRC
-        : null),
+    coverSrc: playlist.coverSrc,
     /** Accent только от своей загруженной обложки; у «Любимых» без upload — null */
     coverColor: playlist.coverColor,
     isPublic: playlist.isPublic,

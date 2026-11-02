@@ -1,25 +1,22 @@
 <script setup lang="ts">
 /**
- * AppLogo — марк Pulsar + wordmark, ссылка на главную.
+ * AppLogo — марк Pulsar + wordmark (без ссылки).
  */
 const props = withDefaults(
   defineProps<{
-    to?: string;
     /** Header `lg` / compact `sm` */
     size?: "lg" | "sm";
   }>(),
   {
-    to: "/",
     size: "lg",
   },
 );
 </script>
 
 <template>
-  <NuxtLink
-    :to="props.to"
-    class="inline-flex shrink-0 items-center gap-1 leading-none text-tone-white transition-colors hover:text-tone-muted"
-    aria-label="Pulsar"
+  <div
+    class="inline-flex shrink-0 items-center gap-1 leading-none text-tone-white"
+    aria-hidden="true"
   >
     <AppLogoMark :class="props.size === 'lg' ? 'size-10' : 'size-8'" />
     <span
@@ -28,5 +25,5 @@ const props = withDefaults(
     >
       Pulsar
     </span>
-  </NuxtLink>
+  </div>
 </template>

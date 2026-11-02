@@ -1,16 +1,16 @@
 <script setup lang="ts">
 /**
- * SearchPageField — крупное поле ввода (без навигации; submit наружу).
+ * SearchPageField — поле страницы /search (submit / clear наружу).
  */
-import { PhMagnifyingGlass } from "@phosphor-icons/vue";
+import { PhMagnifyingGlass, PhX } from "@phosphor-icons/vue";
 
 const model = defineModel<string>({ default: "" });
 
 const emit = defineEmits<{
   submit: [query: string];
+  clear: [];
 }>();
 
-const isFocused = ref(false);
 const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
 
 const trimmedQuery = computed(() => model.value.trim());
@@ -28,15 +28,25 @@ function onFieldKeydown(event: KeyboardEvent) {
     inputEl.value?.blur();
   }
 }
+
+function clearQuery() {
+  model.value = "";
+  emit("clear");
+  inputEl.value?.focus();
+}
 </script>
 
 <template>
   <div class="relative min-w-0 w-full">
-    <!-- Крупное поле страницы -->
+    <!-- Pill: как SearchField, чуть выше -->
     <div
-      class="group box-border flex h-14 min-w-0 w-full items-center gap-4 rounded-full border bg-primary-gray-dark px-5 leading-none transition-colors"
-      :class="isFocused ? 'border-primary-gray' : 'border-transparent'"
+      class="flex h-12 w-full min-w-0 items-center gap-2 rounded-full bg-tone-surface px-4 leading-none transition-colors focus-within:bg-tone-surface-hover"
     >
+      <PhMagnifyingGlass
+        :size="20"
+        weight="light"
+        class="shrink-0 text-tone-muted"
+      />
       <input
         ref="inputEl"
         v-model="model"
@@ -44,14 +54,19 @@ function onFieldKeydown(event: KeyboardEvent) {
         name="search"
         autocomplete="off"
         placeholder="Поиск по артистам, альбомам, трекам"
-        class="h-full min-w-0 flex-1 bg-transparent text-lg leading-none text-primary-white outline-none placeholder:text-primary-gray"
-        @focus="isFocused = true"
-        @blur="isFocused = false"
+        class="h-full min-w-0 flex-1 bg-transparent text-base leading-none text-tone-white outline-none placeholder:text-tone-muted"
         @keydown="onFieldKeydown"
       />
-      <div class="shrink-0 text-primary-white transition-colors">
-        <PhMagnifyingGlass :size="28" weight="light" />
-      </div>
+      <button
+        v-if="model"
+        type="button"
+        class="shrink-0 text-tone-muted transition-colors hover:text-tone-white"
+        aria-label="Очистить поиск"
+        @mousedown.prevent
+        @click="clearQuery"
+      >
+        <PhX :size="16" weight="light" />
+      </button>
     </div>
   </div>
 </template>

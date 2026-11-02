@@ -1,5 +1,6 @@
 /**
- * Трек из GET /api/tracks (list).
+ * Трек из GET /api/tracks (list item).
+ * List: GET /api/tracks → ListPage<Track>
  */
 import type { Genre } from "./genre";
 import type { PublicUser } from "./publicUser";

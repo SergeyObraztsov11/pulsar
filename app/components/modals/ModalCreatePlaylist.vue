@@ -18,7 +18,7 @@ const { createPlaylist, addTrackToPlaylist } = useUserPlaylists(
   () => props.trackId,
 );
 
-const name = ref("");
+const name = ref("Новый плейлист");
 const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 
@@ -52,7 +52,7 @@ async function onSave() {
 </script>
 
 <template>
-  <ModalLayout title="Новый плейлист" @close="onClose">
+  <ModalLayout title="Создать плейлист" @close="onClose">
     <form
       class="flex w-[min(100vw-4rem,22rem)] flex-col gap-4"
       @submit.prevent="onSave"

@@ -40,8 +40,8 @@ const trackTo = computed(() => {
   const value = track.value;
   const artistId = value?.artist?.id;
   const albumId = value?.album?.id;
-  if (!value?.id || !artistId || !albumId) return undefined;
-  return `/user/${artistId}/album/${albumId}/track/${value.id}`;
+  if (!artistId || !albumId) return undefined;
+  return `/user/${artistId}/album/${albumId}`;
 });
 
 const artistTo = computed(() => {

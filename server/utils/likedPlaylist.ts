@@ -5,9 +5,6 @@ import { shiftPlaylistPositionsForInsert, compactPlaylistPositionsAfterDelete } 
 /** Display name for the system liked-tracks playlist */
 export const LIKED_PLAYLIST_NAME = "Мне нравится";
 
-/** Default cover in public/ for system playlist «Любимые» */
-export const LIKED_PLAYLIST_COVER_SRC = "/covers/image.png";
-
 export function isLikedTracksPlaylist(
   systemKind: PlaylistSystemKind | null | undefined,
 ) {

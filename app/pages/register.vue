@@ -197,7 +197,7 @@ function goBack() {
         class="grid min-h-0 flex-1 grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12"
       >
         <div class="flex min-w-0 flex-col gap-4 lg:gap-6">
-          <AppLogo to="/" />
+          <AppLogo />
           <div class="flex flex-col gap-3">
             <h1
               class="text-3xl font-bold leading-none text-primary-white sm:text-4xl"

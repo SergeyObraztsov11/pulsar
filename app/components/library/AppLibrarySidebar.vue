@@ -10,6 +10,7 @@ import ModalCreatePlaylist, {
 } from "~/components/modals/ModalCreatePlaylist.vue";
 import type { Album } from "~/types/album";
 import type { Artist } from "~/types/artist";
+import type { ListPage } from "~/types/listPage";
 import type { PlaylistSummary } from "~/types/playlist";
 
 type LibraryKind = "playlists" | "albums" | "artists";
@@ -181,16 +182,17 @@ const {
 
 const albumsSortParam = computed(() => {
   if (librarySort.value === "name") return "name";
-  if (librarySort.value === "created") return "newest";
+  if (librarySort.value === "created") return "createdAt";
   return "likedAt";
 });
 
 const {
-  data: albums,
+  data: albumsPage,
   pending: albumsPending,
   refresh: refreshAlbums,
-} = await useFetch<Album[]>(
-  () => `/api/albums?liked=true&sort=${albumsSortParam.value}`,
+} = await useFetch<ListPage<Album>>(
+  () =>
+    `/api/albums?liked=true&sort=${albumsSortParam.value}&limit=50`,
   {
     key: computed(
       () => `library-albums:${userId.value || "anon"}:${albumsSortParam.value}`,
@@ -205,11 +207,12 @@ const artistsSortParam = computed(() =>
 );
 
 const {
-  data: artists,
+  data: artistsPage,
   pending: artistsPending,
   refresh: refreshArtists,
-} = await useFetch<Artist[]>(
-  () => `/api/artists?liked=true&sort=${artistsSortParam.value}`,
+} = await useFetch<ListPage<Artist>>(
+  () =>
+    `/api/artists?liked=true&sort=${artistsSortParam.value}&limit=50`,
   {
     key: computed(
       () =>
@@ -263,8 +266,12 @@ function filterByQuery<T extends { name: string }>(list: T[]) {
 const visiblePlaylists = computed(() =>
   sortPlaylistList(filterByQuery(playlists.value ?? [])),
 );
-const visibleAlbums = computed(() => filterByQuery(albums.value ?? []));
-const visibleArtists = computed(() => filterByQuery(artists.value ?? []));
+const visibleAlbums = computed(() =>
+  filterByQuery(albumsPage.value?.items ?? []),
+);
+const visibleArtists = computed(() =>
+  filterByQuery(artistsPage.value?.items ?? []),
+);
 
 const isLoading = computed(() => {
   if (!userId.value) return false;
@@ -272,9 +279,9 @@ const isLoading = computed(() => {
     return playlistsPending.value && playlists.value == null;
   }
   if (libraryKind.value === "albums") {
-    return albumsPending.value && albums.value == null;
+    return albumsPending.value && albumsPage.value == null;
   }
-  return artistsPending.value && artists.value == null;
+  return artistsPending.value && artistsPage.value == null;
 });
 
 const isEmpty = computed(() => {
@@ -283,9 +290,9 @@ const isEmpty = computed(() => {
     return (playlists.value?.length ?? 0) === 0;
   }
   if (libraryKind.value === "albums") {
-    return (albums.value?.length ?? 0) === 0;
+    return (albumsPage.value?.items.length ?? 0) === 0;
   }
-  return (artists.value?.length ?? 0) === 0;
+  return (artistsPage.value?.items.length ?? 0) === 0;
 });
 
 const listMessage = computed(() => {

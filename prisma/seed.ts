@@ -142,8 +142,15 @@ async function main() {
   await prisma.albumGenre.createMany({
     data: [
       { albumId: "valentina", genreId: "hip-hop" },
+      { albumId: "yug-album", genreId: "hip-hop" },
       { albumId: "gorizont", genreId: "indie" },
+      { albumId: "sdvig-album", genreId: "indie" },
       { albumId: "ekho", genreId: "electronic" },
+      { albumId: "kadr-album", genreId: "electronic" },
+      { albumId: "leto-24", genreId: "pop" },
+      { albumId: "liniya-album", genreId: "pop" },
+      { albumId: "na-povtore", genreId: "rock" },
+      { albumId: "tishe", genreId: "r-and-b" },
     ],
   });
 

@@ -70,7 +70,7 @@ const {
       <div class="flex min-w-0 items-center gap-1">
         <NuxtLink
           :to="albumTo"
-          class="min-w-0 flex-1 truncate text-base font-medium text-tone-white hover:text-tone-muted"
+          class="min-w-0 flex-1 truncate text-base font-medium text-tone-white hover:underline"
         >
           {{ nameLabel }}
         </NuxtLink>
@@ -90,7 +90,8 @@ const {
           <template #trigger>
             <button
               type="button"
-              class="flex size-8 shrink-0 items-center justify-center text-tone-muted hover:text-tone-white"
+              class="flex size-8 shrink-0 items-center justify-center text-tone-muted opacity-0 transition-[opacity,colors] duration-200 hover:text-tone-white group-hover:opacity-100"
+              :class="moreOpen ? 'opacity-100' : null"
               aria-label="Ещё"
             >
               <PhDotsThree :size="20" weight="bold" />
@@ -102,7 +103,7 @@ const {
       <NuxtLink
         v-if="props.showArtist"
         :to="artistTo"
-        class="truncate text-sm text-tone-white hover:text-tone-white"
+        class="truncate text-sm text-tone-muted hover:underline"
       >
         {{ artistLabel }}
       </NuxtLink>

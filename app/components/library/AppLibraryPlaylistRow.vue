@@ -51,7 +51,7 @@ const coverIcon = computed(() => (isLiked.value ? PhListHeart : PhQueue));
         :is="coverIcon"
         v-else
         :size="24"
-        :weight="isLiked ? 'fill' : 'light'"
+        weight="light"
       />
     </div>
 

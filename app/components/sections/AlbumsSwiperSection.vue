@@ -3,6 +3,7 @@
  * AlbumsSwiperSection — горизонтальный swiper альбомов (free-mode + скелетоны).
  * items nullish → скелетоны; [] → пусто.
  */
+import { PhCaretLeft, PhCaretRight } from "@phosphor-icons/vue";
 import type { Swiper as SwiperInstance } from "swiper";
 import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -44,6 +45,9 @@ const visibleItems = computed(() => {
 const swiperInstance = ref<SwiperInstance | null>(null);
 const isBeginning = ref(true);
 const isEnd = ref(true);
+
+/** Есть куда листать — иначе стрелки не показываем */
+const canScroll = computed(() => !isBeginning.value || !isEnd.value);
 
 function syncNav(swiper: SwiperInstance) {
   isBeginning.value = swiper.isBeginning;
@@ -89,7 +93,7 @@ function slideNext() {
         </p>
       </div>
 
-      <!-- «Показать все» или prev / next -->
+      <!-- «Показать все» или prev / next (стрелки — только desktop; mobile — свайп) -->
       <div class="flex shrink-0 items-center gap-2">
         <NuxtLink
           v-if="props.moreTo"
@@ -98,21 +102,27 @@ function slideNext() {
         >
           {{ props.moreLabel ?? "Показать все" }}
         </NuxtLink>
-        <template v-else>
-          <UiButton
-            variant="outline"
-            icon="CaretLeft"
-            aria-label="Previous"
-            :disabled="isBeginning || isLoading"
-            @click="slidePrev"
-          />
-          <UiButton
-            variant="outline"
-            icon="CaretRight"
-            aria-label="Next"
-            :disabled="isEnd || isLoading"
-            @click="slideNext"
-          />
+        <template v-else-if="canScroll">
+          <div class="hidden items-center gap-2 sm:flex">
+            <button
+              type="button"
+              class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-[transform,colors,opacity] duration-200 hover:scale-[1.02] hover:bg-tone-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transform-none motion-reduce:hover:scale-100"
+              aria-label="Назад"
+              :disabled="isBeginning || isLoading"
+              @click="slidePrev"
+            >
+              <PhCaretLeft :size="20" weight="light" />
+            </button>
+            <button
+              type="button"
+              class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-[transform,colors,opacity] duration-200 hover:scale-[1.02] hover:bg-tone-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transform-none motion-reduce:hover:scale-100"
+              aria-label="Вперёд"
+              :disabled="isEnd || isLoading"
+              @click="slideNext"
+            >
+              <PhCaretRight :size="20" weight="light" />
+            </button>
+          </div>
         </template>
       </div>
     </div>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * Upload — тестовая форма создания альбома (multipart → POST /api/albums).
+ * Upload — создание альбома (редактор релиза → POST /api/albums).
  */
 import type { Album } from "~/types/album";
+import type { UploadTrackDraft } from "~/components/upload/UploadTrackRow.vue";
 import { albumPath } from "~/utils/catalogPaths";
 import { fetchErrorMessage } from "~/utils/apiErrorMessage";
 
@@ -10,48 +11,20 @@ definePageMeta({
   layout: "app-layout",
 });
 
-type TrackDraft = {
-  name: string;
-  audio: File | null;
-  isExplicit: boolean;
-};
-
-function emptyTrack(): TrackDraft {
+function emptyTrack(): UploadTrackDraft {
   return { name: "", audio: null, isExplicit: false };
 }
 
 const albumName = ref("");
 const cover = ref<File | null>(null);
-const tracks = ref<TrackDraft[]>([emptyTrack()]);
+const tracks = ref<UploadTrackDraft[]>([emptyTrack()]);
 const pending = ref(false);
 const errorMessage = ref("");
-const createdAlbum = ref<Album | null>(null);
 
 const canSubmit = computed(() => {
   if (!albumName.value.trim()) return false;
   return tracks.value.some((track) => track.name.trim() && track.audio);
 });
-
-/** Текст ошибки $fetch */
-function errorText(error: unknown) {
-  return fetchErrorMessage(error);
-}
-
-function onCoverChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  cover.value = input.files?.[0] ?? null;
-}
-
-function onAudioChange(index: number, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0] ?? null;
-  const track = tracks.value[index];
-  if (!track) return;
-  track.audio = file;
-  if (file && !track.name.trim()) {
-    track.name = file.name.replace(/\.[^.]+$/, "");
-  }
-}
 
 function addTrack() {
   tracks.value.push(emptyTrack());
@@ -65,7 +38,6 @@ function removeTrack(index: number) {
 async function onSubmit() {
   if (!canSubmit.value || pending.value) return;
   errorMessage.value = "";
-  createdAlbum.value = null;
   pending.value = true;
 
   const body = new FormData();
@@ -82,12 +54,13 @@ async function onSubmit() {
   });
 
   try {
-    createdAlbum.value = await $fetch<Album>("/api/albums", {
+    const created = await $fetch<Album>("/api/albums", {
       method: "POST",
       body,
     });
+    await navigateTo(albumPath(created));
   } catch (error) {
-    errorMessage.value = errorText(error);
+    errorMessage.value = fetchErrorMessage(error);
   } finally {
     pending.value = false;
   }
@@ -95,80 +68,60 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex max-w-xl flex-col gap-8">
-    <h1 class="text-2xl font-bold text-primary-white">Upload</h1>
-    <p class="text-sm text-primary-gray">
-      Тест POST /api/albums. Обложка (любая картинка) → WebP. Треки MP3 ≤30MB.
-    </p>
+  <div
+    class="mx-auto flex w-full max-w-5xl flex-col gap-8 p-4 animate-fade-up motion-reduce:animate-none sm:p-6"
+  >
+    <h1 class="text-2xl font-bold text-tone-white">Новый альбом</h1>
 
-    <form class="flex flex-col gap-6" @submit.prevent="onSubmit">
-      <UiTextField v-model.trim="albumName" placeholder="Название альбома" />
-
-      <label class="flex flex-col gap-2 text-sm text-primary-gray">
-        Обложка (необязательно)
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
-          @change="onCoverChange"
-        />
-      </label>
-
-      <!-- Треки -->
-      <div
-        v-for="(track, index) in tracks"
-        :key="index"
-        class="flex flex-col gap-3 border-t border-primary-gray-dark pt-4"
-      >
-        <p class="text-sm text-primary-white">Трек {{ index + 1 }}</p>
-        <UiTextField v-model.trim="track.name" placeholder="Название трека" />
-        <label class="flex flex-col gap-2 text-sm text-primary-gray">
-          MP3
-          <input
-            type="file"
-            accept="audio/mpeg,.mp3"
-            @change="onAudioChange(index, $event)"
-          />
-        </label>
-        <label class="flex items-center gap-2 text-sm text-primary-gray">
-          <input v-model="track.isExplicit" type="checkbox" />
-          Explicit
-        </label>
-        <UiButton
-          v-if="tracks.length > 1"
-          variant="ghost"
-          type="button"
-          text="Убрать трек"
-          :disabled="pending"
-          @click="removeTrack(index)"
-        />
+    <form
+      class="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10"
+      @submit.prevent="onSubmit"
+    >
+      <!-- Обложка -->
+      <div class="w-full shrink-0 lg:w-72">
+        <UploadCoverField v-model="cover" />
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <UiButton
-          variant="outline"
-          type="button"
-          text="Ещё трек"
-          :disabled="pending"
-          @click="addTrack"
+      <!-- Мета + треки -->
+      <div class="flex min-w-0 flex-1 flex-col gap-6">
+        <UiTextField
+          v-model.trim="albumName"
+          placeholder="Название альбома"
         />
-        <UiButton
-          type="submit"
-          :text="pending ? undefined : 'Создать альбом'"
-          :variant="pending ? 'loading' : 'white'"
-          :disabled="!canSubmit || pending"
-        />
+
+        <div class="flex flex-col gap-3">
+          <UploadTrackRow
+            v-for="(track, index) in tracks"
+            :key="index"
+            :track="track"
+            :index="index"
+            :can-remove="tracks.length > 1"
+            :disabled="pending"
+            @remove="removeTrack(index)"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <UiButton
+            variant="gray"
+            type="button"
+            text="Добавить трек"
+            icon="PlusSquare"
+            :disabled="pending"
+            @click="addTrack"
+          />
+          <UiButton
+            type="submit"
+            :text="pending ? undefined : 'Создать альбом'"
+            :variant="pending ? 'loading' : 'white'"
+            :disabled="!canSubmit || pending"
+          />
+        </div>
+
+        <p v-if="errorMessage" class="text-sm text-danger">
+          {{ errorMessage }}
+        </p>
       </div>
     </form>
-
-    <p v-if="errorMessage" class="text-sm text-danger">{{ errorMessage }}</p>
-    <p v-if="createdAlbum" class="text-sm text-primary-white">
-      Альбом создан:
-      <NuxtLink
-        :to="albumPath(createdAlbum)"
-        class="hover:text-primary-gray"
-      >
-        {{ createdAlbum.name }}
-      </NuxtLink>
-    </p>
   </div>
 </template>

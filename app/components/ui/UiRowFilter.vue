@@ -3,6 +3,7 @@
  * UiRowFilter — ряд фильтров со swiper; v-model — выбранный value.
  * items nullish → loading-скелеты. Повторный клик — сброс.
  */
+import { PhCaretLeft, PhCaretRight } from "@phosphor-icons/vue";
 import type { Swiper as SwiperInstance } from "swiper";
 import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -70,6 +71,7 @@ function slideNext() {
 
 /** Выбрать пункт или снять выбор */
 function onSelect(value: string) {
+  if (props.disabled) return;
   model.value = model.value === value ? "" : value;
 }
 
@@ -94,10 +96,10 @@ watch(
     aria-busy="true"
     :aria-label="label"
   >
-    <UiButton
+    <div
       v-for="(widthClass, index) in LOADING_WIDTHS"
       :key="index"
-      variant="loading"
+      class="h-8 shrink-0 animate-pulse rounded-full bg-tone-surface"
       :class="widthClass"
     />
   </div>
@@ -133,47 +135,64 @@ watch(
             :key="item.value"
             class="w-auto! shrink-0"
           >
-            <UiButton
+            <button
               type="button"
-              :text="item.label"
+              role="tab"
+              class="inline-flex h-8 shrink-0 items-center rounded-full px-3 text-sm font-medium leading-none transition-[transform,colors,opacity] duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transform-none motion-reduce:hover:scale-100"
+              :class="
+                model === item.value
+                  ? 'bg-tone-white text-tone-canvas'
+                  : 'bg-tone-surface text-tone-white hover:bg-tone-surface-hover'
+              "
               :disabled="disabled"
-              :variant="model === item.value ? 'white' : 'gray'"
               :aria-selected="model === item.value"
               @click="onSelect(item.value)"
-            />
+            >
+              {{ item.label }}
+            </button>
           </SwiperSlide>
         </Swiper>
 
         <template #fallback>
           <div class="flex flex-row flex-nowrap gap-2 overflow-hidden">
-            <UiButton
+            <button
               v-for="item in items ?? []"
               :key="item.value"
               type="button"
-              :text="item.label"
-              :variant="model === item.value ? 'white' : 'gray'"
-            />
+              class="inline-flex h-8 shrink-0 items-center rounded-full px-3 text-sm font-medium leading-none"
+              :class="
+                model === item.value
+                  ? 'bg-tone-white text-tone-canvas'
+                  : 'bg-tone-surface text-tone-white'
+              "
+            >
+              {{ item.label }}
+            </button>
           </div>
         </template>
       </ClientOnly>
     </div>
 
-    <!-- Prev / next в том же ряду -->
+    <!-- Prev / next — как у полок альбомов -->
     <div v-if="showNav" class="flex shrink-0 items-center gap-2">
-      <UiButton
-        variant="outline"
-        icon="CaretLeft"
+      <button
+        type="button"
+        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-[transform,colors,opacity] duration-200 hover:scale-[1.02] hover:bg-tone-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transform-none motion-reduce:hover:scale-100"
         aria-label="Назад"
         :disabled="isBeginning"
         @click="slidePrev"
-      />
-      <UiButton
-        variant="outline"
-        icon="CaretRight"
+      >
+        <PhCaretLeft :size="20" weight="light" />
+      </button>
+      <button
+        type="button"
+        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-tone-surface text-tone-white transition-[transform,colors,opacity] duration-200 hover:scale-[1.02] hover:bg-tone-surface-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transform-none motion-reduce:hover:scale-100"
         aria-label="Вперёд"
         :disabled="isEnd"
         @click="slideNext"
-      />
+      >
+        <PhCaretRight :size="20" weight="light" />
+      </button>
     </div>
   </div>
 </template>

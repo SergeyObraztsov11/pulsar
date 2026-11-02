@@ -61,8 +61,8 @@ export function useTrackCard(
     const value = trackValue.value;
     const artistId = value?.artist?.id;
     const albumId = value?.album?.id;
-    if (!value?.id || !artistId || !albumId) return "/";
-    return `/user/${artistId}/album/${albumId}/track/${value.id}`;
+    if (!artistId || !albumId) return "/";
+    return `/user/${artistId}/album/${albumId}`;
   });
 
   const artistTo = computed(() => {

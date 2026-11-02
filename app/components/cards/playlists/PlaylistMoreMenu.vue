@@ -8,6 +8,7 @@ import {
   PhPause,
   PhPlay,
   PhShareNetwork,
+  PhTrash,
   PhUser,
 } from "@phosphor-icons/vue";
 import type { MenuItem } from "~/components/menus/menu.types";
@@ -17,13 +18,14 @@ const open = defineModel<boolean>("open", { default: false });
 const props = defineProps<{
   /** Плейлист сейчас играет в плеере */
   isPlaying?: boolean;
-  /** Свои несистемные — пункт «Настройки» */
+  /** Свои несистемные — «Настройки» / «Удалить» */
   canEdit?: boolean;
 }>();
 
 const emit = defineEmits<{
   play: [];
   settings: [];
+  delete: [];
   "go-owner": [];
   share: [];
 }>();
@@ -61,6 +63,17 @@ const items = computed<MenuItem[]>(() => {
       onClick: () => emit("share"),
     },
   );
+
+  if (props.canEdit) {
+    list.push({
+      id: "delete",
+      label: "Удалить плейлист",
+      icon: PhTrash,
+      iconClass: "text-danger",
+      labelClass: "text-danger",
+      onClick: () => emit("delete"),
+    });
+  }
 
   return list;
 });

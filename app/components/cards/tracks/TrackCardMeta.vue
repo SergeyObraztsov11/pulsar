@@ -24,7 +24,7 @@ withDefaults(
     <div class="flex min-w-0 items-center">
       <NuxtLink
         :to="trackTo"
-        class="min-w-0 truncate text-base font-medium text-tone-white transition-colors duration-200 hover:text-tone-muted max-lg:pointer-events-none"
+        class="min-w-0 truncate text-base font-medium text-tone-white transition-colors duration-200 hover:underline max-lg:pointer-events-none"
         @click.stop
       >
         {{ nameLabel }}
@@ -33,7 +33,7 @@ withDefaults(
     <div class="truncate">
       <NuxtLink
         :to="artistTo"
-        class="min-w-0 truncate text-base font-medium text-tone-white transition-colors duration-200 hover:text-tone-muted max-lg:pointer-events-none"
+        class="min-w-0 truncate text-base font-medium transition-colors duration-200 text-tone-muted hover:underline max-lg:pointer-events-none"
         @click.stop
       >
         {{ artistLabel }}

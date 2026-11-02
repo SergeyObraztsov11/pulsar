@@ -37,11 +37,16 @@ Multipart, поле `avatar` ≤10MB. JPEG/PNG/WebP/AVIF → `avatars/{id}.jpg` 
 
 Список без треков.
 
-Query: `search`, `liked=true`, `sort=newest|oldest|name|likedAt`
+Query: `search`, `liked=true`, `listened=true`, `genre` (slug|id), `artistId`, `sort=createdAt|name|likedAt|likes|plays`, `order=asc|desc`, `limit` (1…50, default 20), `offset` (≥0, default 0)
 
-Примеры: `/api/albums`, `?search=moon`, `?liked=true&sort=likedAt`
+`order` по умолчанию: `desc` для `createdAt` / `likedAt` / `likes` / `plays`, `asc` для `name`.
 
-Ответ: альбом + `artist` + `genres[]` + `isLiked` + `coverColor` (`#rrggbb` или `null`)
+`listened=true` — уникальные альбомы текущего user по `TrackListen`, порядок `MAX(listenedAt)` desc. Auth. `401`
+
+Примеры: `/api/albums?sort=createdAt&order=desc&limit=14`, `?listened=true&limit=14`, `?genre=hip-hop&sort=likes&order=desc`, `?liked=true&sort=likedAt&limit=50`
+
+Ответ: `{ items, total, limit, offset }`  
+`items[]` — альбом + `artist` + `genres[]` + `isLiked` + `coverColor` (`#rrggbb` или `null`)
 
 ### `POST /api/albums`
 
@@ -78,11 +83,12 @@ Query: `search`, `liked=true`, `sort=newest|oldest|name|likedAt`
 
 ### `GET /api/tracks`
 
-Query: `search` (трек / артист / альбом), `liked=true`, `sort=newest|oldest|name|likedAt`
+Query: `search` (трек / артист / альбом), `liked=true`, `genre` (slug|id), `artistId`, `sort=createdAt|name|likedAt|likes|plays`, `order=asc|desc`, `limit` (1…50, default 20), `offset` (≥0, default 0)
 
-Примеры: `/api/tracks`, `?search=night`, `?liked=true&sort=likedAt`
+Примеры: `/api/tracks?sort=plays&order=desc&limit=20`, `?liked=true&sort=likedAt`, `?genre=indie&sort=createdAt`
 
-Ответ: трек + `artist` + `album` (`id`, `name`, `coverSrc`) + `genres[]` + `isLiked`
+Ответ: `{ items, total, limit, offset }`  
+`items[]` — трек + `artist` + `album` (`id`, `name`, `coverSrc`, `coverColor`) + `genres[]` + `isLiked`
 
 ### `GET /api/tracks/:id`
 
@@ -135,11 +141,12 @@ Body: `{ trackId: string, toPosition: number }` — `toPosition` 0-based инд�
 
 ### `GET /api/artists`
 
-Query: `search` (имя), `liked=true`, `sort=newest|oldest|name|likedAt` (по умолчанию `name`)
+Query: `search` (имя), `liked=true`, `sort=createdAt|name|likedAt|likes|plays` (по умолчанию `name`), `order=asc|desc`, `limit` (1…50, default 20), `offset` (≥0, default 0)
 
-Примеры: `/api/artists`, `?search=волн`, `?liked=true&sort=likedAt`
+Примеры: `/api/artists?limit=20`, `?search=волн`, `?liked=true&sort=likedAt&limit=50`, `?sort=likes&order=desc`
 
-Ответ: публичный user + `isLiked`
+Ответ: `{ items, total, limit, offset }`  
+`items[]` — публичный user + `isLiked`
 
 ### `GET /api/artists/:id`
 

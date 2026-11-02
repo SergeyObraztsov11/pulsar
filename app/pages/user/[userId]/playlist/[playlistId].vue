@@ -12,6 +12,7 @@ import {
   PhDotsThree,
   PhHeart,
   PhListHeart,
+  PhMagnifyingGlass,
   PhPause,
   PhPlay,
   PhQueue,
@@ -163,6 +164,13 @@ const sortedTracks = computed(() => {
     (a, b) => ((a.durationSec ?? 0) - (b.durationSec ?? 0)) * dir,
   );
 });
+
+const isTracksEmpty = computed(
+  () => (playlist.value?.tracks?.length ?? 0) === 0,
+);
+
+/** Поиск по трекам — пока только UI */
+const trackSearchQuery = ref("");
 
 const ownerId = computed(() => playlist.value?.userId ?? "");
 
@@ -318,6 +326,28 @@ function onSettingsClick() {
   });
 }
 
+const deletingPlaylist = ref(false);
+
+/** Удалить свой плейлист и уйти к списку */
+async function onDeleteClick() {
+  const detail = playlist.value;
+  if (!detail || !canEditPlaylist.value || deletingPlaylist.value) return;
+
+  deletingPlaylist.value = true;
+  try {
+    await $fetch(`/api/playlists/${detail.id}`, { method: "DELETE" });
+    const uid = detail.userId;
+    await Promise.all([
+      refreshNuxtData(`library-playlists:${uid}`),
+      refreshNuxtData(`playlists:${uid}`),
+      clearNuxtData(`playlist:${detail.id}`),
+    ]);
+    await navigateTo("/");
+  } catch {
+    deletingPlaylist.value = false;
+  }
+}
+
 /** Поделиться ссылкой на плейлист */
 async function onShareClick() {
   const url = typeof window !== "undefined" ? window.location.href : "";
@@ -460,6 +490,7 @@ async function onShareClick() {
               :can-edit="canEditPlaylist"
               @play="onListenClick"
               @settings="onSettingsClick"
+              @delete="onDeleteClick"
               @go-owner="() => navigateTo(ownerTo)"
               @share="onShareClick"
             >
@@ -571,8 +602,32 @@ async function onShareClick() {
     </div>
 
     <!-- Треклист: ClientOnly — нет SSR/hydration mismatch из‑за media query в карточках -->
-    <section class="flex flex-col gap-16 p-6">
-      <ClientOnly>
+    <section class="flex flex-col gap-4 p-6">
+      <!-- Поиск по трекам (фильтр пока не подключён) -->
+      <div
+        v-if="!isTracksEmpty"
+        class="flex h-10 w-full max-w-md items-center gap-2 rounded-full bg-tone-surface px-4 leading-none transition-colors focus-within:bg-tone-surface-hover"
+      >
+        <PhMagnifyingGlass
+          :size="20"
+          weight="light"
+          class="shrink-0 text-tone-muted"
+        />
+        <input
+          v-model="trackSearchQuery"
+          type="search"
+          name="playlist-track-search"
+          autocomplete="off"
+          placeholder="Поиск в плейлисте"
+          class="h-full min-w-0 flex-1 bg-transparent text-sm leading-none text-tone-white outline-none placeholder:text-tone-muted"
+        />
+      </div>
+
+      <p v-if="isTracksEmpty" class="text-base text-tone-muted">
+        Плейлист пуст
+      </p>
+
+      <ClientOnly v-else>
         <PlaylistTracksReorderList
           v-if="playlist"
           :playlist-id="playlist.id"

@@ -2,11 +2,11 @@
 /**
  * Landing Pulsar — лаконично, музыка вперёд.
  * Hero: крупный заголовок + бегущая «стена обложек».
- * Ниже: полка новых релизов, три возможности, цифры площадки, CTA.
+ * Ниже: цифры, бренд, возможности, полка новых релизов.
  * Гость: без play, лайков и очереди.
  */
 import type { Album } from "~/types/album";
-import type { Track } from "~/types/track";
+import type { ListPage } from "~/types/listPage";
 import { toMediaSrc } from "~/utils/mediaSrc";
 import { pluralizeRu } from "~/utils/pluralizeRu";
 
@@ -14,22 +14,18 @@ definePageMeta({
   layout: "guest-layout",
 });
 
-const { data: albums } = await useFetch<Album[]>("/api/albums", {
-  query: { sort: "newest" },
+/** 10 новейших: полка + стена обложек */
+const { data: albumsPage } = await useFetch<ListPage<Album>>("/api/albums", {
+  query: { sort: "createdAt", order: "desc", limit: 10 },
 });
 
-/** Треки — только для счётчика, грузим после отрисовки */
-const { data: tracks } = useFetch<Track[]>("/api/tracks", {
-  query: { sort: "newest" },
-  lazy: true,
-  server: false,
-  default: () => [],
-});
-
-const list = computed(() => albums.value ?? []);
+const list = computed(() => albumsPage.value?.items ?? []);
 const withCover = computed(() =>
   list.value.filter((album) => Boolean(album.coverSrc)),
 );
+
+/** Нижний swiper — те же 10 */
+const newestAlbums = computed(() => list.value);
 
 const WALL_COLUMNS = 3;
 const MIN_PER_COLUMN = 6;
@@ -55,112 +51,31 @@ const wallColumns = computed(() => {
   });
 });
 
-const SHELF_LIMIT = 14;
-/** Полку показываем, если в ней есть что листать */
-const SHELF_MIN = 3;
-
-type Shelf = {
-  key: string;
-  title: string;
-  description?: string;
-  items: Album[];
-  /** false — только название (полка одного артиста) */
-  showArtist?: boolean;
-};
-
-/** Полки подборок: новинки · самый частый жанр · артист с наибольшим числом релизов */
-const shelves = computed<Shelf[]>(() => {
-  const all = list.value;
-  const result: Shelf[] = [];
-
-  result.push({
-    key: "newest",
-    title: "Новые релизы",
-    description: "То, что вышло на площадке последним",
-    items: all.slice(0, SHELF_LIMIT),
-  });
-
-  // Жанр, у которого больше всего релизов
-  const genreCount = new Map<string, { name: string; count: number }>();
-  for (const album of all) {
-    for (const genre of album.genres) {
-      const entry = genreCount.get(genre.id) ?? { name: genre.name, count: 0 };
-      entry.count += 1;
-      genreCount.set(genre.id, entry);
-    }
-  }
-  const topGenre = [...genreCount.entries()].sort(
-    (a, b) => b[1].count - a[1].count,
-  )[0];
-  if (topGenre && topGenre[1].count >= SHELF_MIN) {
-    const [genreId, { name }] = topGenre;
-    result.push({
-      key: `genre:${genreId}`,
-      title: name,
-      description: "Самый большой жанр на Pulsar",
-      items: all
-        .filter((album) => album.genres.some((genre) => genre.id === genreId))
-        .slice(0, SHELF_LIMIT),
-    });
-  }
-
-  // Артист с наибольшим числом релизов
-  const artistCount = new Map<string, { name: string; count: number }>();
-  for (const album of all) {
-    const entry = artistCount.get(album.artistId) ?? {
-      name: album.artist.name,
-      count: 0,
-    };
-    entry.count += 1;
-    artistCount.set(album.artistId, entry);
-  }
-  const topArtist = [...artistCount.entries()].sort(
-    (a, b) => b[1].count - a[1].count,
-  )[0];
-  if (topArtist && topArtist[1].count >= SHELF_MIN) {
-    const [artistId, { name }] = topArtist;
-    result.push({
-      key: `artist:${artistId}`,
-      title: name,
-      description: "Больше всего релизов на площадке",
-      items: all
-        .filter((album) => album.artistId === artistId)
-        .slice(0, SHELF_LIMIT),
-      showArtist: false,
-    });
-  }
-
-  return result.filter((shelf) => shelf.items.length >= SHELF_MIN);
-});
-
 const reduceMotion = computed(() => {
   if (import.meta.server) return true;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 });
 
-/** Цифры площадки: релизы · артисты · треки */
-const stats = computed(() => {
-  const albumsCount = list.value.length;
-  const artistsCount = new Set(list.value.map((album) => album.artistId)).size;
-  const tracksCount = tracks.value?.length ?? 0;
-  return [
-    {
-      key: "albums",
-      value: albumsCount,
-      label: pluralizeRu(albumsCount, "релиз", "релиза", "релизов"),
-    },
-    {
-      key: "artists",
-      value: artistsCount,
-      label: pluralizeRu(artistsCount, "артист", "артиста", "артистов"),
-    },
-    {
-      key: "tracks",
-      value: tracksCount,
-      label: pluralizeRu(tracksCount, "трек", "трека", "треков"),
-    },
-  ];
-});
+/** Цифры площадки — захардкожены (без лишних запросов) */
+const STATS = [
+  { key: "albums", value: 128, one: "релиз", few: "релиза", many: "релизов" },
+  {
+    key: "artists",
+    value: 46,
+    one: "артист",
+    few: "артиста",
+    many: "артистов",
+  },
+  { key: "tracks", value: 940, one: "трек", few: "трека", many: "треков" },
+] as const;
+
+const stats = computed(() =>
+  STATS.map((stat) => ({
+    key: stat.key,
+    value: stat.value,
+    label: pluralizeRu(stat.value, stat.one, stat.few, stat.many),
+  })),
+);
 
 /** Счётчики: анимируем от 0 к значению при появлении секции */
 const statsRef = ref<HTMLElement | null>(null);
@@ -219,8 +134,8 @@ onMounted(() => {
   onUnmounted(() => observer.disconnect());
 });
 
-/** Стартуем при появлении; догоняем, если треки подъехали позже */
-watch([statsVisible, stats], ([visible]) => {
+/** Стартуем анимацию счётчиков при появлении секции */
+watch(statsVisible, (visible) => {
   if (visible) runCount();
 });
 
@@ -244,25 +159,28 @@ const features = [
 
 <template>
   <div class="bg-tone-canvas text-tone-white">
-    <!-- Hero: заголовок + стена обложек -->
-    <section class="px-4 pt-28 sm:px-8 sm:pt-32 lg:px-10 lg:pt-16">
+    <!-- Hero: копирайт + стена обложек (стена скрыта ниже lg) -->
+    <section class="px-10 pt-16 border-b border-tone-surface">
       <div
-        class="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1.1fr_1fr] lg:gap-16"
+        class="mx-auto grid w-full max-w-7xl min-h-[calc(100dvh-4rem)] grid-cols-1 items-center gap-16 lg:grid-cols-[1.1fr_1fr]"
       >
-        <div class="flex flex-col gap-7 animate-fade-up">
+        <!-- Stagger: заголовок → описание → CTA, шаг 120ms -->
+        <div class="flex flex-col items-start gap-7">
           <h1
-            class="text-6xl font-extrabold leading-[0.92] tracking-tight text-tone-white sm:text-7xl lg:text-8xl"
+            class="text-8xl font-extrabold tracking-tight text-tone-white animate-fade-up motion-reduce:animate-none [animation-delay:0ms]"
           >
-            Слушай.<br />
-            Собирай.<br />
-            Выкладывай.
+            Слушай<br />
+            Собирай<br />
+            Выкладывай
           </h1>
           <p
-            class="max-w-md text-lg leading-relaxed text-tone-white sm:text-xl"
+            class="max-w-md text-pretty text-xl leading-relaxed text-tone-white animate-fade-up motion-reduce:animate-none [animation-delay:120ms]"
           >
             Pulsar — площадка для музыки, которую делают сейчас. Без подписки.
           </p>
-          <div class="flex flex-wrap items-center gap-5 pt-1">
+          <div
+            class="flex flex-wrap items-center gap-5 pt-1 animate-fade-up motion-reduce:animate-none [animation-delay:240ms]"
+          >
             <NuxtLink
               to="/register"
               class="inline-flex h-14 items-center rounded-full bg-tone-white px-8 text-base font-medium leading-none text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100"
@@ -271,17 +189,17 @@ const features = [
             </NuxtLink>
             <NuxtLink
               to="/login"
-              class="inline-flex h-14 items-center text-base font-medium leading-none text-tone-white transition-colors hover:text-tone-muted"
+              class="inline-flex h-14 items-center px-2 text-base font-medium leading-none text-tone-white transition-colors hover:text-tone-muted"
             >
               Войти
             </NuxtLink>
           </div>
         </div>
 
-        <!-- Стена обложек: колонки бегут с разной скоростью -->
+        <!-- Стена обложек — только на lg -->
         <div
           v-if="wallColumns.length"
-          class="cover-wall h-[60vh] min-h-96 overflow-hidden lg:h-[calc(100dvh-8rem)] lg:max-h-208"
+          class="cover-wall hidden h-[calc(100dvh-8rem)] max-h-208 overflow-hidden animate-fade-up motion-reduce:animate-none [animation-delay:240ms] lg:block"
           aria-hidden="true"
         >
           <div class="grid h-full grid-cols-3 gap-4">
@@ -313,57 +231,50 @@ const features = [
         </div>
       </div>
     </section>
-    <!-- Цифры площадки: три числа, ничего лишнего -->
-    <section ref="statsRef" class="px-4 pt-24 sm:px-8 sm:pt-32 lg:px-10">
-      <dl
-        class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 border-t border-tone-surface pt-12 sm:grid-cols-3 sm:gap-8 sm:pt-14"
-      >
+
+    <!-- Цифры -->
+    <section ref="statsRef" class="px-10 pt-32">
+      <dl class="mx-auto grid w-full max-w-7xl grid-cols-3 gap-8 pt-14">
         <div
           v-for="stat in stats"
           :key="stat.key"
           class="flex flex-col items-center gap-3 text-center"
         >
           <dd
-            class="text-7xl font-extrabold leading-none tracking-tight tabular-nums text-tone-white sm:text-8xl lg:text-9xl"
+            class="text-9xl font-extrabold leading-none tracking-tight tabular-nums text-tone-white"
           >
             {{ shown[stat.key] ?? 0 }}
           </dd>
-          <dt class="text-base text-tone-white sm:text-lg">
+          <dt class="text-lg text-tone-white">
             {{ stat.label }}
           </dt>
         </div>
       </dl>
     </section>
-    <!-- CTA -->
-    <section class="px-4 pt-28 sm:px-8 sm:pt-36 lg:px-10">
+
+    <!-- Заявление + бренд -->
+    <section class="px-10 pt-36">
       <div
         class="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 text-center"
       >
         <h2
-          class="max-w-3xl text-5xl font-extrabold leading-[0.95] tracking-tight text-tone-white sm:text-7xl"
+          class=" text-7xl font-extrabold leading-[0.95] tracking-tight text-tone-white"
         >
-          Твоя музыка<br />уже здесь
+          Твоя музыка уже здесь
         </h2>
-        <NuxtLink
-          to="/register"
-          class="inline-flex h-14 items-center rounded-full bg-tone-white px-8 text-base font-medium leading-none text-tone-canvas transition-[transform,opacity] duration-200 hover:scale-105 hover:opacity-90 active:scale-95 motion-reduce:transform-none motion-reduce:hover:scale-100"
-        >
-          Создать аккаунт
-        </NuxtLink>
       </div>
     </section>
-    <!-- Три возможности — тот же ритм, что у цифр -->
-    <section class="px-4 pt-28 sm:px-8 sm:pt-36 lg:px-10">
-      <div
-        class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-12 pt-12 sm:grid-cols-3 sm:gap-8 sm:pt-14"
-      >
+
+    <!-- Три возможности -->
+    <section class="px-10 pt-36">
+      <div class="mx-auto grid w-full max-w-7xl grid-cols-3 gap-8 pt-14">
         <div
           v-for="feature in features"
           :key="feature.title"
           class="flex flex-col items-center gap-4 text-center"
         >
           <h3
-            class="text-4xl font-bold leading-none tracking-tight text-tone-white sm:text-5xl"
+            class="text-5xl font-bold leading-none tracking-tight text-tone-white"
           >
             {{ feature.title }}
           </h3>
@@ -374,25 +285,18 @@ const features = [
       </div>
     </section>
 
-    <!-- Подборки: новинки · жанр · артист -->
-    <section
-      v-if="shelves.length"
-      class="px-4 pb-24 pt-28 sm:px-8 sm:pb-28 sm:pt-36 lg:px-10"
-    >
-      <div class="mx-auto flex w-full max-w-7xl flex-col gap-16 sm:gap-20">
+    <!-- 10 самых новых релизов -->
+    <section v-if="newestAlbums.length" class="px-10 pb-28 pt-36">
+      <div class="mx-auto w-full max-w-7xl">
         <AlbumsSwiperSection
-          v-for="shelf in shelves"
-          :key="shelf.key"
-          :title="shelf.title"
-          :description="shelf.description"
-          :items="shelf.items"
+          title="Новые релизы"
+          :items="newestAlbums"
           :interactive="false"
-          :show-artist="shelf.showArtist ?? true"
         />
       </div>
     </section>
 
-    <div class="px-4 pb-10 sm:px-8 lg:px-10">
+    <div class="px-10 pb-10">
       <div class="mx-auto w-full max-w-7xl">
         <AppFooter />
       </div>
@@ -401,8 +305,9 @@ const features = [
 </template>
 
 <style scoped>
-/* Стена обложек: края растворяются в фоне */
 .cover-wall {
+  /* Шаг между обложками (gap-4) — участвует в расчёте бесшовного цикла */
+  --wall-gap: 1rem;
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -412,7 +317,6 @@ const features = [
   );
 }
 
-/* Колонка бежит вверх; вторая половина — копия для бесшовного цикла */
 .cover-wall__column {
   animation: cover-wall-up linear infinite;
   will-change: transform;
@@ -427,13 +331,13 @@ const features = [
     transform: translateY(0);
   }
   to {
-    transform: translateY(calc(-50% - 0.5rem));
+    transform: translateY(calc(-50% - var(--wall-gap) / 2));
   }
 }
 
 @keyframes cover-wall-down {
   from {
-    transform: translateY(calc(-50% - 0.5rem));
+    transform: translateY(calc(-50% - var(--wall-gap) / 2));
   }
   to {
     transform: translateY(0);

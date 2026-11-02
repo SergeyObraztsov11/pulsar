@@ -1,13 +1,15 @@
 /**
- * catalogPaths — URL страниц каталога: артист, альбом, трек, плейлист.
+ * catalogPaths — URL страниц каталога: артист, альбом, плейлист.
+ * Отдельной страницы трека нет — trackPath ведёт на альбом.
  */
 import type { Album } from "~/types/album";
 import type { Artist } from "~/types/artist";
 import type { PlaylistSummary } from "~/types/playlist";
 import type { Track } from "~/types/track";
 
+/** Альбом трека (страницы трека нет) */
 export function trackPath(track: Track) {
-  return `/user/${track.artist.id}/album/${track.album.id}/track/${track.id}`;
+  return `/user/${track.artist.id}/album/${track.album.id}`;
 }
 
 export function albumPath(album: Album) {

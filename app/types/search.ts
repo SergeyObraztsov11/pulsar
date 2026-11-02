@@ -5,22 +5,26 @@ import type { Album } from "./album";
 import type { Artist } from "./artist";
 import type { Track } from "./track";
 
-/** Фильтр типа на странице /search (без выбора = undefined) */
-export type SearchType = "tracks" | "albums" | "playlists";
+/** Фильтр типа на /search (без type в URL = «Все») */
+export type SearchType = "artists" | "tracks" | "albums";
 
-export const SEARCH_TYPE_OPTIONS: { value: SearchType; label: string }[] = [
+/** Значение чипа: пустая строка = «Все» */
+export type SearchTypeFilter = SearchType | "";
+
+/** Чипы: «Все» = пустой value */
+export const SEARCH_TYPE_OPTIONS: {
+  value: SearchTypeFilter;
+  label: string;
+}[] = [
+  { value: "", label: "Все" },
+  { value: "artists", label: "Исполнители" },
   { value: "tracks", label: "Треки" },
   { value: "albums", label: "Альбомы" },
-  { value: "playlists", label: "Плейлисты" },
 ];
 
-/** type из query; неизвестное / пусто → undefined */
+/** type из query; неизвестное / пусто → undefined («Все») */
 export function parseSearchType(value: unknown): SearchType | undefined {
-  if (
-    value === "tracks" ||
-    value === "albums" ||
-    value === "playlists"
-  ) {
+  if (value === "artists" || value === "tracks" || value === "albums") {
     return value;
   }
   return undefined;

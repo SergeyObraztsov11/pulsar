@@ -14,23 +14,31 @@ function onScroll() {
 
 <template>
   <div class="relative h-dvh overflow-hidden bg-tone-canvas text-tone-white">
-    <!-- Хедер: прозрачный наверху, canvas + линия после скролла -->
     <header
-      class="absolute inset-x-0 top-0 z-50 border-b transition-colors duration-300 ease-out motion-reduce:transition-none"
-      :class="
-        isScrolled
-          ? 'border-tone-surface bg-tone-canvas'
-          : 'border-transparent bg-transparent'
-      "
+      class="absolute inset-x-0 top-0 z-50 border-b bg-tone-canvas transition-colors duration-300 ease-out motion-reduce:transition-none"
+      :class="isScrolled ? 'border-tone-surface' : 'border-transparent'"
     >
+      <!-- На mobile: марк без wordmark и короткая подпись CTA -->
       <div
-        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-8 lg:px-10"
+        class="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-2 px-4 sm:h-16 sm:gap-4 sm:px-8 lg:px-10"
       >
-        <AppLogo to="/" />
+        <NuxtLink
+          to="/"
+          class="inline-flex shrink-0 items-center gap-1 leading-none text-tone-white transition-colors hover:text-tone-muted"
+          aria-label="Pulsar"
+        >
+          <AppLogoMark class="size-9 sm:size-10" />
+          <span class="hidden text-2xl font-bold sm:inline">Pulsar</span>
+        </NuxtLink>
 
-        <div class="flex shrink-0 items-center gap-2">
-          <UiButton variant="ghost" text="Войти" @click="navigateTo('/login')" />
-          <UiButton text="Создать аккаунт" @click="navigateTo('/register')" />
+        <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+          <UiButton
+            variant="ghost"
+            text="Войти"
+            @click="navigateTo('/login')"
+          />
+
+          <UiButton variant="white" text="Создать аккаунт" @click="navigateTo('/register')" />
         </div>
       </div>
     </header>

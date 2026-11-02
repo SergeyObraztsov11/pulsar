@@ -6,8 +6,8 @@ import {
   PhCaretRight,
   PhHouse,
   PhListHeart,
+  PhListPlus,
   PhMagnifyingGlass,
-  PhPlus,
 } from "@phosphor-icons/vue";
 
 const emit = defineEmits<{
@@ -25,8 +25,8 @@ const railButtons = [
   },
   {
     id: "create",
-    label: "Создать",
-    icon: PhPlus,
+    label: "Создать плейлист",
+    icon: PhListPlus,
     action: () => emit("create"),
   },
   {
