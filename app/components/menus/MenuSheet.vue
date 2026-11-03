@@ -112,7 +112,7 @@ function onSelect(item: MenuItem) {
         <!-- Затемнение -->
         <button
           type="button"
-          class="menu-sheet-backdrop absolute inset-0 bg-tone-shell/80"
+          class="menu-sheet-backdrop absolute inset-0 bg-black/80"
           @click="requestClose"
         />
 

@@ -57,6 +57,17 @@ const navItems: { id: NavId; label: string }[] = [
 
 const activeId = ref<NavId>("personal");
 
+const { preference, resolved, setPreference } = useTheme();
+
+const themeHint = computed(() => {
+  if (preference.value === "system") {
+    return resolved.value === "light"
+      ? "Как в системе · сейчас светлая"
+      : "Как в системе · сейчас тёмная";
+  }
+  return preference.value === "light" ? "Светлая" : "Тёмная";
+});
+
 const { data: me } = await useFetch<MeSettings>("/api/auth/me", {
   key: "auth-me-settings",
 });
@@ -211,6 +222,25 @@ function openAvatarModal() {
         type="button"
         @click="openAvatarModal"
       />
+    </section>
+
+    <!-- Тема: доступна и с mobile, где нет desktop-хедера -->
+    <section
+      class="flex items-center gap-3 rounded-lg bg-tone-surface px-4 py-3"
+    >
+      <div class="min-w-0 flex-1">
+        <p class="text-base font-medium text-tone-white">Тема оформления</p>
+        <p class="mt-1 text-sm text-tone-muted">{{ themeHint }}</p>
+      </div>
+      <ThemeToggle />
+      <button
+        v-if="preference !== 'system'"
+        type="button"
+        class="shrink-0 text-sm text-tone-muted transition-colors hover:text-tone-white"
+        @click="setPreference('system')"
+      >
+        Как в системе
+      </button>
     </section>
 
     <!-- Табы -->

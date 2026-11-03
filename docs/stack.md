@@ -30,3 +30,4 @@
 - **Docker Compose** — PostgreSQL и MinIO в локальном окружении
   - MinIO API: `http://127.0.0.1:9000`, консоль: `http://127.0.0.1:9001`
   - бакет `media` создаётся контейнером `minio-init`
+- **Seed** — медиа локально в `seed-albums/`, исключены из Git; `prepare-seed-albums.mjs` копирует из `%USERPROFILE%/Desktop` / `$HOME/Desktop` или `--source`; `npm run db:seed` идемпотентно пишет Postgres + MinIO без очистки базы. См. [seed-albums/README.md](../seed-albums/README.md)

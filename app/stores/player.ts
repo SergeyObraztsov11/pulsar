@@ -13,7 +13,7 @@ export function isSameQueueSource(
 ) {
   if (!a || !b || a.type !== b.type) return false;
   if (a.type === "likes") return true;
-  return a.id === b.id;
+  return b.type !== "likes" && a.id === b.id;
 }
 
 /** Подпись «откуда играет» над текущим треком в очереди */

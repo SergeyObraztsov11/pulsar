@@ -12,15 +12,15 @@ const props = defineProps<{
 <template>
   <div class="flex items-center justify-center gap-0.5">
     <span
-      class="eq-bar eq-bar-1 h-3 w-0.5 rounded-full bg-primary-white"
+      class="eq-bar eq-bar-1 h-3 w-0.5 rounded-full bg-white"
       :class="{ 'eq-bar-active': props.active }"
     />
     <span
-      class="eq-bar eq-bar-2 h-3 w-0.5 rounded-full bg-primary-white"
+      class="eq-bar eq-bar-2 h-3 w-0.5 rounded-full bg-white"
       :class="{ 'eq-bar-active': props.active }"
     />
     <span
-      class="eq-bar eq-bar-3 h-3 w-0.5 rounded-full bg-primary-white"
+      class="eq-bar eq-bar-3 h-3 w-0.5 rounded-full bg-white"
       :class="{ 'eq-bar-active': props.active }"
     />
   </div>

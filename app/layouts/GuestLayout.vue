@@ -32,6 +32,8 @@ function onScroll() {
         </NuxtLink>
 
         <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+          <ThemeToggle />
+
           <UiButton
             variant="ghost"
             text="Войти"

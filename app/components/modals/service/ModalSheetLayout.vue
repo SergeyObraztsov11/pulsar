@@ -38,7 +38,7 @@ defineExpose({ requestClose });
         <!-- Backdrop -->
         <button
           type="button"
-          class="modal-sheet-backdrop absolute inset-0 bg-primary-black/80"
+          class="modal-sheet-backdrop absolute inset-0 bg-black/80"
           @click="requestClose"
         />
 

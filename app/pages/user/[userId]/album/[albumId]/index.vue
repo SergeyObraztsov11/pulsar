@@ -317,6 +317,7 @@ function scrollToTop() {
     <header
       ref="heroRef"
       class="relative flex shrink-0 flex-col items-center gap-4 overflow-hidden rounded-t-lg bg-tone-surface p-4 text-tone-white sm:gap-5 sm:p-5 lg:flex-row lg:items-end lg:gap-6 lg:p-6"
+      :class="heroBgStyle ? 'media-hero' : null"
       :style="heroBgStyle"
     >
       <div
@@ -478,9 +479,10 @@ function scrollToTop() {
     <div class="sticky top-0 z-12 h-0">
       <div
         class="absolute inset-x-0 top-0 flex h-14 items-center gap-3 bg-tone-surface px-4 transition-opacity duration-200 motion-reduce:transition-none lg:px-6"
-        :class="
-          showCompactHeader ? 'opacity-100' : 'pointer-events-none opacity-0'
-        "
+        :class="[
+          showCompactHeader ? 'opacity-100' : 'pointer-events-none opacity-0',
+          compactHeaderStyle ? 'media-hero' : null,
+        ]"
         :style="compactHeaderStyle"
         :aria-hidden="!showCompactHeader"
       >

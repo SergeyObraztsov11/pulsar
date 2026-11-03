@@ -71,7 +71,7 @@ defineExpose({ requestClose });
       <!-- Затемнение -->
       <div
         v-if="show"
-        class="fixed inset-0 z-100 flex items-center justify-center bg-tone-shell/80 p-8"
+        class="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-8"
       >
         <!-- Модальное окно -->
         <div

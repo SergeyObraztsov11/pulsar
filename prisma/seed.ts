@@ -1,223 +1,336 @@
 /**
- * Заполняет БД тестовыми данными (dev).
- * Запуск: npm run db:seed
- * Пароль у всех пользователей: password
+ * Idempotent seed: imports five real albums from seed-albums/ into Postgres + MinIO.
+ * Does NOT wipe existing users/albums/tracks. Re-runs upsert seed-owned rows and overwrite S3 objects.
+ * Only manifest.albums are imported — seed-albums/extras/ is archived media and is skipped.
+ *
+ * Prepare media (optional refresh): node scripts/prepare-seed-albums.mjs [--source <dir>]
+ * Run: npm run db:seed
+ *
+ * Password for seed artists: password
+ * Legacy wipe seed kept at prisma/seed.legacy.ts (do not run against a used DB).
  */
 import "dotenv/config";
 import { Hash } from "@adonisjs/hash";
 import { Scrypt } from "@adonisjs/hash/drivers/scrypt";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { access, readFile } from "node:fs/promises";
+import path from "node:path";
+import { parseFile } from "music-metadata";
+import sharp from "sharp";
 import { PrismaClient } from "../app/generated/prisma/client";
 import {
   albumCoverKey,
   audioObjectKey,
   avatarObjectKey,
-  playlistCoverKey,
-  SEED_AUDIO_TRACK_IDS,
 } from "../app/utils/mediaKeys";
+
+type SeedTrack = {
+  id: string;
+  trackNumber: number;
+  name: string;
+  file: string;
+  durationSec: number;
+  isExplicit?: boolean;
+};
+
+type SeedAlbum = {
+  id: string;
+  folder: string;
+  name: string;
+  releaseDate?: string;
+  genreIds: string[];
+  isExplicit: boolean;
+  coverFile: string;
+  artist: { id: string; name: string; email: string };
+  tracks: SeedTrack[];
+};
+
+type SeedManifest = {
+  albums: SeedAlbum[];
+};
+
+const GENRES = [
+  { id: "hip-hop", name: "Hip-Hop", slug: "hip-hop" },
+  { id: "pop", name: "Pop", slug: "pop" },
+  { id: "rock", name: "Rock", slug: "rock" },
+] as const;
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
+const endpoint = process.env.NUXT_S3_ENDPOINT;
+const region = process.env.NUXT_S3_REGION || "us-east-1";
+const accessKey = process.env.NUXT_S3_ACCESS_KEY;
+const secretKey = process.env.NUXT_S3_SECRET_KEY;
+const bucket = process.env.NUXT_S3_BUCKET;
+
+if (!endpoint || !accessKey || !secretKey || !bucket) {
+  throw new Error("NUXT_S3_* is not set (endpoint, keys, bucket)");
+}
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
 
-const users = [
-  { id: "platina", name: "Платина", avatarSrc: avatarObjectKey("platina") },
-  { id: "volna", name: "Волна", avatarSrc: avatarObjectKey("volna") },
-  { id: "liniya", name: "Линия", avatarSrc: avatarObjectKey("liniya") },
-  { id: "yug", name: "Юг", avatarSrc: avatarObjectKey("yug") },
-  { id: "sdvig", name: "Сдвиг", avatarSrc: avatarObjectKey("sdvig") },
-  { id: "more", name: "Море", avatarSrc: avatarObjectKey("more") },
-  { id: "kadr", name: "Кадр", avatarSrc: avatarObjectKey("kadr") },
-  { id: "aura", name: "Аура", avatarSrc: avatarObjectKey("aura") },
-  { id: "piksel", name: "Пиксель", avatarSrc: avatarObjectKey("piksel") },
-  { id: "severnyy", name: "Северный", avatarSrc: avatarObjectKey("severnyy") },
-];
+const s3 = new S3Client({
+  region,
+  endpoint,
+  credentials: {
+    accessKeyId: accessKey,
+    secretAccessKey: secretKey,
+  },
+  forcePathStyle: true,
+});
 
-const albums = [
-  { id: "valentina", artistId: "platina", name: "Валентина", coverSrc: albumCoverKey("valentina", "jpg") },
-  { id: "gorizont", artistId: "volna", name: "Горизонт", coverSrc: albumCoverKey("gorizont", "jpg") },
-  { id: "ekho", artistId: "liniya", name: "Эхо", coverSrc: albumCoverKey("ekho", "jpg") },
-  { id: "leto-24", artistId: "yug", name: "Лето 24", coverSrc: albumCoverKey("leto-24", "jpg") },
-  { id: "na-povtore", artistId: "sdvig", name: "На повторе", coverSrc: albumCoverKey("na-povtore", "jpg") },
-  { id: "tishe", artistId: "more", name: "Тише", coverSrc: albumCoverKey("tishe", "jpg") },
-  { id: "sdvig-album", artistId: "kadr", name: "Сдвиг", coverSrc: albumCoverKey("sdvig-album", "jpg") },
-  { id: "kadr-album", artistId: "aura", name: "Кадр", coverSrc: albumCoverKey("kadr-album", "jpg") },
-  { id: "liniya-album", artistId: "piksel", name: "Линия", coverSrc: albumCoverKey("liniya-album", "jpg") },
-  { id: "yug-album", artistId: "severnyy", name: "Юг", coverSrc: albumCoverKey("yug-album", "jpg") },
-];
+const seedRoot = path.join(process.cwd(), "seed-albums");
 
-const tracks = [
-  // Горизонт — Волна
-  { id: "track-1", albumId: "gorizont", artistId: "volna", name: "Горизонт", trackNumber: 1, durationSec: 204 },
-  { id: "track-11", albumId: "gorizont", artistId: "volna", name: "Дальний свет", trackNumber: 2, durationSec: 188 },
-  { id: "track-12", albumId: "gorizont", artistId: "volna", name: "Полоса", trackNumber: 3, durationSec: 216 },
-  // Сдвиг — Кадр
-  { id: "track-2", albumId: "sdvig-album", artistId: "kadr", name: "Без имени", trackNumber: 1, durationSec: 178 },
-  { id: "track-13", albumId: "sdvig-album", artistId: "kadr", name: "Кадр 24", trackNumber: 2, durationSec: 195 },
-  { id: "track-14", albumId: "sdvig-album", artistId: "kadr", name: "Пауза", trackNumber: 3, durationSec: 162 },
-  // Лето 24 — Юг
-  { id: "track-3", albumId: "leto-24", artistId: "yug", name: "Лето 24", trackNumber: 1, durationSec: 221 },
-  { id: "track-15", albumId: "leto-24", artistId: "yug", name: "Жара", trackNumber: 2, durationSec: 183 },
-  { id: "track-16", albumId: "leto-24", artistId: "yug", name: "После заката", trackNumber: 3, durationSec: 247 },
-  // Эхо — Линия
-  { id: "track-4", albumId: "ekho", artistId: "liniya", name: "Эхо", trackNumber: 1, durationSec: 242 },
-  { id: "track-17", albumId: "ekho", artistId: "liniya", name: "Отзвук", trackNumber: 2, durationSec: 201 },
-  { id: "track-18", albumId: "ekho", artistId: "liniya", name: "Тишина между", trackNumber: 3, durationSec: 229 },
-  // На повторе — Сдвиг
-  { id: "track-5", albumId: "na-povtore", artistId: "sdvig", name: "На повторе", trackNumber: 1, durationSec: 197 },
-  { id: "track-19", albumId: "na-povtore", artistId: "sdvig", name: "Ещё раз", trackNumber: 2, durationSec: 174 },
-  { id: "track-20", albumId: "na-povtore", artistId: "sdvig", name: "Петля", trackNumber: 3, durationSec: 208 },
-  // Тише — Море
-  { id: "track-6", albumId: "tishe", artistId: "more", name: "Ночной город", trackNumber: 1, durationSec: 213 },
-  { id: "track-21", albumId: "tishe", artistId: "more", name: "Прибой", trackNumber: 2, durationSec: 191 },
-  { id: "track-22", albumId: "tishe", artistId: "more", name: "Глубина", trackNumber: 3, durationSec: 256 },
-  // Кадр — Аура
-  { id: "track-7", albumId: "kadr-album", artistId: "aura", name: "Тише", trackNumber: 1, durationSec: 165 },
-  { id: "track-23", albumId: "kadr-album", artistId: "aura", name: "Свет", trackNumber: 2, durationSec: 187 },
-  // Валентина — Платина
-  { id: "track-8", albumId: "valentina", artistId: "platina", name: "Валентина", trackNumber: 1, durationSec: 189 },
-  { id: "track-24", albumId: "valentina", artistId: "platina", name: "Платина", trackNumber: 2, durationSec: 203 },
-  { id: "track-25", albumId: "valentina", artistId: "platina", name: "Ночь на районе", trackNumber: 3, durationSec: 218 },
-  // Линия — Пиксель
-  { id: "track-9", albumId: "liniya-album", artistId: "piksel", name: "До утра", trackNumber: 1, durationSec: 232 },
-  { id: "track-26", albumId: "liniya-album", artistId: "piksel", name: "Пиксель", trackNumber: 2, durationSec: 176 },
-  // Юг — Северный
-  { id: "track-10", albumId: "yug-album", artistId: "severnyy", name: "Сквозь шум", trackNumber: 1, durationSec: 251 },
-  { id: "track-27", albumId: "yug-album", artistId: "severnyy", name: "Север", trackNumber: 2, durationSec: 199 },
-  { id: "track-28", albumId: "yug-album", artistId: "severnyy", name: "Вьюга", trackNumber: 3, durationSec: 224 },
-];
+async function putObject(key: string, body: Buffer, contentType: string) {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    }),
+  );
+}
+
+async function durationSecFromFile(filePath: string) {
+  const meta = await parseFile(filePath);
+  const sec = meta.format.duration;
+  if (sec == null || !Number.isFinite(sec) || sec < 0) {
+    throw new Error(`Could not read duration: ${filePath}`);
+  }
+  return Math.round(sec);
+}
+
+/** Match API upload: square WebP cover + accent hex for hero. */
+async function processCover(input: Buffer) {
+  const body = await sharp(input)
+    .rotate()
+    .resize(800, 800, { fit: "cover" })
+    .webp({ quality: 80 })
+    .toBuffer();
+  const { dominant } = await sharp(body).stats();
+  const coverColor = `#${[dominant.r, dominant.g, dominant.b]
+    .map((n) => n.toString(16).padStart(2, "0"))
+    .join("")}`;
+  return { body, coverColor };
+}
+
+async function processAvatar(input: Buffer) {
+  const body = await sharp(input)
+    .rotate()
+    .resize(512, 512, { fit: "cover" })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+  const { dominant } = await sharp(body).stats();
+  const avatarColor = `#${[dominant.r, dominant.g, dominant.b]
+    .map((n) => n.toString(16).padStart(2, "0"))
+    .join("")}`;
+  return { body, avatarColor };
+}
+
+async function loadManifest(): Promise<SeedManifest> {
+  const manifestPath = path.join(seedRoot, "manifest.json");
+  try {
+    await access(manifestPath);
+  } catch {
+    throw new Error(
+      `Missing ${manifestPath}. Run: node scripts/prepare-seed-albums.mjs`,
+    );
+  }
+  const raw = await readFile(manifestPath, "utf8");
+  const manifest = JSON.parse(raw) as SeedManifest;
+  if (!Array.isArray(manifest.albums) || manifest.albums.length === 0) {
+    throw new Error("seed-albums/manifest.json has no albums");
+  }
+  return manifest;
+}
+
+async function ensureGenre(genre: (typeof GENRES)[number]) {
+  const bySlug = await prisma.genre.findUnique({ where: { slug: genre.slug } });
+  if (bySlug) return bySlug.id;
+
+  const byId = await prisma.genre.findUnique({ where: { id: genre.id } });
+  if (byId) return byId.id;
+
+  await prisma.genre.create({
+    data: { id: genre.id, name: genre.name, slug: genre.slug },
+  });
+  return genre.id;
+}
+
+async function ensureLikedPlaylist(userId: string) {
+  const existing = await prisma.playlist.findFirst({
+    where: { userId, systemKind: "liked_tracks" },
+    select: { id: true },
+  });
+  if (existing) return existing.id;
+
+  const created = await prisma.playlist.create({
+    data: {
+      id: `liked-${userId}`,
+      userId,
+      name: "Мне нравится",
+      isPublic: false,
+      systemKind: "liked_tracks",
+    },
+  });
+  return created.id;
+}
+
+async function upsertArtist(
+  artist: SeedAlbum["artist"],
+  passwordHash: string,
+  coverBuffer: Buffer,
+) {
+  const avatar = await processAvatar(coverBuffer);
+  const avatarSrc = avatarObjectKey(artist.id);
+  await putObject(avatarSrc, avatar.body, "image/jpeg");
+
+  // Password only on create so re-seed does not reset a changed artist password.
+  await prisma.user.upsert({
+    where: { id: artist.id },
+    create: {
+      id: artist.id,
+      email: artist.email,
+      name: artist.name,
+      passwordHash,
+      avatarSrc,
+      avatarColor: avatar.avatarColor,
+    },
+    update: {
+      name: artist.name,
+      email: artist.email,
+      avatarSrc,
+      avatarColor: avatar.avatarColor,
+    },
+  });
+
+  await ensureLikedPlaylist(artist.id);
+}
+
+async function seedAlbum(
+  album: SeedAlbum,
+  genreIdBySlug: Map<string, string>,
+) {
+  const folder = path.join(seedRoot, album.folder);
+  const coverPath = path.join(folder, album.coverFile);
+  const coverBuffer = await readFile(coverPath);
+  const cover = await processCover(coverBuffer);
+  const coverSrc = albumCoverKey(album.id, "webp");
+  await putObject(coverSrc, cover.body, "image/webp");
+  console.log("put", coverSrc);
+
+  await prisma.album.upsert({
+    where: { id: album.id },
+    create: {
+      id: album.id,
+      artistId: album.artist.id,
+      name: album.name,
+      coverSrc,
+      coverColor: cover.coverColor,
+      releaseDate: album.releaseDate ? new Date(album.releaseDate) : null,
+      isExplicit: album.isExplicit,
+    },
+    update: {
+      artistId: album.artist.id,
+      name: album.name,
+      coverSrc,
+      coverColor: cover.coverColor,
+      releaseDate: album.releaseDate ? new Date(album.releaseDate) : null,
+      isExplicit: album.isExplicit,
+    },
+  });
+
+  for (const genreSlug of album.genreIds) {
+    const genreId = genreIdBySlug.get(genreSlug);
+    if (!genreId) {
+      throw new Error(`Genre not prepared: ${genreSlug}`);
+    }
+    await prisma.albumGenre.upsert({
+      where: {
+        albumId_genreId: { albumId: album.id, genreId },
+      },
+      create: { albumId: album.id, genreId },
+      update: {},
+    });
+  }
+
+  for (const track of album.tracks) {
+    const audioPath = path.join(folder, track.file);
+    await access(audioPath).catch(() => {
+      throw new Error(`Missing audio file: ${audioPath}`);
+    });
+
+    const durationSec = await durationSecFromFile(audioPath);
+    const audioBody = await readFile(audioPath);
+    const audioSrc = audioObjectKey(track.id);
+    await putObject(audioSrc, audioBody, "audio/mpeg");
+    console.log("put", audioSrc, `(${durationSec}s)`);
+
+    await prisma.track.upsert({
+      where: { id: track.id },
+      create: {
+        id: track.id,
+        albumId: album.id,
+        artistId: album.artist.id,
+        name: track.name,
+        trackNumber: track.trackNumber,
+        durationSec,
+        audioSrc,
+        isExplicit: track.isExplicit ?? album.isExplicit,
+      },
+      update: {
+        albumId: album.id,
+        artistId: album.artist.id,
+        name: track.name,
+        trackNumber: track.trackNumber,
+        durationSec,
+        audioSrc,
+        isExplicit: track.isExplicit ?? album.isExplicit,
+      },
+    });
+  }
+
+  return { coverBuffer };
+}
 
 async function main() {
-  // Хеш как у nuxt-auth-utils (@adonisjs/hash scrypt)
+  const manifest = await loadManifest();
   const passwordHash = await new Hash(new Scrypt({})).make("password");
 
-  // Сначала чистим (порядок важен из‑за связей)
-  await prisma.artistLink.deleteMany();
-  await prisma.artistLike.deleteMany();
-  await prisma.albumLike.deleteMany();
-  await prisma.playlistTrack.deleteMany();
-  await prisma.trackGenre.deleteMany();
-  await prisma.albumGenre.deleteMany();
-  await prisma.track.deleteMany();
-  await prisma.playlist.deleteMany();
-  await prisma.album.deleteMany();
-  await prisma.genre.deleteMany();
-  await prisma.user.deleteMany();
+  const genreIdBySlug = new Map<string, string>();
+  for (const genre of GENRES) {
+    const id = await ensureGenre(genre);
+    genreIdBySlug.set(genre.slug, id);
+  }
 
-  await prisma.user.createMany({
-    data: users.map((user) => ({
-      ...user,
-      email: `${user.id}@example.com`,
-      passwordHash,
-    })),
-  });
+  // Artists first (unique email). Same artist reused across albums if needed.
+  const artistsDone = new Set<string>();
+  for (const album of manifest.albums) {
+    if (artistsDone.has(album.artist.id)) continue;
+    const coverPath = path.join(seedRoot, album.folder, album.coverFile);
+    const coverBuffer = await readFile(coverPath);
+    await upsertArtist(album.artist, passwordHash, coverBuffer);
+    artistsDone.add(album.artist.id);
+    console.log("artist", album.artist.id);
+  }
 
-  await prisma.album.createMany({ data: albums });
-  await prisma.track.createMany({
-    data: tracks.map((track) => ({
-      ...track,
-      audioSrc: (SEED_AUDIO_TRACK_IDS as readonly string[]).includes(track.id)
-        ? audioObjectKey(track.id)
-        : null,
-    })),
-  });
+  let trackCount = 0;
+  for (const album of manifest.albums) {
+    console.log(`\nAlbum ${album.id} (${album.tracks.length} tracks)`);
+    await seedAlbum(album, genreIdBySlug);
+    trackCount += album.tracks.length;
+  }
 
-  await prisma.genre.createMany({
-    data: [
-      { id: "hip-hop", name: "Hip-Hop", slug: "hip-hop" },
-      { id: "pop", name: "Pop", slug: "pop" },
-      { id: "rock", name: "Rock", slug: "rock" },
-      { id: "electronic", name: "Electronic", slug: "electronic" },
-      { id: "r-and-b", name: "R&B", slug: "r-and-b" },
-      { id: "indie", name: "Indie", slug: "indie" },
-      { id: "jazz", name: "Jazz", slug: "jazz" },
-    ],
-  });
-
-  await prisma.albumGenre.createMany({
-    data: [
-      { albumId: "valentina", genreId: "hip-hop" },
-      { albumId: "yug-album", genreId: "hip-hop" },
-      { albumId: "gorizont", genreId: "indie" },
-      { albumId: "sdvig-album", genreId: "indie" },
-      { albumId: "ekho", genreId: "electronic" },
-      { albumId: "kadr-album", genreId: "electronic" },
-      { albumId: "leto-24", genreId: "pop" },
-      { albumId: "liniya-album", genreId: "pop" },
-      { albumId: "na-povtore", genreId: "rock" },
-      { albumId: "tishe", genreId: "r-and-b" },
-    ],
-  });
-
-  await prisma.trackGenre.createMany({
-    data: [
-      { trackId: "track-1", genreId: "indie" },
-      { trackId: "track-11", genreId: "indie" },
-      { trackId: "track-12", genreId: "indie" },
-      { trackId: "track-8", genreId: "hip-hop" },
-      { trackId: "track-24", genreId: "hip-hop" },
-      { trackId: "track-25", genreId: "hip-hop" },
-      { trackId: "track-4", genreId: "electronic" },
-      { trackId: "track-17", genreId: "electronic" },
-      { trackId: "track-18", genreId: "electronic" },
-      { trackId: "track-6", genreId: "indie" },
-      { trackId: "track-21", genreId: "indie" },
-      { trackId: "track-3", genreId: "hip-hop" },
-      { trackId: "track-15", genreId: "hip-hop" },
-    ],
-  });
-
-  await prisma.playlist.createMany({
-    data: [
-      ...users.map((user) => ({
-        id: `liked-${user.id}`,
-        userId: user.id,
-        name: "Мне нравится",
-        isPublic: false,
-        systemKind: "liked_tracks" as const,
-      })),
-      {
-        id: "evening",
-        userId: "volna",
-        name: "Вечерний",
-        coverSrc: playlistCoverKey("evening"),
-        isPublic: true,
-      },
-    ],
-  });
-
-  await prisma.playlistTrack.createMany({
-    data: [
-      { playlistId: "liked-platina", trackId: "track-1", position: 0 },
-      { playlistId: "liked-platina", trackId: "track-8", position: 1 },
-      { playlistId: "liked-platina", trackId: "track-3", position: 2 },
-      { playlistId: "liked-volna", trackId: "track-6", position: 0 },
-      { playlistId: "evening", trackId: "track-6", position: 0 },
-      { playlistId: "evening", trackId: "track-7", position: 1 },
-      { playlistId: "evening", trackId: "track-9", position: 2 },
-    ],
-  });
-
-  await prisma.albumLike.createMany({
-    data: [
-      { userId: "volna", albumId: "valentina" },
-      { userId: "platina", albumId: "gorizont" },
-    ],
-  });
-
-  await prisma.artistLike.createMany({
-    data: [
-      { userId: "volna", artistId: "platina" },
-      { userId: "platina", artistId: "volna" },
-    ],
-  });
-
-  console.log("Seed OK: users, albums, tracks, genres, playlists, likes");
+  console.log(
+    `\nSeed OK (idempotent): ${manifest.albums.length} albums, ${trackCount} tracks, media in MinIO bucket "${bucket}"`,
+  );
 }
 
 main()

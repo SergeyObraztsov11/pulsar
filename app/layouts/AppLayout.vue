@@ -68,6 +68,8 @@ const menuItems = computed<MenuItem[]>(() => [
         </div>
 
         <div class="flex min-w-0 items-center justify-end gap-2">
+          <ThemeToggle />
+
           <UiButton
             variant="gray"
             text="Выложить альбом"

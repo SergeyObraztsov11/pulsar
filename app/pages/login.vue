@@ -74,7 +74,7 @@ async function onSubmit() {
   <div class="flex w-full flex-col gap-4 lg:min-w-3xl">
     <!-- Карточка входа -->
     <form
-      class="flex w-full flex-col gap-6 rounded-2xl border border-primary-gray-dark p-6 lg:h-96 lg:gap-8 lg:p-8"
+      class="flex w-full flex-col gap-6 rounded-2xl border border-tone-surface-hover p-6 lg:h-96 lg:gap-8 lg:p-8"
       @submit.prevent="onSubmit"
     >
       <div

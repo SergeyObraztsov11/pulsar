@@ -47,7 +47,7 @@ const card = reactive(
 
       <div
         v-if="props.interactive && card.showCoverOverlayPanel"
-        class="absolute inset-0 flex items-center justify-center bg-tone-shell/50"
+        class="absolute inset-0 flex items-center justify-center bg-black/50"
       >
         <UiEqualizerIcon
           v-show="card.showCoverEqualizer"
@@ -56,7 +56,7 @@ const card = reactive(
         <button
           v-show="card.showCoverPlay"
           type="button"
-          class="flex size-8 items-center justify-center text-tone-white transition-colors duration-150"
+          class="flex size-8 items-center justify-center text-white transition-colors duration-150"
           @click.stop="card.onPlayClick()"
         >
           <PhPause v-if="card.isPlayingCurrent" :size="16" weight="fill" />

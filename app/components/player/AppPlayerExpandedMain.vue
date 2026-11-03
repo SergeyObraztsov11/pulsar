@@ -65,7 +65,7 @@ function onSeekCommit(event: Event) {
         <UiCoverImage :src="coverSrc" :alt="nameLabel" />
 
         <div
-          class="absolute inset-0 bg-primary-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 max-lg:opacity-100 motion-reduce:opacity-100"
+          class="absolute inset-0 bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 max-lg:opacity-100 motion-reduce:opacity-100"
         >
           <!-- Transport по центру -->
           <div class="absolute inset-0 flex items-center justify-center gap-6">

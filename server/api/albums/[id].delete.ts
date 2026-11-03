@@ -8,7 +8,7 @@ import { ApiErrorCode, throwApiError } from "../../utils/apiError";
 
 /** Ключ в бакете, не публичный путь вроде /covers/c1.jpg */
 function isObjectKey(src: string | null | undefined): src is string {
-  return Boolean(src) && !src.startsWith("/") && !src.startsWith("http");
+  return !!src && !src.startsWith("/") && !src.startsWith("http");
 }
 
 export default defineEventHandler(async (event) => {

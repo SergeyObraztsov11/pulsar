@@ -24,12 +24,12 @@ const props = defineProps<ModalUserSettingsGenderProps>();
 const { close } = useModal();
 
 const initialGender = props.gender ?? "";
-const gender = ref(initialGender);
+const selectedGender = ref(initialGender);
 const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 
-const isDirty = computed(() => gender.value !== initialGender);
-const isValid = computed(() => Boolean(gender.value));
+const isDirty = computed(() => selectedGender.value !== initialGender);
+const isValid = computed(() => Boolean(selectedGender.value));
 const canSave = computed(
   () => isDirty.value && isValid.value && !saving.value,
 );
@@ -44,7 +44,7 @@ async function onSave() {
 
   saving.value = true;
   const result = await patchMeSettings({
-    gender: gender.value || null,
+    gender: selectedGender.value || null,
   });
   if (!result.ok) {
     errorMessage.value = result.message;
@@ -69,7 +69,7 @@ async function onSave() {
       </p>
 
       <UiSelectField
-        v-model="gender"
+        v-model="selectedGender"
         placeholder="Пол"
         :options="[...GENDERS]"
       />

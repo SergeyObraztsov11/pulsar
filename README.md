@@ -6,7 +6,7 @@
 
 ## Требования
 
-- Node.js 20+
+- Node.js 24
 - Docker Desktop (PostgreSQL и MinIO)
 
 ## Установка
@@ -27,13 +27,22 @@ cp .env.example .env
 Copy-Item .env.example .env
 ```
 
-Подними инфраструктуру, схему БД и демо-данные:
+Подними инфраструктуру и схему БД:
 
 ```bash
 docker compose up -d
 npm run db:migrate
+```
+
+Медиа пяти альбомов находятся локально в `seed-albums/` и исключены из Git. Чтобы подготовить их из папки с исходниками (по умолчанию `Desktop` пользователя; или `--source <dir>`):
+
+```bash
+node scripts/prepare-seed-albums.mjs
+# node scripts/prepare-seed-albums.mjs --source "/path/to/albums-root"
 npm run db:seed
 ```
+
+`npm run db:seed` **не** очищает чужие пользователи/альбомы: upsert артистов/альбомов/треков сида и перезапись объектов в бакете `media`. Подробности: [`seed-albums/README.md`](seed-albums/README.md). Старый разрушительный сид сохранён как `prisma/seed.legacy.ts` и не подключён к `db:seed`.
 
 Запуск:
 
@@ -51,8 +60,10 @@ npm run dev
 |---------|------------|
 | `npm run dev` | Dev-сервер |
 | `npm run build` | Production-сборка |
+| `npm run verify` | Линтер, проверка типов и автоматические тесты |
 | `npm run db:migrate` | Миграции Prisma |
-| `npm run db:seed` | Демо-данные |
+| `npm run db:seed` | Идемпотентный импорт seed-albums → БД + MinIO |
+| `node scripts/prepare-seed-albums.mjs` | Копирует 5 альбомов в `seed-albums/` из Desktop или `--source` |
 | `npm run db:studio` | Просмотр таблиц БД в браузере |
 | `docker compose up -d` | Postgres + MinIO |
 | `docker compose down` | Остановить контейнеры |

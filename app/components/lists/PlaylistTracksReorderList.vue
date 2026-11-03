@@ -46,7 +46,7 @@ watch(
 );
 
 provide(playerQueueKey, {
-  tracks: list,
+  tracks: computed(() => list.value),
   source: computed(() => props.queueSource ?? null),
 });
 

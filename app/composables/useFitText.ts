@@ -1,8 +1,5 @@
-import {
-  useResizeObserver,
-  type MaybeRefOrGetter,
-  type WatchSource,
-} from "@vueuse/core";
+import { useResizeObserver } from "@vueuse/core";
+import type { MaybeRefOrGetter, WatchSource } from "vue";
 
 type UseFitTextOptions = {
   /** Максимальный размер (px), напр. 48 = text-5xl, 96 = text-8xl */

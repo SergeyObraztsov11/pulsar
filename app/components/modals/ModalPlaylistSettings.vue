@@ -204,9 +204,9 @@ async function onSave() {
           </div>
 
           <div
-            class="absolute inset-0 flex items-center justify-center bg-tone-shell/55 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            class="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
           >
-            <PhCamera :size="28" weight="light" class="text-tone-white" />
+            <PhCamera :size="28" weight="light" class="text-white" />
           </div>
         </button>
 

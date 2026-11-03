@@ -44,7 +44,7 @@ const {
 
       <template v-if="interactive">
         <div
-          class="pointer-events-none absolute inset-0 bg-primary-black/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+          class="pointer-events-none absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
           :class="showDesktopActions ? 'opacity-100' : ''"
         />
 

@@ -92,7 +92,7 @@ async function onSave() {
   saving.value = true;
 
   try {
-    const cropped = await cropperRef.value.getCroppedFile("avatar.jpg");
+    const cropped = await cropperRef.value.getCroppedFile();
     const body = new FormData();
     body.append("avatar", cropped);
 

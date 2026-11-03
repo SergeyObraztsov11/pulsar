@@ -66,7 +66,7 @@ function scrollToTop() {
     <header
       ref="headerRef"
       class="sticky top-0 z-12 flex shrink-0 items-center gap-3 overflow-hidden rounded-t-lg px-4 py-3 text-tone-white lg:px-6"
-      :class="headerBgStyle ? null : 'bg-tone-surface'"
+      :class="headerBgStyle ? 'media-hero' : 'bg-tone-surface'"
       :style="headerBgStyle"
     >
       <NuxtLink

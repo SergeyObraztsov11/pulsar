@@ -41,9 +41,13 @@ Desktop.ini
 *.swp
 *.swo
 
-# Локальные seed-медиа (заливка: npx tsx prisma/seed-media.ts)
+# Локальные медиа для сида
 public/audio/
 public/covers/
+seed-albums/**/*.mp3
+seed-albums/**/cover.jpg
+seed-albums/**/cover.png
+seed-albums/**/cover.webp
 
 # Локальные / временные
 *.local

@@ -10,59 +10,101 @@
 
   /*
    * ── Legacy: primary-* ─────────────────────────────────────
-   * Текущий UI. Не удалять до постепенной миграции на tone-*.
-   * Имена light/dark не совпадают с яркостью — не ориентироваться на суффикс.
+   * Роли после аудита (не ориентироваться на light/dark в имени):
+   * white → основной текст / CTA-заливка
+   * gray → вторичный текст (раньше ошибочно #2e2d2d)
+   * gray-dark → поверхность / панели
+   * black → фон содержимого (canvas)
+   * gray-light → промежуточный (почти не используется в UI)
    */
 
-  /** Основной текст, белые CTA, иконки на тёмном фоне */
-  --color-primary-white: #ffffff;
+  /** Основной текст / CTA-заливка (= tone-white) */
+  --color-primary-white: #f5f7fa;
 
-  /** Legacy: hover gray-кнопок, заливки полей (сейчас #6a6a6a — средний серый) */
-  --color-primary-gray-light: #6a6a6a;
+  /** Legacy mid fill; в светлой теме — surface-hover */
+  --color-primary-gray-light: #303844;
 
-  /** Legacy: muted-текст и тёмные заливки (сейчас #2e2d2d — почти surface) */
-  --color-primary-gray: #2e2d2d;
+  /** Вторичный текст (= tone-muted); не использовать как тёмную заливку */
+  --color-primary-gray: #b2bdca;
 
-  /** Карточки, мини-плеер, меню, модалки, hover строк треков */
-  --color-primary-gray-dark: #1a1a1a;
+  /** Панели / карточки (= tone-surface) */
+  --color-primary-gray-dark: #222831;
 
-  /** Фон main, sidebar, layout приложения */
-  --color-primary-black: #111111;
+  /** Фон содержимого (= tone-canvas) */
+  --color-primary-black: #12151a;
 
-  /** Ошибки форм, валидация (общий для legacy и tone-*) */
-  --color-danger: #f25f5f;
+  /** Ошибки форм, валидация */
+  --color-danger: #ff7b83;
 
   /*
    * ── v2: tone-* ────────────────────────────────────────────
-   * Новая шкала: роль в UI, не «light/dark» в названии.
-   * Фоны: shell (внешний) → canvas (контент) → surface (панели).
+   * Фоны: shell → canvas → surface → surface-hover.
    * Текст: white (primary) · muted (secondary).
-   * Ошибки — тот же danger выше.
    */
 
-  /** Primary-текст, белые кнопки Play / Submit */
-  --color-tone-white: #ffffff;
+  /** Primary-текст, заливка основных CTA */
+  --color-tone-white: #f5f7fa;
 
-  /** Secondary-текст: артист, мета, duration, placeholder-подписи */
-  --color-tone-muted: #a7a7a7;
+  /** Secondary-текст: артист, мета, placeholder */
+  --color-tone-muted: #b2bdca;
 
-  /** Hover строк, покой gray-кнопки, фон выпадающего меню */
-  --color-tone-surface: #282828;
+  /** Панели, меню, gray-кнопки в покое */
+  --color-tone-surface: #222831;
 
-  /** Hover gray-кнопки и пунктов меню */
-  --color-tone-surface-hover: #3a3a3a;
+  /** Hover панелей и gray-кнопок */
+  --color-tone-surface-hover: #303844;
 
-  /** Фон main / sidebar; строка трека в покое (прозрачно) */
-  --color-tone-canvas: #121212;
+  /** Фон main / sidebar */
+  --color-tone-canvas: #12151a;
 
-  /** Край экрана: html/body, зазор вокруг rounded main (AppLayout shell) */
-  --color-tone-shell: #000000;
+  /** Край экрана: html/body, shell AppLayout */
+  --color-tone-shell: #0b0d10;
 
   /* Именованные анимации для утилит animate-* */
   --animate-fade-up: fade-up 0.55s ease-out both;
   --animate-glow-breathe: glow-breathe 5s ease-in-out infinite;
   --animate-progress-sheen: progress-sheen 1.6s ease-in-out infinite;
   --animate-dnd-jiggle: dnd-jiggle 0.55s ease-in-out infinite;
+}
+
+/*
+ * Светлая тема: те же роли, другие значения.
+ * Класс .light ставит blocking-скрипт / useTheme до paint.
+ */
+html.light {
+  --color-primary-white: #18212d;
+  --color-primary-gray-light: #e4e9ef;
+  --color-primary-gray: #536174;
+  --color-primary-gray-dark: #ffffff;
+  --color-primary-black: #f8f9fb;
+  --color-danger: #ba2536;
+
+  --color-tone-white: #18212d;
+  --color-tone-muted: #536174;
+  --color-tone-surface: #ffffff;
+  --color-tone-surface-hover: #e4e9ef;
+  --color-tone-canvas: #f8f9fb;
+  --color-tone-shell: #e9edf2;
+}
+
+/*
+ * Hero / sticky на coverColor: акценты нормализованы под тёмный фон.
+ * Фиксируем всю тёмную шкалу (текст + поверхности): иначе в light
+ * bg-tone-surface остаётся белым при светлом тексте (hero/compact fallback
+ * и вложенные панели внутри media-hero).
+ */
+.media-hero {
+  --color-tone-shell: #0b0d10;
+  --color-tone-canvas: #12151a;
+  --color-tone-surface: #222831;
+  --color-tone-surface-hover: #303844;
+  --color-tone-white: #f5f7fa;
+  --color-tone-muted: #b2bdca;
+  --color-primary-black: #12151a;
+  --color-primary-gray-dark: #222831;
+  --color-primary-gray-light: #303844;
+  --color-primary-gray: #b2bdca;
+  --color-primary-white: #f5f7fa;
 }
 
 /* Появление блоков (stagger на landing) */
@@ -123,23 +165,43 @@ html {
   color-scheme: dark;
 }
 
+html.light {
+  color-scheme: light;
+}
+
 /* Выделение текста */
 ::selection {
   background-color: color-mix(
     in srgb,
-    var(--color-primary-white) 50%,
+    var(--color-tone-white) 35%,
     transparent
   );
-  color: var(--color-primary-white);
+  color: var(--color-tone-white);
 }
 
 ::-moz-selection {
   background-color: color-mix(
     in srgb,
-    var(--color-primary-white) 50%,
+    var(--color-tone-white) 35%,
     transparent
   );
-  color: var(--color-primary-white);
+  color: var(--color-tone-white);
+}
+
+/* Autofill: фон/текст совпадают с полями на обеих темах */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-tone-white);
+  caret-color: var(--color-tone-white);
+  box-shadow: 0 0 0 1000px var(--color-tone-surface) inset;
+  transition: background-color 99999s ease-out;
 }
 
 /* Переходы между страницами (NuxtPage name: "page") */
